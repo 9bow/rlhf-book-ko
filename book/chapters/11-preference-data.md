@@ -5,155 +5,155 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "What are Preferences"
+prev-chapter: "선호도란 무엇인가"
 prev-url: "10-preferences"
-page-title: Preference Data
-search-title: "Chapter 11: Preference Data"
-next-chapter: "Synthetic Data & CAI"
+page-title: 선호도 데이터
+search-title: "Chapter 11: 선호도 데이터"
+next-chapter: "합성 데이터 및 CAI"
 next-url: "12-synthetic-data"
 ---
 
-# Preference Data
+# 선호도 데이터
 
-Preference data is the engine of preference fine-tuning and reinforcement learning from human feedback. 
-The core problem we've been trying to solve with RLHF is that we cannot precisely model human rewards and preferences for AI models' outputs -- that is, write clearly defined loss functions to optimize against -- so preference data is the proxy signal we use to tune our models.
-The data is what allows us to match behaviors we desire and avoid some failure modes we hate.
-The data is so rich a source that it is difficult to replace this style of optimization at all.
-Within preference fine-tuning, many methods for collecting and using said data have been proposed, and given that human preferences cannot be captured in a clear reward function, many more will come to enable this process of collecting labeled preference data at the center of RLHF and related techniques.
-Today, two main challenges exist around preference data that are intertwined with this chapter: 1) operational complexity and cost of collection, and 2) the need for preference data to be collected on the generations from the model being trained (called "on-policy").
+선호도 데이터 (preference data)는 선호도 미세조정 (PreFT)과 인간 피드백 기반 강화학습 (RLHF)의 핵심 동력이다.
+우리가 RLHF로 해결하려는 핵심 문제는 AI 모델의 출력에 대한 인간의 보상과 선호도를 정확하게 모델링할 수 없다는 것이다 -- 즉, 최적화할 명확하게 정의된 손실 함수를 작성할 수 없다 -- 따라서 선호도 데이터는 모델을 조율하기 위해 사용하는 대리 신호다.
+데이터는 우리가 원하는 행동을 매칭하고 일부 실패 모드를 피할 수 있게 해준다.
+데이터는 매우 풍부한 소스여서 이러한 방식의 최적화를 완전히 대체하기는 어렵다.
+선호도 미세조정 내에서, 이 데이터를 수집하고 활용하기 위한 많은 방법이 제안되었으며, 인간의 선호도를 명확한 보상 함수로 포착할 수 없다는 점에서, RLHF 및 관련 기법의 중심에 있는 레이블링된 선호도 데이터 수집 과정을 가능하게 하기 위해 더 많은 방법이 등장할 것이다.
+오늘날 선호도 데이터를 둘러싼 두 가지 주요 과제가 이 장과 얽혀 있다: 1) 수집의 운영적 복잡성과 비용, 그리고 2) 선호도 데이터가 학습 중인 모델의 생성물에서 수집되어야 한다는 필요성(이를 "온-정책"이라 부른다).
 
-In this chapter, we detail technical decisions on how the data is formatted and organizational practices for collecting it.
+이 장에서는 데이터 형식화 방법에 관한 기술적 결정과 데이터 수집을 위한 조직적 관행을 자세히 살펴본다.
 
-## Why We Need Preference Data
+## 선호도 데이터가 필요한 이유
 
-The preference data is needed for RLHF because directly capturing complex human values in a single reward function is effectively impossible, as discussed in the previous Chapter 10, where substantial context of psychology, economics, and philosophy shows that accurately modeling human preferences is an impossible problem to ever completely solve.
-Collecting this data to train reward models is one of the original ideas behind RLHF [@leike2018scalable] and has continued to be used extensively throughout the emergence of modern language models.
-One of the core intuitions for *why this data works so well* is that it is far easier, both for humans and AI models supervising data collection, to differentiate between a good and a bad answer for a prompt than it is to generate a good answer on its own. 
-This chapter focuses on the *mechanics* of getting preference data and the best practices depend on the specific problem being solved.
+선호도 데이터는 복잡한 인간 가치를 단일 보상 함수로 직접 포착하는 것이 사실상 불가능하기 때문에 RLHF에 필요하다. 이는 이전 10장에서 다루었으며, 심리학, 경제학, 철학의 상당한 맥락이 인간 선호도를 정확하게 모델링하는 것이 완전히 해결하기 불가능한 문제임을 보여준다.
+보상 모델을 학습시키기 위해 이 데이터를 수집하는 것은 RLHF의 원래 아이디어 중 하나 [@leike2018scalable]이며, 현대 언어 모델의 등장 전반에 걸쳐 광범위하게 계속 사용되고 있다.
+*이 데이터가 왜 이렇게 잘 작동하는가*에 대한 핵심 직관 중 하나는, 인간과 데이터 수집을 감독하는 AI 모델 모두에게 있어서, 프롬프트에 대해 좋은 답변을 스스로 생성하는 것보다 좋은 답변과 나쁜 답변을 구별하는 것이 훨씬 더 쉽다는 것이다.
+이 장은 선호도 데이터를 얻는 *메커니즘*과 해결해야 할 특정 문제에 따라 달라지는 모범 사례에 초점을 맞춘다.
 
-## Collecting Preference Data
+## 선호도 데이터 수집
 
-Getting the most out of human data involves iterative training of models, spending hundreds of thousands (or millions of dollars), highly detailed data instructions, translating ideas through data foundry businesses that mediate collection (or hiring a meaningful amount of annotators), and other challenges that add up. 
-This is not a process that should be taken lightly.
-Among all of the public knowledge on RLHF, collecting this data well is also one of the most opaque pieces of the pipeline. 
-At the time of writing, there are no open models with fully open human preference data released with the methods used to collect it (the largest and most recent human preference dataset released for models is the HelpSteer line of work from NVIDIA's Nemotron team [@wang2024helpsteer2p]).
-For these reasons, many who take up RLHF for new teams or projects omit human data and use AI feedback data, off-the-shelf reward models, or other methods to circumvent the need for curating data from scratch.
+인간 데이터에서 최대한 활용하려면 반복적인 모델 학습, 수십만 달러(또는 수백만 달러)의 지출, 매우 상세한 데이터 지침, 수집을 중개하는 데이터 파운드리 비즈니스를 통해 아이디어를 전달하는 것(또는 상당한 수의 주석자 고용), 그리고 합산되는 기타 과제들이 필요하다.
+이것은 가볍게 여겨서는 안 되는 과정이다.
+RLHF에 관한 공개된 지식 중에서, 이 데이터를 잘 수집하는 것도 파이프라인에서 가장 불투명한 부분 중 하나다.
+이 글을 쓰는 시점에서, 수집에 사용된 방법론과 함께 완전히 공개된 인간 선호도 데이터가 릴리스된 완전 개방형 모델은 없다 (모델을 위해 릴리스된 가장 크고 최신의 인간 선호도 데이터셋은 NVIDIA의 Nemotron 팀의 HelpSteer 연구 [@wang2024helpsteer2p]이다).
+이러한 이유로, 새로운 팀이나 프로젝트에서 RLHF를 시작하는 많은 사람들이 인간 데이터를 생략하고 AI 피드백 데이터, 기성 보상 모델, 또는 처음부터 데이터를 큐레이션할 필요성을 우회하는 다른 방법을 사용한다.
 
-An important assumption that is taken into the preference data collection process is that the best data for your training process is "on-policy" with respect to the previous checkpoint(s) of your training process.
-Recall that within post-training, we start with a base model and then perform a set of training *stages* to create a series of *checkpoints*. 
-In this case, the preference data could be collected on a checkpoint that has undergone supervised fine-tuning, where the preference data will be used in the next stage of RLHF training.
+선호도 데이터 수집 과정에서 받아들여지는 중요한 가정은 학습 과정에 가장 좋은 데이터가 이전 체크포인트에 대해 "온-정책"이라는 것이다.
+후처리 학습에서, 우리는 기반 모델에서 시작하여 일련의 학습 *단계*를 수행해 일련의 *체크포인트*를 생성한다는 점을 상기하자.
+이 경우, 선호도 데이터는 지도 미세조정을 거친 체크포인트에서 수집될 수 있으며, 선호도 데이터는 다음 RLHF 학습 단계에서 사용된다.
 
-The use of the term on-policy here is adapted from the reinforcement learning literature, where on-policy is a technical term implying that the data for a certain gradient update is collected from the most recent form of the policy.
-In preference data, on-policy is used in a slightly softer manner, where it means that the data is collected from the current family of models.
-Different models have different patterns in their generations, which makes preference data that is from a closely related model more robust in the crucial areas of optimization.
-Research has shown that using this on-policy data, rather than other popular datasets that aggregate completions from pools of popular models on platforms like HuggingFace, is particularly important for effective RLHF training [@malik2025rewardbench].
+여기서 온-정책이라는 용어는 강화학습 문헌에서 적용된 것으로, 온-정책은 특정 그래디언트 업데이트를 위한 데이터가 정책의 가장 최신 형태에서 수집됨을 내포하는 기술 용어다.
+선호도 데이터에서 온-정책은 약간 더 느슨한 방식으로 사용되며, 데이터가 현재 모델 계열에서 수집됨을 의미한다.
+서로 다른 모델은 생성물에서 서로 다른 패턴을 가지며, 이는 밀접하게 관련된 모델의 선호도 데이터를 최적화의 중요한 영역에서 더 강건하게 만든다.
+연구에 따르면 HuggingFace와 같은 플랫폼의 인기 있는 모델 풀로부터 완성물을 집계하는 다른 인기 데이터셋보다 이 온-정책 데이터를 사용하는 것이 효과적인 RLHF 학습에 특히 중요하다 [@malik2025rewardbench].
 
-This necessity for on-policy data is not well documented, but many popular technical reports, such as early versions of Claude or Llama 2, showcase multiple training stages with RLHF being useful for final performance, which mirrors this well.
-The same uncertainty applies for the popular area of AI feedback data -- the exact balance between human and AI preference data used for the latest AI models is unknown.
-These data sources are known to be a valuable path to improve performance, but careful tuning of processes is needed to extract that potential performance from a data pipeline.
+이 온-정책 데이터의 필요성은 잘 문서화되지 않았지만, Claude나 Llama 2의 초기 버전과 같은 많은 인기 있는 기술 보고서들은 RLHF가 최종 성능에 유용한 여러 학습 단계를 보여주며, 이를 잘 반영한다.
+동일한 불확실성이 AI 피드백 데이터의 인기 있는 분야에도 적용된다 -- 최신 AI 모델에 사용된 인간 선호도 데이터와 AI 선호도 데이터 사이의 정확한 균형은 알려져 있지 않다.
+이러한 데이터 소스들은 성능을 향상시키는 귀중한 경로임이 알려져 있지만, 데이터 파이프라인에서 잠재적 성능을 추출하기 위해서는 프로세스의 신중한 조율이 필요하다.
 
-A subtle but important point is that the *chosen* answer in preference data is often not a globally *correct* answer.
-Instead, it is the answer that is better relative to the alternatives shown (e.g., clearer, safer, more helpful, or less incorrect).
-There can be cases where every completion being compared to a given prompt is correct or incorrect, and the models can still learn from well-labeled data.
+미묘하지만 중요한 점은, 선호도 데이터에서 *선택된(chosen)* 답변이 종종 전역적으로 *올바른* 답변이 아니라는 것이다.
+대신, 표시된 대안들에 비해 더 나은 답변이다(예: 더 명확하고, 더 안전하고, 더 도움이 되거나, 덜 부정확한).
+특정 프롬프트에 비교되는 모든 완성물이 정확하거나 부정확한 경우가 있을 수 있으며, 모델은 여전히 잘 레이블링된 데이터로부터 학습할 수 있다.
 
-### Interfaces
+### 인터페이스
 
-Crucial to collecting preference data is the interface by which one interacts with the model, but it's more of an art than a science, as it's not well-studied how subtle changes in the interface impact how a user interacts with a model.
-An example of how a model's vibe can be changed by the user experience is *speed*, where with the rise of reasoning models, a user can think a model is less intelligent if it replies too fast (even though users obviously want to get their answer faster overall).
+선호도 데이터 수집에 핵심적인 것은 모델과 상호작용하는 인터페이스이지만, 인터페이스의 미묘한 변화가 사용자가 모델과 상호작용하는 방식에 어떻게 영향을 미치는지 잘 연구되지 않았기 때문에 과학이라기보다는 예술에 가깝다.
+모델의 분위기가 사용자 경험에 의해 변할 수 있는 예시는 *속도*인데, 추론 모델의 부상과 함께 사용자는 모델이 너무 빨리 응답하면 덜 지능적이라고 생각할 수 있다(사용자가 명백히 전반적으로 더 빠른 답을 원함에도 불구하고).
 
-An example interface is shown below from Anthropic's early and foundational RLHF work for building Claude [@bai2022training].
-In the figure shown below, @fig:preference-interface, a data labeler has a conversation with the model and must choose a preference between two possible answers, at the bottom highlighted in purple.
-In addition, the labeler is given the potential to include more notes on the conversation or a general rating of the conversation quality (potentially spread across multiple tasks, as seen in the top left).
+아래에 Anthropic의 초기 및 기초적인 RLHF 연구에서 Claude 구축을 위한 인터페이스 예시가 나와 있다 [@bai2022training].
+아래에 표시된 그림 @fig:preference-interface 에서, 데이터 레이블러는 모델과 대화하고 아래에 보라색으로 강조된 두 가지 가능한 답변 중 선호도를 선택해야 한다.
+또한 레이블러는 대화에 더 많은 메모를 포함하거나 대화 품질의 일반적인 평가를 포함할 잠재성이 주어진다(왼쪽 상단에서 볼 수 있듯이 여러 작업에 걸쳐 퍼져 있을 수 있음).
 
-![An example of one of the earliest preference data collection interface, from Anthropic's research. Bai et al. 2022. The actual conversation is a toy conversation around what is a good example conversation for data collection. License CC-BY.](images/anthropic-interface.png){#fig:preference-interface .center}
+![가장 초기의 선호도 데이터 수집 인터페이스 중 하나의 예시, Anthropic의 연구에서. Bai et al. 2022. 실제 대화는 데이터 수집을 위한 좋은 예시 대화가 무엇인지에 관한 장난감 대화다. License CC-BY.](images/anthropic-interface.png){#fig:preference-interface .center}
 
-This first example is a *training-data only* interface, where the goal is to collect rich metadata along with the conversation. 
-Now that these models are popular, applications often expose interfaces for collecting preference directly to the users during everyday use, much like how other technology products will A/B test new features in small subsets of the production usage.
-It depends on the application whether this preference data is used directly to train the future models, or if it is used just as an evaluation of models' performance relative to each other.
-An example interaction of this form is shown below in @fig:preference-chatgpt for an earlier version of ChatGPT.
+이 첫 번째 예시는 *학습 데이터 전용* 인터페이스로, 목표는 대화와 함께 풍부한 메타데이터를 수집하는 것이다.
+이제 이 모델들이 대중화되면서, 애플리케이션은 일상적인 사용 중에 직접 사용자로부터 선호도를 수집하기 위한 인터페이스를 노출하는 경우가 많다. 다른 기술 제품들이 프로덕션 사용의 소규모 하위 집합에서 새 기능을 A/B 테스트하는 것과 매우 유사하다.
+이 선호도 데이터가 미래 모델을 학습시키는 데 직접 사용되는지 아니면 서로에 대한 모델 성능 평가로만 사용되는지는 애플리케이션에 따라 다르다.
+이러한 형태의 상호작용 예시가 ChatGPT의 이전 버전으로 @fig:preference-chatgpt 에 아래에 나와 있다.
 
-![Example preference data collection interface from when I was served two completions from different ChatGPT beta models. The actual completions are very close in content, showing how collecting preference data can be noisy and difficult to get exactly right.](images/chatgpt-ab-test.jpeg){#fig:preference-chatgpt .center}
+![서로 다른 ChatGPT 베타 모델로부터 두 가지 완성물이 제공되었을 때의 선호도 데이터 수집 인터페이스 예시. 실제 완성물은 내용이 매우 유사하여, 선호도 데이터 수집이 얼마나 노이즈가 많고 정확하게 하기 어려운지를 보여준다.](images/chatgpt-ab-test.jpeg){#fig:preference-chatgpt .center}
 
-This style of interface is used extensively across the industry, such as for *evaluation* of models given the same format.
-A popular public option to engage with models in this way is Arena (formerly ChatBotArena) [@chiang2024chatbot], which includes the option of a "tie" between models:
+이러한 스타일의 인터페이스는 같은 형식으로 모델 *평가*를 위해 업계 전반에 걸쳐 광범위하게 사용된다.
+이 방식으로 모델과 참여할 수 있는 인기 있는 공개 옵션은 Arena(이전의 ChatBotArena) [@chiang2024chatbot]이며, 모델 간의 "무승부" 옵션을 포함한다:
 
-![Example preference data collection interface from an early version of the popular Arena benchmark.](images/chatbotarena.png){#fig:chatbotarena .center}
+![인기 있는 Arena 벤치마크의 초기 버전에서의 선호도 데이터 수집 인터페이스 예시.](images/chatbotarena.png){#fig:chatbotarena .center}
 
-For models in the wild, one of the most common techniques is to collect feedback on if a specific response was positive or negative.
-An example from the Ai2 playground is shown below with thumbs up and down indicators:
+실제 환경의 모델에서, 가장 일반적인 기법 중 하나는 특정 응답이 긍정적인지 부정적인지에 대한 피드백을 수집하는 것이다.
+엄지손가락 위/아래 표시기가 있는 Ai2 플레이그라운드의 예시가 아래에 나와 있다:
 
-![Example preference data collection interface with up or down arrow from the Allen Institute of AI's research demos.](images/up-down-vote.png){#fig:up-down .center}
+![Allen Institute of AI 연구 데모에서 위 또는 아래 화살표로 선호도 데이터 수집 인터페이스 예시.](images/up-down-vote.png){#fig:up-down .center}
 
-In domains other than language, the same core principles apply, even though these domains are not the focus of this book.
-For every Midjourney generation (and most popular image generators) they expose multiple responses to users.
-These companies then use the data of which response was selected to fine-tune their models with RLHF.
-Midjourney's interface is shown below:
+언어 이외의 영역에서도 동일한 핵심 원칙이 적용되며, 이러한 영역들은 이 책의 초점이 아니다.
+모든 Midjourney 생성(그리고 대부분의 인기 있는 이미지 생성기)은 사용자에게 여러 응답을 노출한다.
+이러한 회사들은 어떤 응답이 선택되었는지에 대한 데이터를 사용해 RLHF로 모델을 미세조정한다.
+Midjourney의 인터페이스가 아래에 나와 있다:
 
-![Example user interface of text-to-image models.](images/midj.jpeg){#fig:midj .center}
+![텍스트-이미지 모델의 사용자 인터페이스 예시.](images/midj.jpeg){#fig:midj .center}
 
-### Rankings vs. Ratings
+### 랭킹 vs. 평점
 
-The largest decision on how to collect preference data is if the data should be rankings -- i.e. relative ordering of model completions -- or ratings -- i.e. scores assigned to each piece of text.
-Common practice is to train on rankings, but ratings are often used as metadata and / or have been explored in related literature.
+선호도 데이터를 수집하는 방법에 관한 가장 큰 결정은 데이터가 랭킹 -- 즉, 모델 완성물의 상대적 순서 -- 이어야 하는지 아니면 평점 -- 즉, 각 텍스트 조각에 할당된 점수 -- 이어야 하는지다.
+일반적인 관행은 랭킹으로 학습하지만, 평점은 종종 메타데이터로 사용되거나 관련 문헌에서 탐구되어왔다.
 
-One simple way to collect ratings is to score a *single* completion on a 1-5 scale:
+평점을 수집하는 한 가지 간단한 방법은 *단일* 완성물을 1-5 척도로 점수를 매기는 것이다:
 
-- **5** — excellent: correct, clear, and notably helpful
-- **4** — good: correct, clear, and useful
-- **3** — okay: acceptable, but nothing special
-- **2** — poor: partially correct but confusing or incomplete
-- **1** — very poor: incorrect or unhelpful
+- **5** — 우수: 정확하고, 명확하며, 특히 도움이 됨
+- **4** — 좋음: 정확하고, 명확하며, 유용함
+- **3** — 보통: 허용 가능하지만 특별하지 않음
+- **2** — 낮음: 부분적으로 정확하지만 혼란스럽거나 불완전함
+- **1** — 매우 낮음: 부정확하거나 도움이 되지 않음
 
-With multiple completions to the same prompt, a simple way to make preference data would be to choose the highest rated completion and pair it randomly with a lower scored completion (as done for UltraFeedback and derivative works [@cui2023ultrafeedback]).
+동일한 프롬프트에 대한 여러 완성물이 있을 때, 선호도 데이터를 만드는 간단한 방법은 가장 높은 평점을 받은 완성물을 선택하고 낮은 점수를 받은 완성물과 무작위로 쌍을 이루는 것이다(UltraFeedback과 파생 연구에서 수행된 것처럼 [@cui2023ultrafeedback]).
 
-Although, the most common technique for collecting preferences is to use a Likert scale for relative rankings [@likert1932technique], which asks users to select which response they prefer in a group of completions.
-For example, a 5 point Likert scale would look like the following (note that, yes, a Likert scale uses a single integer to record the ranking, much like a rating, so it's how the data is structured that is the core difference in the two ways of collecting preference data):
+가장 일반적인 선호도 수집 기법은 리커트 척도 (Likert scale)를 사용한 상대적 랭킹이다 [@likert1932technique]. 이는 사용자에게 완성물 그룹에서 어느 응답을 선호하는지 선택하도록 요청한다.
+예를 들어, 5점 리커트 척도는 다음과 같다 (참고로, 리커트 척도는 평점과 매우 유사하게 단일 정수를 사용해 랭킹을 기록하므로, 두 가지 선호도 데이터 수집 방식의 핵심 차이는 데이터가 구조화되는 방식이다):
 
-| A$>>$B | A$>$B | Tie | B$>$A | B$>>$A |
+| A$>>$B | A$>$B | 무승부 | B$>$A | B$>>$A |
 |:------:|:-----:|:-----:|:-----:|:------:|
 | 1    | 2   | 3   | 4   | 5    |
 
-Table: An example 5-wise Likert scale between two responses, A and B. {#tbl:likert5}
+Table: 두 응답 A와 B 사이의 5점 리커트 척도 예시. {#tbl:likert5}
 
-Some early RLHF for language modeling works use an 8-step Likert scale with levels of preference between the two responses [@bai2022training]. 
-An even scale removes the possibility of ties:
+언어 모델링을 위한 초기 RLHF 연구들은 두 응답 사이의 선호도 수준을 가진 8단계 리커트 척도를 사용한다 [@bai2022training].
+짝수 척도는 무승부의 가능성을 제거한다:
 
 
 | A$>>>$B |     |     | A$>$B | B$>$A  |     |     | B$>>>$A |
 |:-------:|:-----:|:-----:|:-----:|:------:|:-----:|:-----:|:-------:|
 | 1     | 2   | 3   | 4   | 5    | 6   | 7   | 8     |
 
-Table: An example 8-wise Likert scale between two responses, A and B. {#tbl:likert8}
+Table: 두 응답 A와 B 사이의 8점 리커트 척도 예시. {#tbl:likert8}
 
-In this case [@bai2022training], as in other works, this information is still reduced to a binary signal for the training of a reward model.
+이 경우 [@bai2022training]와 다른 연구들에서, 이 정보는 여전히 보상 모델 학습을 위한 이진 신호로 축소된다.
 
-### Multi-turn Data
+### 멀티턴 데이터
 
-In practice, core questions often arise over how to parse and collect multi-turn data -- simply conversations with multiple related prompts.
-In a real-world interaction, normally a piece of preference data is only collected on the "final" prompt, but there are scenarios where preferences can be given on every response.
-When preferences are given on every response, the conversation traditionally continues with the "chosen" answer.
-At training time, it is common to include the training data for every turn of the conversation as a "single prompt," where the model can learn from completing it.
-This can effectively unroll longer conversations into many training prompts, but needs to be done carefully to not bias the training data.
-Many research questions are still emerging, such as if the person labeling the preference on the generations should be the same as the person who creates the prompt (to avoid sycophancy), and other variables that are difficult to control for in data collection (question [inspired by John Schulman](https://x.com/johnschulman2/status/1917483351436582953)).
-If the prompt creator cannot label the preference data, multi-turn is not really practical due to the need for conversations to continue in real-time -- sometimes for preference data the curation of prompts is a different problem than comparing responses (also due to the work of maintaining active endpoints for models).
-For training, all of the previous turns in the conversation are masked from the loss, as discussed with instruction fine-tuning.
+실제로, 여러 관련 프롬프트가 있는 단순한 대화인 멀티턴 데이터를 어떻게 파싱하고 수집할지에 관한 핵심 질문들이 자주 발생한다.
+실제 상호작용에서는 일반적으로 선호도 데이터가 "최종" 프롬프트에서만 수집되지만, 모든 응답에 선호도가 부여될 수 있는 시나리오도 있다.
+모든 응답에 선호도가 부여되면, 대화는 전통적으로 "선택된" 답변으로 계속된다.
+학습 시에는 대화의 모든 턴에 대한 학습 데이터를 "단일 프롬프트"로 포함하는 것이 일반적이며, 모델은 이를 완성함으로써 학습할 수 있다.
+이는 더 긴 대화를 많은 학습 프롬프트로 효과적으로 풀어낼 수 있지만, 학습 데이터에 편향을 주지 않도록 신중하게 수행되어야 한다.
+예를 들어 생성물에 대한 선호도를 레이블링하는 사람이 프롬프트를 만든 사람과 동일해야 하는지(아첨을 피하기 위해), 그리고 데이터 수집에서 통제하기 어려운 다른 변수들에 관한 많은 연구 질문들이 여전히 등장하고 있다 ([John Schulman에게서 영감 받은 질문](https://x.com/johnschulman2/status/1917483351436582953)).
+프롬프트 작성자가 선호도 데이터를 레이블링할 수 없다면, 멀티턴은 실시간으로 계속되는 대화의 필요성 때문에 실제로는 실용적이지 않다 -- 때로는 선호도 데이터의 경우 프롬프트 큐레이션이 응답 비교와는 다른 문제이기도 하다 (모델의 활성 엔드포인트 유지 작업 때문이기도 하다).
+학습 시에는, 지시 미세조정에서 논의된 것처럼, 대화의 이전 모든 턴이 손실에서 마스킹된다.
 
-### Structured Preference Data
+### 구조화된 선호도 데이터
 
-In many applications of RLHF and post-training, preference data can be created *automatically* due to innate structures of the data -- i.e. the domains make automatic checks of correctness or preference possible.
-For example, in mathematical reasoning domains the chosen response can be a correct answer and the rejected an incorrect answer.
-Another example is in precise instruction following, such as the evaluation IFEval [@zhou2023instructionfollowingevaluationlargelanguage], where prompts take the form of:
+RLHF와 후처리 학습의 많은 응용에서, 선호도 데이터는 데이터의 내재적 구조로 인해 *자동으로* 생성될 수 있다 -- 즉, 해당 영역이 자동적인 정확성 또는 선호도 확인을 가능하게 한다.
+예를 들어, 수학적 추론 영역에서 선택된 응답은 올바른 답변이 될 수 있고 거부된 응답은 잘못된 답변이 될 수 있다.
+또 다른 예시는 IFEval [@zhou2023instructionfollowingevaluationlargelanguage]과 같은 평가에서의 정밀한 지시 따르기이며, 프롬프트는 다음과 같은 형태를 취한다:
 
-> **Prompt**: Write me a short poem about a goldfish. **Start each sentence with the letter g.**
+> **프롬프트**: 금붕어에 관한 짧은 시를 써줘. **각 문장을 g 문자로 시작하라.**
 
-The second part of this query is called the constraint, and the preference data could be constructed with an example in the chosen column that follows the constraint.
-Constructing this preference data, which would be included as *synthetic* preference data, involves prompting the same model (or multiple models) twice. Once with the constraint included and once without.
+이 질의의 두 번째 부분은 제약이라 불리며, 선호도 데이터는 제약을 따르는 예시로 선택 열에 구성될 수 있다.
+*합성* 선호도 데이터로 포함될 이 선호도 데이터를 구성하는 것은 동일한 모델(또는 여러 모델)에 두 번 프롬프트를 보내는 것을 포함한다. 한 번은 제약이 포함되고 한 번은 포함되지 않는다.
 
-For example, prompting GPT-4.5-Preview with both of these gives the following.
+예를 들어, GPT-4.5-Preview에 이 두 가지를 프롬프트로 보내면 다음과 같은 결과가 나온다.
 
-> **Prompt**: Write me a short poem about a goldfish. Start each sentence with the letter g.
+> **프롬프트**: 금붕어에 관한 짧은 시를 써줘. 각 문장을 g 문자로 시작하라.
 >
-> **Response**: Golden swimmer, circling slow,
+> **응답**: Golden swimmer, circling slow,
 > Gleaming scales in water's glow.
 > Gentle fins dance softly by,
 > Gazing out with quiet eye.
@@ -162,11 +162,11 @@ For example, prompting GPT-4.5-Preview with both of these gives the following.
 > Graceful turns in endless roam,
 > Goldfish finds a crystal home.
 
-And without the constraint (which, it turns out, is also a lower quality output):
+그리고 제약 없이 (이 경우 품질도 더 낮은 것으로 판명된다):
 
-> **Prompt**: Write me a short poem about a goldfish.
+> **프롬프트**: 금붕어에 관한 짧은 시를 써줘.
 >
-> **Response**: In circles bright, the goldfish glides,
+> **응답**: In circles bright, the goldfish glides,
 > A spark of sun that gently rides
 > Through waters clear, in endless spins---
 > A golden whisper, scales like fins.
@@ -176,94 +176,93 @@ And without the constraint (which, it turns out, is also a lower quality output)
 > In silent waves, content to roam,
 > The goldfish dreams its bowl as home.
 
-Crucially, the prompt for the preference data will need to include the constraint.
-In domains outside of academic study, there are far more applications of preference data based on inductive biases like above (relative to quality-based preferences, which most of this chapter focuses on).
-These have been shown to enable preference fine-tuning to have meaningful performance improvements across related evaluations, such as instruction-following, math, etc. [@lambert2024t].
+결정적으로, 선호도 데이터를 위한 프롬프트에는 제약이 포함되어야 한다.
+학문적 연구 외부의 영역에서는, 품질 기반 선호도(이 장의 대부분이 초점을 맞추는)에 비해 위와 같은 귀납적 편향에 기반한 선호도 데이터의 응용이 훨씬 많다.
+이는 선호도 미세조정이 지시 따르기, 수학 등 관련 평가에서 의미 있는 성능 향상을 가져올 수 있음을 보여주었다 [@lambert2024t].
 
-#### Alternatives
+#### 대안들
 
-There are multiple other ways to collect useful feedback data for RLHF that have not been pursued in as great of detail. 
-Examples include using single data points with directional labels, e.g. as shown from Ai2 playground above in @fig:up-down, directly with algorithms designed for single direction signals like Kahneman-Tversky Optimization (KTO) [@ethayarajh2024kto].
-Other algorithms have been proposed with different types of feedback signals such as fine-grained feedback, e.g. at the token level [@wu2024fine], or natural language feedback, e.g. by writing responses [@chen2024learning], to provide a richer learning signal in exchange for a more complicated data collection setup.
+RLHF에 유용한 피드백 데이터를 수집하는 다른 여러 방법들이 있지만, 자세히 탐구되지 않은 것들이 있다.
+예시로는 단방향 레이블이 있는 단일 데이터 포인트 사용이 있으며, 예를 들어 위의 @fig:up-down 에서 Ai2 플레이그라운드에서 보여준 것처럼, Kahneman-Tversky 최적화 (KTO) [@ethayarajh2024kto]와 같이 단방향 신호를 위해 설계된 알고리즘과 직접 사용된다.
+다른 알고리즘들은 토큰 수준에서의 세밀한 피드백 [@wu2024fine] 또는 응답 작성과 같은 자연어 피드백 [@chen2024learning]과 같은 다른 유형의 피드백 신호를 제안했으며, 더 복잡한 데이터 수집 설정과 교환하여 더 풍부한 학습 신호를 제공한다.
 
-### Sourcing and Contracts
+### 소싱과 계약
 
-Getting human preference data is an involved and costly process.
-The following describes the experience of getting preference data when the field is moving quickly. 
-Over time, these processes will become far more automated and efficient (especially with AI feedback being used for a larger portion of the process).
+인간 선호도 데이터를 얻는 것은 복잡하고 비용이 많이 드는 과정이다.
+다음은 분야가 빠르게 움직일 때 선호도 데이터를 얻는 경험을 설명한다.
+시간이 지남에 따라, 이러한 과정들은 훨씬 더 자동화되고 효율적이 될 것이다 (특히 AI 피드백이 더 큰 비율의 과정에 사용되면서).
 
-The first step is sourcing the vendor to provide data (or one's own annotators). 
-Much like acquiring access to cutting-edge Nvidia GPUs, getting access to data providers in the peak of AI excitement is also a who-you-know game -- those who can provide data are supply-limited. 
-If you have credibility in the AI ecosystem, the best data companies will want you on their books for public image and long-term growth options. 
-Discounts are often also given on the first batches of data to get training teams hooked.
+첫 번째 단계는 데이터를 제공할 벤더를 찾는 것이다(또는 자체 주석자).
+최신 Nvidia GPU 접근권 획득과 마찬가지로, AI 열풍의 정점에서 데이터 제공업체에 접근하는 것도 아는 사람이 누구냐의 게임이다 -- 데이터를 제공할 수 있는 업체들은 공급이 제한되어 있다.
+AI 생태계에서 신뢰성이 있다면, 최고의 데이터 기업들은 공개 이미지와 장기적 성장 옵션을 위해 당신을 원할 것이다.
+학습 팀을 끌어들이기 위해 첫 번째 데이터 배치에 할인이 제공되는 경우도 많다.
 
-If you're a new entrant in the space, you may have a hard time getting the data you need quickly. 
-Data vendors are known to prioritize large budget line-items and new customers that have an influential brand or potential for large future revenue.
-This is, in many business ways, natural, as the data foundry companies are often supply-limited in their ability to organize humans for effective data labelling.
+공간의 새로운 진입자라면, 필요한 데이터를 빠르게 얻기 어려울 수 있다.
+데이터 벤더들은 대규모 예산 항목과 영향력 있는 브랜드나 대규모 미래 수익 잠재력을 가진 새 고객을 우선시하는 것으로 알려져 있다.
+이는 데이터 파운드리 회사들이 효과적인 데이터 레이블링을 위해 인간을 조직하는 능력에서 종종 공급이 제한되어 있기 때문에, 많은 비즈니스 측면에서 자연스러운 일이다.
 
-In a recurring unfortunate pattern, data companies have not delivered data as contracted without the customer threatening legal or financial action against them for breach of contract.
-Others have listed companies as customers for PR even though they never worked with them, saying they "didn't know how that happened" when called out.
-There are plenty of potential bureaucratic or administrative snags through the process. 
-For example, the default terms on the contracts often prohibit the open sourcing of artifacts after acquisition in some fine print.
+반복되는 불행한 패턴으로, 데이터 기업들은 고객이 계약 위반으로 법적 또는 재정적 조치를 위협하지 않으면 계약대로 데이터를 납품하지 않는 경우가 있었다.
+다른 기업들은 실제로 함께 작업하지 않은 회사를 고객으로 홍보 목적으로 올려놓고, 지적받으면 "어떻게 그런 일이 생겼는지 모른다"고 말했다.
+과정에는 관료적 또는 행정적 장애물이 많다.
+예를 들어, 계약의 기본 조건은 종종 소규모 글씨로 구매 후 인공물의 오픈 소싱을 금지하는 경우가 있다.
 
-Once a contract is settled, the data buyer and data provider agree upon instructions for the task(s) purchased. 
-There are intricate documents with extensive details, corner cases, and priorities for the data. 
-A popular example of data instructions is the one that [OpenAI released for InstructGPT](https://docs.google.com/document/d/1MJCqDNjzD04UbcnVZ-LmeXJ04-TKEICDAepXyMCBUb8/edit#heading=h.21o5xkowgmpj) [@ouyang2022training].
+계약이 체결되면, 데이터 구매자와 데이터 제공업체는 구매한 작업에 대한 지침에 합의한다.
+데이터에 대한 광범위한 세부 사항, 예외 케이스, 우선순위를 담은 정교한 문서들이 있다.
+인기 있는 데이터 지침의 예시는 [OpenAI가 InstructGPT를 위해 공개한 것](https://docs.google.com/document/d/1MJCqDNjzD04UbcnVZ-LmeXJ04-TKEICDAepXyMCBUb8/edit#heading=h.21o5xkowgmpj)이다 [@ouyang2022training].
 
-Depending on the domains of interest in the data, timelines for when the data can be labeled or curated vary. 
-High-demand areas like mathematical reasoning or coding must be locked into a schedule weeks out. 
-In the case when you are collecting a dataset for your next model and you realize that collecting data later may be optimal, simple delays of data collection don't always work --- Scale AI et al. are managing their workforces like AI research labs manage the compute-intensive jobs on their clusters (planning multiple weeks or months ahead as to when different resources will be allocated where).
+관심 있는 데이터 영역에 따라, 데이터가 레이블링되거나 큐레이션될 수 있는 타임라인이 다르다.
+수학적 추론이나 코딩과 같은 수요가 높은 영역은 몇 주 전부터 일정을 잡아야 한다.
+다음 모델을 위한 데이터셋을 수집하는 경우 나중에 데이터를 수집하는 것이 최적일 수 있음을 깨달았을 때, 단순한 데이터 수집 지연이 항상 효과가 있는 것은 아니다 --- Scale AI 등은 AI 연구소가 클러스터에서 계산 집약적인 작업을 관리하는 것처럼 인력을 관리하고 있다 (다른 리소스가 어디에 언제 할당될지 몇 주 또는 몇 달 전에 계획).
 
-Once everything is agreed upon, the actual collection process is a high-stakes time for post-training teams. 
-All the training infrastructure, evaluation tools, and plans for how to use the data and make downstream decisions must be in place.
-If the data cannot be easily slotted into an existing RLHF data pipeline, it'll take a long time to have the information the data partner wants in order to try and improve the collection process *during* the process. 
-Collecting data that cannot be seamlessly integrated into training pipelines often becomes stale and a waste of resources.
+모든 것이 합의되면, 실제 수집 과정은 후처리 학습 팀에게 중요한 시간이다.
+모든 학습 인프라, 평가 도구, 그리고 데이터를 사용하고 다운스트림 결정을 내리는 방법에 대한 계획이 준비되어야 한다.
+데이터가 기존 RLHF 데이터 파이프라인에 쉽게 통합될 수 없다면, 수집 *과정 중에* 수집 과정을 개선하려는 데이터 파트너가 원하는 정보를 얻는 데 오랜 시간이 걸릴 것이다.
+학습 파이프라인에 원활하게 통합될 수 없는 데이터 수집은 종종 오래되어 자원 낭비가 된다.
 
-The data is delivered in weekly batches with more data coming later in the contract. 
-For example, a typical preference data contract might span a 6 week delivery period.
-The first weeks are for further calibration and the later weeks are when teams hope to most improve their model.
+데이터는 계약 후반에 더 많은 데이터와 함께 주간 배치로 제공된다.
+예를 들어, 일반적인 선호도 데이터 계약은 6주 납품 기간에 걸칠 수 있다.
+초기 몇 주는 추가 보정을 위한 것이고 후기 몇 주는 팀이 모델을 가장 많이 개선하기를 희망하는 때이다.
 
-![Overview of the multi-batch cycle for obtaining human preference data from a vendor. The ramp up period allows a narrowing of goals and methodology in order to create the best possible data. It is expected that a larger proportion of the data from the earlier batches will have to be thrown out due to quality issues. This is one timeline example for a smaller data contract (~$500K) and much larger data contracts can vary substantially.](images/pref-data-timeline.png){#fig:preferences .center}
+![벤더로부터 인간 선호도 데이터를 얻기 위한 다중 배치 사이클 개요. 준비 기간은 가능한 최상의 데이터를 만들기 위해 목표와 방법론을 좁히는 것을 허용한다. 초기 배치에서 더 많은 비율의 데이터를 품질 문제로 버려야 할 것으로 예상된다. 이것은 더 작은 데이터 계약(~$500K)에 대한 하나의 타임라인 예시이며 훨씬 큰 데이터 계약은 상당히 다를 수 있다.](images/pref-data-timeline.png){#fig:preferences .center}
 
-The goal is that by week 4 or 5 the data is visibly improving the model. 
-This is something some frontier models have mentioned, such as the 14 stages in the Llama 2 data collection [@touvron2023llama], but it doesn't always go well. 
-As an example, a team trying this for the first time with human preferences may not have the RLHF preparedness to get meaningful bumps on their evaluations. The last weeks come and they are forced to continue collecting preference data generated from endpoints they aren't confident in.
+4주 또는 5주차까지는 데이터가 눈에 띄게 모델을 개선하고 있어야 한다는 것이 목표다.
+이것은 Llama 2 데이터 수집의 14단계 [@touvron2023llama]와 같은 일부 프론티어 모델이 언급한 것이지만, 항상 잘 진행되는 것은 아니다.
+예를 들어, 인간 선호도로 처음으로 이를 시도하는 팀은 평가에서 의미 있는 성능 향상을 얻을 RLHF 준비도가 없을 수 있다. 마지막 주가 오면 그들은 자신이 확신하지 못하는 엔드포인트에서 생성된 선호도 데이터를 계속 수집하도록 강요받는다.
 
-After the data is all in, there is plenty of time for learning and improving the model. 
-Data acquisition through these vendors works best when viewed as an ongoing process of achieving a set goal. 
-It requires iterative experimentation, high effort, and focus. 
-It's likely that millions of dollars spent on these datasets are "wasted" and not used in the final models, but that is just the cost of doing business. 
-Not many organizations have the bandwidth and expertise to make full use of human data of this style.
+데이터가 모두 들어온 후에는 모델을 학습하고 개선할 충분한 시간이 있다.
+이러한 벤더들을 통한 데이터 취득은 설정된 목표를 달성하기 위한 지속적인 과정으로 볼 때 가장 효과적이다.
+반복적인 실험, 높은 노력, 집중력이 필요하다.
+이러한 데이터셋에 지출된 수백만 달러가 "낭비"되어 최종 모델에 사용되지 않을 가능성이 높지만, 그것은 단지 사업 비용일 뿐이다.
+이러한 스타일의 인간 데이터를 충분히 활용할 수 있는 역량과 전문성을 갖춘 조직은 많지 않다.
 
-Note that this section *does not* mirror the experience for buying human-written instruction data, where the process is less of a time crunch.
-Early post-training processes were built around the first stage of training being heavily driven by carefully crafted, human answers to a set of prompts.
-This stage of data is not subject to the on-policy restrictions for multiple reasons: Instruction data is used directly on top of a base model, so on-policy doesn't really apply; the loss-function for instruction fine-tuning doesn't need the contrastive data of preference fine-tuning; and other structural advantages.
-Today, the primary other focus of human data is in generating prompts for post-training -- which dictate the training distribution of topics for the model -- or on challenging tasks at the frontier of model performance.
-More of these data trade-offs are discussed in Chapter 12 on Synthetic Data.
+이 섹션이 인간이 작성한 지시 데이터 구매 경험을 *반영하지 않는다*는 점에 유의하라. 그 과정은 시간적 압박이 덜하다.
+초기 후처리 학습 과정은 학습의 첫 번째 단계를 정성스럽게 작성된 인간의 답변 세트에 의해 주도되도록 구축되었다.
+이 단계의 데이터는 온-정책 제약에서 여러 이유로 자유롭다: 지시 데이터는 기반 모델 위에 직접 사용되므로 온-정책이 실제로 적용되지 않는다; 지시 미세조정을 위한 손실 함수는 선호도 미세조정의 대조적 데이터가 필요하지 않다; 그리고 다른 구조적 이점들.
+오늘날, 인간 데이터의 주요 다른 초점은 후처리 학습을 위한 프롬프트 생성 -- 이는 모델의 주제 학습 분포를 결정한다 -- 또는 모델 성능의 프론티어에서 도전적인 과제에 있다.
+이러한 데이터 트레이드오프 중 더 많은 것이 합성 데이터에 관한 12장에서 논의된다.
 
-## Bias: Things to Watch Out For in Data Collection
+## 편향: 데이터 수집에서 주의해야 할 사항들
 
-While preference data is essential, it's also known to be prone to many subtle biases that can make its collection error-prone.
-These biases are so common, e.g. prefix bias (where the beginning of a completion disproportionately drives the preference) [@kumar2025detecting], that they can easily be passed to the final model [@bharadwaj2025flatteryflufffogdiagnosing] (and especially as we know that models are only as good as their data).
-These issues are often subtle, and the effectiveness of interventions varies widely across them.
-For many, such as sycophancy (over-agreeing with the user’s stated beliefs or flattering them, even when it reduces truthfulness) [@sharma2023towards], they reflect issues within humans that are often outside of the labeling criteria that one will think of providing to the annotation partner or labelers.
-Others, such as verbosity [@singhal2023long] [@bu2025beyond] or formatting habits [@zhang2024lists], emerge for a similar reason, but they are easier to detect and mitigate in training.
-Mitigating these subtle biases in data is the difference between good or great preference data, and therefore good or great RLHF training.
+선호도 데이터는 필수적이지만, 수집을 오류가 발생하기 쉽게 만드는 많은 미묘한 편향에 취약한 것으로도 알려져 있다.
+이러한 편향들은 매우 일반적이어서, 예를 들어 접두사 편향(완성물의 시작 부분이 선호도를 불균형적으로 좌우하는) [@kumar2025detecting]과 같이, 최종 모델에 쉽게 전달될 수 있다 [@bharadwaj2025flatteryflufffogdiagnosing] (그리고 특히 모델이 데이터만큼만 좋다는 것을 알기 때문에).
+이러한 문제들은 종종 미묘하며, 개입의 효과는 문제에 따라 크게 다르다.
+많은 경우, 예를 들어 아첨(모델이 진실성을 줄이더라도 사용자의 명시된 신념에 지나치게 동의하거나 아첨하는 것) [@sharma2023towards]과 같은 경우, 그것들은 주석 파트너나 레이블러에게 제공하려고 생각하는 레이블링 기준 외부에 있는 인간 내부의 문제를 반영한다.
+다른 것들, 예를 들어 장황함 [@singhal2023long] [@bu2025beyond] 또는 형식화 습관 [@zhang2024lists]은 비슷한 이유로 등장하지만, 학습에서 감지하고 완화하기가 더 쉽다.
+데이터에서 이러한 미묘한 편향을 완화하는 것이 좋은 선호도 데이터와 훌륭한 선호도 데이터 사이의 차이이며, 따라서 좋은 RLHF 학습과 훌륭한 RLHF 학습 사이의 차이다.
 
-## Open Questions in RLHF Preference Data
+## RLHF 선호도 데이터의 열린 질문들
 
-The data used to enable RLHF is often curated by multiple stakeholders in a combination of paid employment and consumer usage.
-This data, representing a preference between two pieces of text in an individual instance, is capturing a broad and diverse function via extremely limited interactions.
-Given that the data is sparse in count relative to the complexity it begins to represent, more questions should be openly shared about its curation and impacts.
+RLHF를 가능하게 하는 데이터는 종종 유급 고용과 소비자 사용의 조합으로 여러 이해 관계자에 의해 큐레이션된다.
+개별 인스턴스에서 두 텍스트 조각 사이의 선호도를 포착하는 이 데이터는 극히 제한된 상호작용을 통해 광범위하고 다양한 함수를 포착하고 있다.
+데이터가 나타내기 시작하는 복잡성에 비해 수가 희박하기 때문에, 큐레이션과 영향에 관한 더 많은 질문이 공개적으로 공유되어야 한다.
 
-Currently, datasets for the most popular LLMs are being generated by professional workforces. 
-This opens up many questions around who is creating the data and how the context of their workplace informs it.
+현재, 가장 인기 있는 대규모 언어 모델 (LLM)을 위한 데이터셋은 전문적인 인력에 의해 생성되고 있다.
+이는 누가 데이터를 만들고 있으며 직장 맥락이 어떻게 데이터를 만드는지에 관한 많은 질문을 제기한다.
 
-Despite the maturity of RLHF as a core method across the field, there are still many core open questions facing how best to align its practice with its motivations.
-Some are enumerated below:
+RLHF가 분야 전반의 핵심 방법으로 성숙했음에도 불구하고, 동기와 실천을 가장 잘 정렬하는 방법에 관한 여전히 많은 핵심적인 열린 질문들이 있다.
+일부는 아래에 열거되어 있다:
 
-- **Data collection contexts**: Can data involving preferences collected in a professional setting mirror the intent of researchers designing an experiment or provide suitable transfer to downstream users?  How does this compare to volunteer workers? How does context inform preferences, how does this data impact a downstream model, how can the impact of a user interface be measured in data? How does repetitive labeling of preference data shift one's preferences?  Do professional crowd-workers, instructed to follow a set of preferences, follow the instructions or their innate values? 
-- **Type of feedback**: Does the default operating method of RLHF, pairwise preferences capture preferences in its intended form?  Can comparisons in RLHF across the same data be made with the default comparisons versus advanced multi-axis feedback mechanisms [@wu2024fine]? What types of comparisons would reflect how humans communicate preferences in text?
-- **Population demographics**: Who is completing the data? Is a diverse population maintained? How does a lack of diversity emerge as measurable impacts on the model? What is a minimum number of people required to suitably represent a given population? How are instances of preference annotator disagreement treated -- as a source of noise, or a signal?
-- **Are the Preferences Expressed in the Models?** In the maturation of RLHF and related approaches, the motivation of them -- to align models to abstract notions of human preference -- has drifted from the practical use -- to make the models more effective to users. A feedback loop that is not measurable due to the closed nature of industrial RLHF work is the check to see if the behavior of the models matches the specification given to the data annotators during the process of data collection. We have limited tools to audit this, such as the Model Spec from OpenAI [@openai2024modelspec] that details *what they want their models to do*, but we don't know exactly how this translates to data collection.
-
+- **데이터 수집 맥락**: 전문적인 환경에서 수집된 선호도를 포함하는 데이터가 실험을 설계하는 연구자들의 의도를 반영하거나 다운스트림 사용자에게 적합한 전이를 제공할 수 있는가? 이것은 자원봉사 근로자와 어떻게 비교되는가? 맥락이 어떻게 선호도를 알리며, 이 데이터가 다운스트림 모델에 어떤 영향을 미치는가, 사용자 인터페이스의 영향이 데이터에서 어떻게 측정될 수 있는가? 선호도 데이터를 반복적으로 레이블링하는 것이 어떻게 선호도를 바꾸는가? 선호도 집합을 따르도록 지시를 받은 전문 크라우드 워커들은 지침을 따르는가, 아니면 그들의 내재적 가치를 따르는가?
+- **피드백의 유형**: RLHF의 기본 작동 방식인 쌍별 선호도가 의도된 형태로 선호도를 포착하는가? RLHF에서 동일한 데이터의 비교는 기본 비교 대 고급 다축 피드백 메커니즘으로 이루어질 수 있는가 [@wu2024fine]? 어떤 유형의 비교가 인간이 텍스트에서 선호도를 전달하는 방식을 반영하는가?
+- **인구 통계학**: 누가 데이터를 완성하고 있는가? 다양한 인구가 유지되고 있는가? 다양성의 부재가 모델에 측정 가능한 영향으로 어떻게 나타나는가? 특정 인구를 적절하게 대표하기 위해 필요한 최소 인원수는 얼마인가? 선호도 주석자 의견 불일치의 사례들은 어떻게 처리되는가 -- 노이즈의 원천으로, 아니면 신호로?
+- **모델에서 선호도가 표현되고 있는가?** RLHF와 관련 접근법의 성숙 과정에서, 그것들의 동기 -- 추상적인 인간 선호도 개념에 모델을 정렬하는 것 -- 는 실용적 사용 -- 모델을 사용자에게 더 효과적으로 만드는 것 -- 에서 멀어졌다. 산업적 RLHF 작업의 폐쇄적인 특성으로 인해 측정할 수 없는 피드백 루프는 모델의 행동이 데이터 수집 과정에서 데이터 주석자에게 주어진 사양과 일치하는지 확인하는 것이다. OpenAI의 Model Spec [@openai2024modelspec]과 같이 *그들이 모델이 무엇을 하기를 원하는지*를 자세히 설명하는 것과 같은 제한적인 감사 도구가 있지만, 이것이 데이터 수집으로 어떻게 정확하게 번역되는지는 알 수 없다.

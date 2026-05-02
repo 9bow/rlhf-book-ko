@@ -5,365 +5,360 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "Home"
+prev-chapter: "홈"
 prev-url: "https://rlhfbook.com/"
-page-title: Introduction
-search-title: "Chapter 1: Introduction"
-next-chapter: "Key Related Works"
+page-title: 소개
+search-title: "1장: 소개"
+next-chapter: "주요 관련 연구"
 next-url: "02-related-works"
 lectures:
   - video: "https://www.youtube.com/watch?v=o6l6tJQgUg4&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=2"
-    label: "Lecture 1: Overview (Chapters 1–3)"
+    label: "강의 1: 개요 (1–3장)"
 ---
 
-# Introduction
+# 소개
 
-Reinforcement learning from Human Feedback (RLHF) is a technique used to incorporate human information into AI systems.
-RLHF emerged primarily as a method to solve hard-to-specify problems.
-With systems that are designed to be used by humans directly, such problems emerge all the time due to the often unexpressible nature of an individual's preferences. This encompasses every domain of content and interaction with a digital system.
-RLHF's early applications were often in control problems and other traditional domains for reinforcement learning (RL), where the goal is to optimize a specific behavior to solve a task.
-The core idea to start the field of RLHF was "can we solve hard problems only with basic preference signals guiding the optimization process."
-RLHF became most known through the release of ChatGPT and the subsequent rapid development of large language models (LLMs) and other foundation models.
+인간 피드백 기반 강화학습 (RLHF)은 인간의 정보를 AI 시스템에 통합하는 기법입니다.
+RLHF는 주로 명세하기 어려운 문제를 해결하기 위한 방법으로 등장했습니다.
+인간이 직접 사용하도록 설계된 시스템에서는 개인의 선호도 (preference)가 종종 표현하기 어려운 특성을 지니기 때문에, 이러한 문제가 모든 콘텐츠 및 디지털 시스템과의 상호작용 영역에서 끊임없이 발생합니다.
+RLHF의 초기 적용은 제어 문제나 강화학습 (RL)의 전통적인 도메인에서 이루어지는 경우가 많았는데, 이 분야에서의 목표는 특정 행동을 최적화하여 태스크를 해결하는 것입니다.
+RLHF 분야를 시작하게 된 핵심 아이디어는 "기본적인 선호도 신호만으로 최적화 과정을 이끌어 어려운 문제를 해결할 수 있을까"라는 질문이었습니다.
+RLHF는 ChatGPT의 출시와 이후 대규모 언어 모델 (LLM) 및 기반 모델 (foundation model)의 급속한 발전을 통해 가장 널리 알려지게 되었습니다.
 
-The basic pipeline for RLHF involves three steps.
-First, a language model that can follow user questions must be trained (see Chapter 4).
-Second, human preference data must be collected for the training of a reward model of human preferences (see Chapter 5).
-Finally, the language model can be optimized with an RL optimizer of choice, by sampling generations and rating them with respect to the reward model (see Chapters 3 and 6).
-This book details key decisions and basic implementation examples for each step in this process.
+RLHF의 기본 파이프라인은 세 단계로 구성됩니다.
+첫째, 사용자 질문을 따를 수 있는 언어 모델 (language model)을 학습시켜야 합니다 (4장 참조).
+둘째, 인간 선호도 보상 모델 (reward model)을 학습시키기 위한 인간 피드백 (human feedback) 선호도 데이터를 수집해야 합니다 (5장 참조).
+마지막으로, 생성을 샘플링하고 보상 모델로 평가하여 원하는 RL 최적화 도구로 언어 모델을 최적화할 수 있습니다 (3장 및 6장 참조).
+이 책은 이 과정의 각 단계에서 내려야 할 핵심 결정 사항과 기본 구현 예시를 자세히 설명합니다.
 
-RLHF has been applied to many domains successfully, with complexity increasing as the techniques have matured.
-Early breakthrough experiments with RLHF were applied to deep reinforcement learning [@christiano2017deep], summarization [@stiennon2020learning], following instructions [@ouyang2022training], parsing web information for question-answering [@nakano2021webgpt], and "alignment" [@bai2022training].
-A summary of the early RLHF recipes is shown below in @fig:rlhf-basic.
+RLHF는 기술이 성숙해감에 따라 복잡성이 증가하면서 다양한 도메인에 성공적으로 적용되어 왔습니다.
+RLHF의 초기 획기적인 실험들은 심층 강화학습 [@christiano2017deep], 요약 [@stiennon2020learning], 지시 따르기 [@ouyang2022training], 질의응답을 위한 웹 정보 파싱 [@nakano2021webgpt], 그리고 "정렬 (alignment)" [@bai2022training]에 적용되었습니다.
+초기 RLHF 레시피의 요약은 아래 @fig:rlhf-basic에 나와 있습니다.
 
-![A rendition of the early, three stage RLHF process with SFT, a reward model, and then optimization.](images/rlhf-basic.png){#fig:rlhf-basic}
+![지도 미세조정 (SFT), 보상 모델, 그리고 최적화로 구성된 초기 3단계 RLHF 과정의 렌더링.](images/rlhf-basic.png){#fig:rlhf-basic}
 
-In modern language model training, RLHF is one component of post-training. 
-Post-training is a more complete set of techniques and best-practices to make language models more useful for downstream tasks [@lambert2024t].
-Post-training can be summarized as a many-stage training process using three optimization methods:
+현대 언어 모델 학습에서 RLHF는 후처리 학습 (post-training)의 한 구성 요소입니다.
+후처리 학습은 언어 모델을 다운스트림 태스크에 더 유용하게 만들기 위한 보다 완전한 기법과 모범 사례의 집합입니다 [@lambert2024t].
+후처리 학습은 세 가지 최적화 방법을 사용하는 다단계 학습 과정으로 요약할 수 있습니다:
 
-1. Instruction / Supervised Fine-tuning (IFT/SFT), where we teach formatting and form the base of instruction-following abilities. This is largely about learning *features* in language.
-2. Preference Fine-tuning (PreFT), where we align to human preferences via RLHF and related methods (and get smaller bump in capabilities at the same time). This is largely about *style* of language and subtle human preferences that are hard to quantify.
-3. Reinforcement Learning with Verifiable Rewards (RLVR). The newest type of post-training that boosts performance on verifiable domains with more RL training.
+1. 지시 조정 / 지도 미세조정 (IFT/SFT): 형식을 가르치고 지시 따르기 능력의 기반을 형성합니다. 이는 주로 언어의 *특징 (feature)*을 학습하는 것에 관한 것입니다.
+2. 선호도 미세조정 (PreFT): RLHF 및 관련 방법을 통해 인간 선호도에 정렬하는 단계입니다 (동시에 소폭의 성능 향상도 얻습니다). 이는 주로 언어의 *스타일*과 정량화하기 어려운 미묘한 인간 선호도에 관한 것입니다.
+3. 검증 가능한 보상을 활용한 강화학습 (RLVR): 더 많은 RL 학습으로 검증 가능한 도메인의 성능을 향상시키는 가장 새로운 유형의 후처리 학습입니다.
 
-RLHF lives within and dominates the second area, **preference fine-tuning**, which has more complexity than instruction tuning because it often involves proxy reward models of the true object and noisier data.
-At the same time, RLHF is far more established than the other popular RL method for language models, reinforcement learning with verifiable rewards. 
-For that reason, this book focuses on preference learning, but in order to completely grasp the role of RLHF, one needs to use these other training stages, so they are also explained in detail.
+RLHF는 두 번째 영역인 **선호도 미세조정** 내에 속하며 이를 지배하고 있는데, 이 단계는 실제 목적 함수의 프록시 보상 모델을 사용하고 더 잡음이 많은 데이터를 다루기 때문에 지시 조정보다 복잡성이 높습니다.
+동시에, RLHF는 언어 모델을 위한 또 다른 인기 있는 RL 방법인 검증 가능한 보상을 활용한 강화학습보다 훨씬 더 확립된 방법입니다.
+따라서 이 책은 선호도 학습에 초점을 맞추지만, RLHF의 역할을 완전히 파악하려면 다른 학습 단계도 활용해야 하므로, 이 단계들도 자세히 설명합니다.
 
-As we consider the space of options and attention on these methods for crafting models we collectively use extensively, RLHF colloquially *is* what led to modern post-training.
-RLHF was the technique that enabled the massive success of the release of ChatGPT, so early in 2023 RLHF encompassed much of the interest in the general field of post-training.
-RLHF is now just one piece of post-training, so in this book we map through why there was so much attention on RLHF early on, and how other methods emerged to complement it.
+우리가 광범위하게 사용하는 모델을 만들기 위한 이러한 방법들의 선택지와 관심 공간을 고려할 때, 구어적으로 RLHF는 현대 후처리 학습을 이끈 것 자체입니다.
+RLHF는 ChatGPT의 출시라는 막대한 성공을 가능하게 한 기법이었으므로, 2023년 초 RLHF는 후처리 학습이라는 일반적인 분야의 관심 대부분을 포괄했습니다.
+RLHF는 이제 후처리 학습의 한 부분일 뿐이므로, 이 책에서는 왜 초기에 RLHF에 그토록 많은 관심이 집중되었는지, 그리고 어떻게 다른 방법들이 등장하여 이를 보완하게 되었는지를 설명합니다.
 
-Training language models is a very complex process, often involving large technical teams of 10s to 100s of people and millions of dollars in data and compute cost.
-This book serves three purposes to enable readers to grasp how RLHF and related models are used to craft leading models.
-First, the book distills cutting-edge research often hidden within large technology companies into clear topics and trade-offs, so readers can understand how models are made.
-Second, the book will allow users to set up basic code examples to get their hands dirty on fine-tuning these models themselves.
-Finally, beyond teaching the techniques for doing RLHF, this book is designed to distill intuition as to *why* RLHF is crucial to modern AI models.
+언어 모델 학습은 매우 복잡한 과정으로, 수십에서 수백 명에 달하는 대규모 기술 팀과 수백만 달러의 데이터 및 컴퓨팅 비용이 필요합니다.
+이 책은 독자들이 RLHF와 관련 모델이 어떻게 선도적인 모델을 만드는 데 사용되는지 파악할 수 있도록 세 가지 목적을 제공합니다.
+첫째, 이 책은 대형 기술 기업들 내에 숨겨져 있는 최첨단 연구를 명확한 주제와 트레이드오프로 압축하여 독자들이 모델이 어떻게 만들어지는지 이해할 수 있게 합니다.
+둘째, 독자들이 기본 코드 예시를 설정하여 직접 이 모델들을 미세조정하는 데 참여할 수 있게 합니다.
+마지막으로, RLHF를 수행하는 기법을 가르치는 것을 넘어, 이 책은 *왜* RLHF가 현대 AI 모델에 필수적인지에 대한 직관을 압축하여 제공하도록 설계되었습니다.
 
-Due to the complexity of RLHF and how the state-of-the-art is often too complex to be done alone, this book focuses on enabling readers so they have the tools needed to get jobs and start research projects in the area. 
-Others will just enjoy precisely understanding the inner workings of the technology that is the focus of countless discussions across the globe.
-A book that lays out an exact recipe of how to do RLHF for a specific need is impossible, which is why there is a large industry of companies providing RLHF training and related methods as a service worth millions of dollars.
-Still, rapid progress in AI systems means the readers who are fitted with this knowledge can approach more and more of their own training over time.
+RLHF의 복잡성과 최첨단 기술이 종종 혼자서 수행하기에 너무 복잡하다는 사실로 인해, 이 책은 독자들이 이 분야에서 취업하고 연구 프로젝트를 시작하는 데 필요한 도구를 갖출 수 있도록 돕는 데 중점을 둡니다.
+다른 독자들은 전 세계적으로 수많은 논의의 중심인 이 기술의 내부 작동 방식을 정확하게 이해하는 것 자체를 즐길 것입니다.
+특정 필요에 맞는 RLHF 수행 방법의 정확한 레시피를 제시하는 책은 불가능하며, 그렇기 때문에 RLHF 학습 및 관련 방법을 서비스로 제공하는 기업들이 수백만 달러 규모의 산업을 이루고 있습니다.
+그럼에도, AI 시스템의 빠른 발전은 이 지식을 갖춘 독자들이 시간이 지남에 따라 더 많은 자체 학습을 수행할 수 있게 해줄 것입니다.
 
-## What Does RLHF Do?
+## RLHF는 무엇을 하는가?
 
-The biggest question around RLHF, yet one that is still hard to answer, is "What does RLHF training offer models?"
-In recent years, language models have shifted from academic experiments studied in the purview of benchmarks to general-purpose technology.
-RLHF is at the core of this transition.
+RLHF를 둘러싼 가장 큰 질문이자 여전히 답하기 어려운 것은 "RLHF 학습이 모델에 무엇을 제공하는가?"입니다.
+최근 몇 년 동안, 언어 모델은 벤치마크의 관점에서 연구되는 학문적 실험에서 범용 기술로 변모했습니다.
+RLHF는 이 전환의 핵심에 있습니다.
 
-To start, let us consider how a language model at the end of autoregressive pretraining answers a query. 
-A strong model, Llama 3.1 405B Base, will continue from "The president of the united states in 2006 was":
+먼저, 자기회귀 (autoregressive) 사전 학습 (pretraining)이 끝난 언어 모델이 질의에 어떻게 답하는지 생각해 봅시다.
+강력한 모델인 Llama 3.1 405B 기본 모델은 "2006년 미국의 대통령은"에 이어서 다음과 같이 계속합니다:
 
-> **Response**: George W. Bush, the governor of Florida in 2006 was Jeb Bush, and John McCain was an Arizona senator in 2006 - who later lost to obama.
-> September 1 -- U.S. President Bush signs an executive order to provide more options for faith-based organizations when delivering social services that are paid for with federal funds.
-> January 1 -- The current deadline set by United States Congress in the Unlawful Internet Gambling Enforcement Act, aka UIGEA.
-> search: Amendments to the 1961 International Convention for the Protection of New Varieties of Plants require plant breeders' rights include farmer's privilege.
-> 2009 was a common year starting on Thursday of the Gregorian calendar, the 2009th year of the Common Era (ce) and Anno Domini (ad) designations, the 9th year of the 3rd millennium, the 9th year of the 21st century, and the 10th and last year of the 2000s decade.
+> **응답**: 조지 W. 부시, 2006년 플로리다 주지사는 젭 부시, 그리고 존 매케인은 2006년 애리조나 상원의원이었습니다 - 나중에 오바마에게 패배한. September 1 -- U.S. President Bush signs an executive order to provide more options for faith-based organizations when delivering social services that are paid for with federal funds. January 1 -- The current deadline set by United States Congress in the Unlawful Internet Gambling Enforcement Act, aka UIGEA. search: Amendments to the 1961 International Convention for the Protection of New Varieties of Plants require plant breeders' rights include farmer's privilege. 2009 was a common year starting on Thursday of the Gregorian calendar, the 2009th year of the Common Era (ce) and Anno Domini (ad) designations, the 9th year of the 3rd millennium, the 9th year of the 21st century, and the 10th and last year of the 2000s decade.
 
-What is clear is that this model is completing the sentence and adding other common internet metadata.
+이 모델이 문장을 이어가며 일반적인 인터넷 메타데이터를 추가하고 있다는 것이 명확합니다.
 
-In contrast, a model trained with RLHF (and other post-training tools) would answer the question very differently.
-Asking Tülu 3 405B the same question "The president of the united states in 2006 was," it says concisely:
+이와 대조적으로, RLHF(와 다른 후처리 학습 도구)로 학습된 모델은 동일한 질문에 매우 다르게 답할 것입니다.
+Tülu 3 405B에 동일한 질문 "2006년 미국의 대통령은"을 물어보면, 간결하게 대답합니다:
 
-> **Response**: George W. Bush was the president of the United States in 2006. He served two terms in office, from January 20, 2001, to January 20, 2009.
+> **응답**: 2006년 미국의 대통령은 조지 W. 부시였습니다. 그는 2001년 1월 20일부터 2009년 1월 20일까지 두 임기를 재임했습니다.
 
-This change in style is downstream of the post-training methods described in this book.
+이러한 스타일의 변화는 이 책에서 설명하는 후처리 학습 방법들의 결과물입니다.
 
-The most compelling view of how RLHF works is to consider how *style* applies to interactions you have with language models.
-The style, closely related to tone or format, of information presented is crucial to how it is learned.
-Style is often used to describe the manner of the model. To see the difference, consider two example responses to the following question:
+RLHF가 어떻게 작동하는지에 대한 가장 설득력 있는 관점은 *스타일*이 언어 모델과의 상호작용에 어떻게 적용되는지 생각하는 것입니다.
+제시되는 정보의 스타일은 어조 또는 형식과 밀접하게 관련되어 있으며, 이를 통해 학습되는 방식에 매우 중요합니다.
+스타일은 종종 모델의 방식을 설명하는 데 사용됩니다. 차이점을 확인하려면 다음 질문에 대한 두 가지 예시 답변을 고려해 보세요:
 
-> **User**: Help, I have to give a presentation tomorrow and I’m panicking.
+> **사용자**: 내일 발표를 해야 하는데 너무 긴장돼요.
 
-A blunt, low-empathy style:
+무뚝뚝하고 공감이 낮은 스타일:
 
-> **Response**: You'll be fine. Practice your slides a few times, get some sleep, and stop overthinking it. Just present what you know and move on.
+> **응답**: 괜찮을 거예요. 슬라이드를 몇 번 연습하고, 충분히 자고, 과도하게 생각하지 마세요. 아는 것을 발표하고 넘어가면 됩니다.
 
-A warmer, more supportive style:
+더 따뜻하고 지지적인 스타일:
 
-> **Response**: That sounds really stressful, and it’s a normal reaction. If you can, do one quick practice run now, pick the one or two points you most want people to remember, and then give yourself permission to rest—being clear and calm tomorrow will matter more than cramming tonight.
+> **응답**: 정말 스트레스받으실 것 같아요, 그리고 그건 자연스러운 반응이에요. 가능하다면 지금 한 번 빠르게 연습하고, 사람들이 가장 기억했으면 하는 한두 가지 포인트를 골라두세요. 그런 다음 충분히 쉬세요 — 오늘 밤 벼락치기보다 내일 차분하고 명확하게 전달하는 것이 훨씬 더 중요하니까요.
 
 
-On the other hand, format is how the answer is structured. 
-Modern models are known to use extensive markdown formatting with lists, linebreaks, and emojis. 
-Consider two answers to the following question that are very different:
+반면, 형식은 답변이 어떻게 구성되는지를 말합니다.
+현대 모델은 목록, 줄바꿈, 이모지를 포함한 광범위한 마크다운 형식을 사용하는 것으로 알려져 있습니다.
+매우 다른 두 가지 답변을 고려해 보세요:
 
-> **User**: How can I improve my sleep quality?
+> **사용자**: 수면의 질을 어떻게 향상시킬 수 있나요?
 
-The simple answer, from an early language model:
+초기 언어 모델의 단순한 답변:
 
-> **Response**: Try to go to bed at the same time each night, avoid caffeine late in the day, and keep your bedroom quiet and dark.
+> **응답**: 매일 밤 같은 시간에 자도록 노력하고, 늦은 시간에 카페인을 피하며, 침실을 조용하고 어둡게 유지하세요.
 
-Or a complex, richer answer:
+또는 더 복잡하고 풍부한 답변:
 
-> **Response**: Better sleep, in practice
+> **응답**: 실제로 더 잘 자는 법
 > 
-> **Goal**: make your schedule predictable and your environment boring enough that your brain gives up.
+> **목표**: 일정을 예측 가능하게 만들고 환경을 충분히 단조롭게 만들어 뇌가 포기하게 하세요.
 > 
-> **Tonight (quick wins)**:
-> 	1.	Dim lights for the last hour before bed.
-> 	2.	No caffeine after lunch; keep alcohol minimal.
-> 	3.	If you’re stuck awake, get up and do something quiet until sleepy again.
+> **오늘 밤 (빠른 개선)**:
+> 	1.	잠자리에 들기 한 시간 전부터 불빛을 어둡게 하세요.
+> 	2.	점심 이후 카페인 금지; 알코올은 최소화하세요.
+> 	3.	잠을 못 자고 있다면, 일어나서 다시 졸릴 때까지 조용히 무언가를 하세요.
 > 
-> **Daily basics (most impact)**:
-> 	-	Same wake time (even weekends) --> anchors your body clock.
-> 	-	Morning light for 5-10 minutes --> helps set circadian rhythm.
-> 	-	Cool, dark room (fan/eye mask) --> easier to stay asleep.
+> **일상 기본 사항 (가장 큰 효과)**:
+> 	-	같은 기상 시간 (주말 포함) --> 체내 시계를 고정합니다.
+> 	-	아침에 5-10분 햇빛 쬐기 --> 일주기 리듬을 설정하는 데 도움이 됩니다.
+> 	-	시원하고 어두운 방 (선풍기/안대) --> 더 오래 잠들기 쉬워집니다.
 > 
-> **If you want a simple rule**:
-> `wake time fixed + caffeine cutoff + wind-down routine`
+> **간단한 규칙을 원한다면**:
+> `기상 시간 고정 + 카페인 차단 + 마무리 루틴`
 > 
-> If sleep problems are persistent or severe, it can be worth talking with a clinician—many issues are very treatable.
+> 수면 문제가 지속적이거나 심각하다면, 임상의와 상담하는 것이 가치 있을 수 있습니다 — 많은 문제들이 치료 가능합니다.
 
-Instruction fine-tuning would provide the basic ability for models to respond reliably in the question-answering format, and RLHF is what takes these answers and crafts them into the reliable, warm, and engaging answers we now expect from language models.
+지시 미세조정은 모델이 질의응답 형식으로 안정적으로 응답하는 기본 능력을 제공하며, RLHF는 이러한 답변을 우리가 이제 언어 모델에서 기대하는 신뢰할 수 있고, 따뜻하며, 매력적인 답변으로 다듬어 냅니다.
 
-Modern research has established RLHF as a general method to integrate subtle stylistic and related behavioral features into the models.
-An early, popular example of the utility of RLHF was in the application to safety [@dai2023safe] [@bai2022training], where RLHF enabled models to be both helpful and harmless across varied datasets.
-Compared to other techniques for post-training, such as instruction fine-tuning, RLHF generalizes far better across domains [@kirk2023understanding] [@chu2025sft] -- helping create effective general-purpose models.
+현대 연구는 RLHF를 미묘한 스타일 및 관련 행동적 특징을 모델에 통합하는 일반적인 방법으로 확립했습니다.
+RLHF 유용성의 초기 인기 있는 예시는 안전성 적용이었는데 [@dai2023safe] [@bai2022training], 이 경우 RLHF를 통해 모델이 다양한 데이터셋 전반에서 도움이 되면서도 무해할 수 있었습니다.
+지시 미세조정과 같은 다른 후처리 학습 기법과 비교했을 때, RLHF는 도메인 전반에 걸쳐 훨씬 더 잘 일반화됩니다 [@kirk2023understanding] [@chu2025sft] -- 효과적인 범용 모델을 만드는 데 기여합니다.
 
-Intuitively, this can be seen in how the optimization techniques are applied. 
-Instruction fine-tuning trains the model to predict the next token when the text preceding is close to examples it has seen.
-It is optimizing the model to more regularly output specific features in text. This is a per-token update.
+직관적으로, 이는 최적화 기법이 적용되는 방식에서 볼 수 있습니다.
+지시 미세조정은 앞에 오는 텍스트가 학습 예시에 가까울 때 다음 토큰 (token)을 예측하도록 모델을 학습시킵니다.
+이것은 텍스트에서 특정 특징을 더 규칙적으로 출력하도록 모델을 최적화하는 것입니다. 이는 토큰별 업데이트입니다.
 
-RLHF on the other hand tunes completions on the response level rather than looking at the next token specifically.
-Additionally, it is telling the model what a *better* response looks like, rather than a specific response it should learn.
-RLHF also shows a model which type of response it should avoid, i.e. negative feedback. 
-The training to achieve this is often called a *contrastive* loss function (one whose loss is computed from the comparison between two or more examples, rather than from each example independently) and is referenced throughout this book.
+반면 RLHF는 특정 다음 토큰을 보는 것이 아니라 응답 수준에서 완성을 조정합니다.
+또한, 특정 응답을 학습해야 한다는 것이 아니라 *더 나은* 응답이 어떤 것인지를 모델에 알려줍니다.
+RLHF는 또한 모델에게 어떤 유형의 응답을 피해야 하는지, 즉 부정적인 피드백을 보여줍니다.
+이를 달성하기 위한 학습은 종종 *대조적 (contrastive)* 손실 함수 (loss function)라고 불리며 (각 예시를 독립적으로 계산하는 것이 아니라 두 개 이상의 예시 간의 비교에서 손실을 계산하는 함수), 이 책 전반에 걸쳐 참조됩니다.
 
-While this flexibility is a major advantage of RLHF, it comes with implementation challenges. 
-Largely, these center on *how to control the optimization.* 
-As we will cover in this book, implementing RLHF often requires training a reward model, of which best practices are not strongly established and depend on the area of application.
-With this, the optimization itself is prone to *over-optimization* because our reward signal is at best a proxy objective, requiring regularization.
-With these limitations, effective RLHF requires a strong starting point, so RLHF cannot be a solution to every problem alone and needs to be approached in a broader lens of post-training.
+이러한 유연성이 RLHF의 주요 장점이지만, 구현상의 과제도 따릅니다.
+대체로 이것들은 *최적화를 어떻게 제어할 것인가*에 집중됩니다.
+이 책에서 다루겠지만, RLHF를 구현하려면 보상 모델을 학습시켜야 하는데, 모범 사례가 강하게 확립되어 있지 않고 적용 영역에 따라 다릅니다.
+이와 함께, 보상 신호가 기껏해야 프록시 목적 함수이기 때문에 최적화 자체가 *과최적화 (over-optimization)*에 취약하여 정규화 (regularization)가 필요합니다.
+이러한 한계로 인해 효과적인 RLHF는 강력한 시작점이 필요하므로, RLHF는 단독으로 모든 문제의 해결책이 될 수 없으며 후처리 학습이라는 더 넓은 맥락에서 접근해야 합니다.
 
-Due to this complexity, implementing RLHF is far more costly than simple instruction fine-tuning and can come with unexpected challenges such as length bias [@singhal2023long] [@park2024disentangling]. 
-For model training efforts where absolute performance matters, RLHF is established as being crucial to achieving a strong fine-tuned model, but it is more expensive in compute, data costs, and time.
-Through the early history of RLHF after ChatGPT, there were many research papers that showed approximate solutions to RLHF via limited instruction fine-tuning, but as the literature matured it has been repeated time and again that RLHF and related methods are core stages to model performance that cannot be easily dispensed with.
+이러한 복잡성 때문에, RLHF를 구현하는 것은 단순한 지시 미세조정보다 비용이 훨씬 많이 들며, 길이 편향 (length bias) [@singhal2023long] [@park2024disentangling]과 같은 예상치 못한 도전이 따를 수 있습니다.
+절대적인 성능이 중요한 모델 학습 노력에서, RLHF는 강력한 미세조정 모델을 달성하는 데 필수적인 것으로 확립되어 있지만, 컴퓨팅, 데이터 비용, 시간 면에서 더 많은 비용이 듭니다.
+ChatGPT 이후 RLHF의 초기 역사를 통해, 제한된 지시 미세조정을 통한 RLHF의 근사 해결책을 보여주는 많은 연구 논문들이 있었지만, 문헌이 성숙해지면서 RLHF와 관련 방법들이 쉽게 제거할 수 없는 모델 성능의 핵심 단계임이 반복적으로 확인되었습니다.
 
-## Walkthrough of a RLHF Recipe
+## RLHF 레시피 연습
 
-To set the stage for the book, it's important to understand what "doing RLHF" can look like, as a minimal example, without any of the technical jargon that can be hard to grasp before solidifying fundamental intuitions.
-This section follows what is described as the canonical, three-stage RLHF recipe, as established with OpenAI's model InstructGPT in 2022 [@ouyang2022training].
+이 책의 무대를 설정하기 위해, 기본적인 직관을 굳히기 전에 이해하기 어려운 기술 용어 없이 최소한의 예시로 "RLHF 수행"이 어떻게 보이는지 이해하는 것이 중요합니다.
+이 섹션은 2022년 OpenAI의 모델 InstructGPT로 확립된 표준적인 3단계 RLHF 레시피를 따릅니다 [@ouyang2022training].
 
-The first step of the process is to transition the model from a base model that completes text to an instruction-following model that can operate in a question-answering format.
-This is done by using the same next-token prediction loss function on a set of carefully crafted datapoints where the model is shown *only* data in this question-answering format.
-After the model is shown these high-quality responses, the model can now be prompted with a specific sequence of tokens to know that it should answer any query with a more defined, assistant persona.
+이 과정의 첫 번째 단계는 텍스트를 완성하는 기본 모델에서 질의응답 형식으로 작동할 수 있는 지시 따르기 모델로 전환하는 것입니다.
+이는 모델에게 이 질의응답 형식의 데이터만을 보여주는 신중하게 제작된 데이터 포인트 세트에 동일한 다음 토큰 예측 손실 함수를 사용하여 수행됩니다.
+모델이 이 고품질 응답들을 학습하고 나면, 특정 토큰 시퀀스로 프롬프트 (prompt)를 주면 더 명확하게 정의된 어시스턴트 페르소나로 모든 질문에 답해야 한다는 것을 알 수 있게 됩니다.
 
-With this foundation of *the shape of how the model should answer* the next two steps play together to improve the overall quality of the answers.
-These two steps serve to set up a problem where we can use reinforcement learning to update the model and make it more helpful.
+*모델이 어떻게 답해야 하는지의 형태*라는 이 기반을 통해, 다음 두 단계가 함께 작용하여 답변의 전반적인 품질을 향상시킵니다.
+이 두 단계는 강화학습을 사용하여 모델을 업데이트하고 더 유용하게 만들 수 있는 문제를 설정하는 역할을 합니다.
 
-The first of these two steps is to train a reward model that captures human preferences.
-In order to apply reinforcement learning to a problem, you need a reward function that indicates quality.
-The goal of a reward model is to create a scalar signal that can then later be optimized with RL.
-In practice, this involves fine-tuning a language model (it is usually the same instruction-tuned model from the previous step) on a dataset of preference relations between pieces of text.
-This dataset is collected across a variety of prompts, model completions, and labelers to try and capture a robust signal of what is a better answer from a language model.
-The reward model learns which features in the text are better than others, so when it is used at inference-time (and during RL as the reward signal) it scores any piece of input text on how good it is.
+이 두 단계 중 첫 번째는 인간 선호도를 포착하는 보상 모델을 학습시키는 것입니다.
+강화학습을 문제에 적용하려면 품질을 나타내는 보상 함수가 필요합니다.
+보상 모델의 목표는 이후 RL로 최적화될 수 있는 스칼라 신호를 만드는 것입니다.
+실제로, 이는 텍스트 조각들 사이의 선호도 관계 데이터셋에서 언어 모델(보통 이전 단계의 동일한 지시 조정 모델)을 미세조정하는 것을 포함합니다.
+이 데이터셋은 다양한 프롬프트, 모델 완성 (completion), 그리고 주석자 (annotator)에 걸쳐 수집되어 언어 모델의 더 나은 답변이 무엇인지에 대한 견고한 신호를 포착하려고 합니다.
+보상 모델은 텍스트의 어떤 특징이 더 나은지를 학습하므로, 추론 시(그리고 RL에서 보상 신호로 사용될 때) 입력 텍스트의 품질을 평가합니다.
 
-With these two pieces, a question-answering model and a reward model, we have everything we need to put together the pieces and actually do reinforcement learning from human feedback (RLHF).
-The actual RLHF stage proceeds by taking prompts representative of tasks the model should be good at, generating a bunch of completions, having the reward model rank them, and then using RL to figure out how to change the model and make it better.
-The basic primitive is that reinforcement learning is given a signal of which actions are good, in the form of tokens that a language model generates, and derives update rules that attribute different actions to different parameters in the model.
-The final RLHF stage shifts parameters to make good tokens more likely, and does so iteratively to maintain the general capabilities of the initial model.
+이 두 가지, 즉 질의응답 모델과 보상 모델로, 우리는 조각들을 합쳐 실제로 인간 피드백 기반 강화학습 (RLHF)을 수행하는 데 필요한 모든 것을 갖추게 됩니다.
+실제 RLHF 단계는 모델이 잘 수행해야 할 태스크를 대표하는 프롬프트를 가져와, 많은 완성을 생성하고, 보상 모델로 순위를 매기고, RL을 사용하여 모델을 어떻게 변경하고 개선할지 결정하는 방식으로 진행됩니다.
+기본 원리는 강화학습이 언어 모델이 생성하는 토큰 형태로 어떤 행동이 좋은지에 대한 신호를 받아, 다른 행동을 모델의 다른 매개변수에 귀속시키는 업데이트 규칙을 도출한다는 것입니다.
+최종 RLHF 단계는 좋은 토큰을 더 가능성 있게 만들도록 매개변수를 이동시키며, 초기 모델의 일반적인 능력을 유지하면서 반복적으로 수행됩니다.
 
-Once RL is complete, and performance has saturated, this is often the final model served to the user.
+RL이 완료되고 성능이 포화되면, 이것이 종종 사용자에게 제공되는 최종 모델이 됩니다.
 
-Through this book, we'll cover many recipes for how to do RLHF, and more related optimization methods that make up the broader suite of post-training.
-These all emerge to solve more challenging problems facing language models, and to make the strengths of the original RLHF approaches more powerful.
+이 책을 통해, RLHF를 수행하는 많은 레시피와 더 넓은 후처리 학습 스위트를 구성하는 더 관련된 최적화 방법들을 다룰 것입니다.
+이 모두는 언어 모델이 직면한 더 어려운 문제들을 해결하고 원래 RLHF 접근 방식의 강점을 더욱 강력하게 만들기 위해 등장했습니다.
 
-## An Intuition for Post-Training
+## 후처리 학습에 대한 직관
 
-We've established that RLHF specifically and post-training generally is crucial to performance of the latest models and how it changes the models' outputs, but not why it works.
-Here's a simple analogy for how so many gains can be made on benchmarks on top of any base model.
+우리는 RLHF와 특히 후처리 학습 일반이 최신 모델의 성능에 중요하고 모델의 출력을 어떻게 변화시키는지 확립했지만, 왜 작동하는지는 아직 다루지 않았습니다.
+다음은 기본 모델 위에서 벤치마크에서 왜 그렇게 많은 성능 향상이 이루어질 수 있는지에 대한 간단한 비유입니다.
 
-The way I've been describing the potential of post-training is called the elicitation interpretation of post-training, where all we are doing is extracting potential by amplifying valuable behaviors in the base model.
+내가 후처리 학습의 잠재력을 설명해온 방식은 후처리 학습의 유도 해석 (elicitation interpretation)이라고 불리는데, 여기서 우리가 하는 모든 것은 기본 모델에서 가치 있는 행동을 증폭시켜 잠재력을 끌어내는 것입니다.
 
-To make this example click, we make the analogy between the base model -- the language model that comes out of the large-scale, next-token prediction pretraining -- and other foundational components in building complex systems. We use the example of the chassis of a car, which defines the space where a car can be built around it.
-Consider Formula 1 (F1): most of the teams show up to the beginning of the year with a new chassis and engine. Then, they spend all year on aerodynamics and systems changes (of course, it is a minor oversimplification), and can dramatically improve the performance of the car. The best F1 teams improve far more during a season than chassis-to-chassis.
+이 예시를 이해하기 쉽게 하기 위해, 기본 모델 -- 대규모 차세대 토큰 예측 사전 학습에서 나오는 언어 모델 -- 과 복잡한 시스템을 구축하는 다른 기반 구성 요소 사이의 비유를 만들어 봅니다. 자동차 섀시 (chassis)의 예를 사용하는데, 이는 그 주변에 자동차를 만들 수 있는 공간을 정의합니다.
+포뮬러 1 (F1)을 생각해 보세요: 대부분의 팀이 새 섀시와 엔진으로 시즌 초에 나타납니다. 그런 다음, 그들은 1년 내내 공기역학과 시스템 변경에 집중하여(물론, 약간의 단순화이지만), 차량의 성능을 극적으로 향상시킬 수 있습니다. 최고의 F1 팀들은 섀시에서 섀시로의 변화보다 시즌 중에 훨씬 더 큰 향상을 이룹니다.
 
-The same is true for post-training, where one can extract a ton of performance out of a static base model as they learn more about its quirks and tendencies. The best post-training teams extract a ton of performance in a very short time frame. The set of techniques is everything after the end of most of pretraining. It includes "mid-training" like annealing / high-quality end of pretraining web data, instruction tuning, RLVR, preference-tuning, etc. A good example is the change from the first version of the Allen Institute for AI's fully-open, small Mixture-of-Experts (MoE) model OLMoE Instruct to the second. The first model was released in the fall of 2024 [@muennighoff2024olmoe], and with the second version only updating the post-training, the evaluation average on popular benchmarks went from 35 to 48 without changing the majority of pretraining [@ai2_olmoe_ios_2025].
+같은 것이 후처리 학습에도 적용됩니다. 정적인 기본 모델에서 그것의 특이한 점과 경향을 더 많이 알아갈수록 엄청난 성능을 끌어낼 수 있습니다. 최고의 후처리 학습 팀들은 매우 짧은 시간 안에 엄청난 성능을 끌어냅니다. 기법의 집합은 대부분의 사전 학습 종료 이후의 모든 것입니다. 여기에는 어닐링 / 고품질 사전 학습 말미 웹 데이터와 같은 "중간 학습", 지시 조정, RLVR, 선호도 조정 등이 포함됩니다. 좋은 예는 Allen Institute for AI의 완전히 공개된 소형 혼합 전문가 (MoE) 모델 OLMoE Instruct의 첫 번째 버전에서 두 번째 버전으로의 변화입니다. 첫 번째 모델은 2024년 가을에 출시되었으며 [@muennighoff2024olmoe], 두 번째 버전은 후처리 학습만 업데이트하여 대부분의 사전 학습을 변경하지 않고 인기 있는 벤치마크의 평가 평균이 35에서 48로 향상되었습니다 [@ai2_olmoe_ios_2025].
 
-The idea is that there is a lot of intelligence and ability within base models, but because they can only answer in next-token prediction and not question-answering format, it takes a lot of work building around them, through post-training, in order to make excellent final models.
+아이디어는 기본 모델 내에 많은 지능과 능력이 있지만, 그것들이 질의응답 형식이 아닌 차세대 토큰 예측으로만 답할 수 있기 때문에, 후처리 학습을 통해 그것들 주변에 많은 작업을 구축하는 것이 훌륭한 최종 모델을 만드는 데 필요하다는 것입니다.
 
-Then, when you look at models such as OpenAI's GPT-4.5 released in February 2025, which was largely a failure of a consumer product due to being too large of a base model to serve to millions of users, you can see this as a far more dynamic and exciting base for OpenAI to build onto.
-With this intuition, base models determine the vast majority of the potential of a final model, and post-training's job is to cultivate all of it.
+그런 다음, 2025년 2월에 출시된 OpenAI의 GPT-4.5와 같은 모델을 보면, 이 모델은 수백만 명의 사용자에게 서비스하기에 너무 큰 기본 모델이었기 때문에 소비자 제품으로서는 대체로 실패였지만, OpenAI가 발전시킬 훨씬 더 역동적이고 흥미로운 기반으로 볼 수 있습니다.
+이 직관으로, 기본 모델은 최종 모델의 잠재력의 대부분을 결정하며, 후처리 학습의 역할은 그 모든 것을 개발하는 것입니다.
 
-I've described this intuition as the Elicitation Theory of Post-training.
-This theory folds in with the reality that the majority of gains users are seeing are from post-training because it implies that there is more latent potential in a model pretraining on the internet than we can simply teach the model --- such as by passing certain narrow samples in repeatedly during early types of post-training (i.e. only instruction tuning).
-The challenge of post-training is to reshape models from next-token prediction to conversation question-answering, while extracting all of this knowledge and intelligence from pretraining.
+나는 이 직관을 후처리 학습의 유도 이론 (Elicitation Theory of Post-training)이라고 설명해 왔습니다.
+이 이론은 사용자들이 보는 성능 향상의 대부분이 후처리 학습에서 온다는 현실과 맞물리는데, 이는 인터넷에서 사전 학습된 모델에 초기 유형의 후처리 학습(즉, 지시 조정만)에서 특정 좁은 샘플을 반복적으로 전달하는 것보다 단순히 모델에게 가르칠 수 있는 것보다 더 많은 잠재적 지식이 있음을 시사합니다.
+후처리 학습의 과제는 사전 학습에서 이 모든 지식과 지능을 추출하면서 모델을 차세대 토큰 예측에서 대화 질의응답으로 재구성하는 것입니다.
 
-A related idea to this theory is the Superficial Alignment Hypothesis, coined in the paper LIMA: Less is More for Alignment [@zhou2023lima]. This paper is getting some important intuitions right but for the wrong reasons in the big picture. The authors state:
+이 이론과 관련된 아이디어는 LIMA: Less is More for Alignment 논문에서 만들어진 표면적 정렬 가설 (Superficial Alignment Hypothesis)입니다 [@zhou2023lima]. 이 논문은 몇 가지 중요한 직관을 올바르게 얻고 있지만 큰 그림에서는 잘못된 이유를 제시합니다. 저자들은 다음과 같이 말합니다:
 
-> A model's knowledge and capabilities are learnt almost entirely during pretraining, while alignment teaches it which subdistribution of formats should be used when interacting with users. If this hypothesis is correct, and alignment is largely about learning style, then a corollary of the Superficial Alignment Hypothesis is that one could sufficiently tune a pretrained language model with a rather small set of examples [Kirstain et al., 2021].
+> 모델의 지식과 능력은 사전 학습 동안 거의 전적으로 학습되며, 정렬은 사용자와 상호작용할 때 어떤 형식의 하위 분포를 사용해야 하는지를 가르칩니다. 이 가설이 맞다면, 그리고 정렬이 주로 스타일을 학습하는 것에 관한 것이라면, 표면적 정렬 가설의 추론 결과는 사전 학습된 언어 모델을 상당히 적은 수의 예시로 충분히 조정할 수 있다는 것입니다 [Kirstain et al., 2021].
 
-All of the successes of deep learning should have taught you a deeply held belief that scaling data is important to performance. Here, the major difference is that the authors are discussing alignment and style, the focus of academic post-training at the time. With a few thousand samples for instruction fine-tuning, you can change a model substantially and improve a narrow set of evaluations, such as AlpacaEval, MT Bench, Arena (formerly ChatBotArena, a platform where users compare anonymous model responses head-to-head), and the likes. These do not always translate to more challenging capabilities, which is why Meta wouldn't train its Llama Chat models on just this dataset. Academic results have lessons, but need to be interpreted carefully if you are trying to understand the big picture of the technological arc.
+딥러닝의 모든 성공은 데이터를 확장하는 것이 성능에 중요하다는 깊이 자리 잡은 믿음을 가르쳐 주었어야 합니다. 여기서 주요 차이점은 저자들이 당시 학문적 후처리 학습의 초점인 정렬과 스타일에 대해 논의하고 있다는 것입니다. 지시 미세조정을 위한 수천 개의 샘플만으로도 모델을 상당히 변화시키고 AlpacaEval, MT Bench, Arena(이전에는 ChatBotArena, 사용자가 익명 모델의 응답을 일대일로 비교하는 플랫폼), 등의 좁은 평가 세트를 향상시킬 수 있습니다. 이것들이 항상 더 어려운 능력으로 전환되지는 않으며, 그렇기 때문에 Meta는 Llama Chat 모델을 이 데이터셋만으로 학습시키지 않을 것입니다. 학문적 결과들은 교훈을 주지만, 기술적 궤도의 큰 그림을 이해하려 할 때는 신중하게 해석해야 합니다.
 
-What this paper is showing is that you can change models substantially with a few samples. We knew this, and it is important to the short-term adaptation of new models, but their argument for performance leaves the casual readers with the wrong lessons.
+이 논문이 보여주는 것은 몇 가지 샘플만으로도 모델을 상당히 변화시킬 수 있다는 것입니다. 우리는 이것을 알고 있었으며, 새로운 모델의 단기 적응에 중요하지만, 성능에 대한 그들의 주장은 일반 독자들에게 잘못된 교훈을 남깁니다.
 
-If we change the data, the impact could be far higher on the model's performance and behavior, but it is far from "superficial." Base language models today (with no post-training) can be trained on some mathematics problems with reinforcement learning, learn to output a full chain-of-thought reasoning, and then score higher on a full suite of reasoning evaluations like BigBenchHard, Zebra Logic, AIME, etc.
+데이터를 변경하면 모델의 성능과 행동에 훨씬 더 높은 영향을 줄 수 있지만, 그것은 "표면적"과는 거리가 멉니다. 오늘날의 기본 언어 모델(후처리 학습 없음)은 수학 문제들로 강화학습을 통해 학습되어, 전체 사고의 연쇄 (CoT) 추론을 출력하도록 배우고, BigBenchHard, Zebra Logic, AIME 등과 같은 전체 추론 평가 스위트에서 더 높은 점수를 얻을 수 있습니다.
 
-The superficial alignment hypothesis is wrong for the same reason that people who think RLHF and post-training are just for vibes are still wrong. 
-This was a field-wide lesson we had to overcome in 2023 (one many AI observers are still rooted in). 
-Post-training has far outgrown that, and we are coming to see that the style of models operates on top of behavior --- such as the now popular long chain of thought.
+표면적 정렬 가설은 RLHF와 후처리 학습이 단지 분위기를 위한 것이라고 생각하는 사람들이 여전히 틀린 것과 같은 이유로 틀렸습니다.
+이것은 우리가 2023년에 극복해야 했던 분야 전체의 교훈이었습니다 (많은 AI 관측자들이 여전히 이에 갇혀 있습니다).
+후처리 학습은 그것을 훨씬 능가하여 성장했으며, 우리는 모델의 스타일이 행동 위에서 작동한다는 것을 알게 되고 있습니다 -- 예를 들어 지금은 인기 있는 긴 사고의 연쇄처럼.
 
-As the AI community shifts post-training further into the era of agentic and reasoning models, the superficial alignment hypothesis breaks down further.
-RL methods are becoming an increasingly large share of the compute needed to train frontier language models.
-In the short time since reinforcement learning with verifiable rewards (RLVR) was coined in our work on Tülu 3 in the fall of 2024 [@lambert2024t], the scale of compute used for post-training has grown dramatically.
-DeepSeek R1, famous for popularizing RLVR, used only about 5% of their overall compute in post-training -- 147K H800 GPU hours for RL training on R1 [@guo2025deepseek], relative to 2.8M GPU hours for pretraining the underlying DeepSeek V3 base model [@deepseekai2025deepseekv3technicalreport].
+AI 커뮤니티가 후처리 학습을 에이전틱 (agentic) 및 추론 모델의 시대로 더욱 이동시키면서, 표면적 정렬 가설은 더욱 무너집니다.
+RL 방법들은 프론티어 언어 모델을 학습시키는 데 필요한 컴퓨팅의 점점 더 큰 부분을 차지하게 되고 있습니다.
+우리의 Tülu 3 연구에서 검증 가능한 보상을 활용한 강화학습 (RLVR)이 2024년 가을에 만들어진 이후 [@lambert2024t], 후처리 학습에 사용되는 컴퓨팅 규모가 극적으로 성장했습니다.
+RLVR을 대중화하는 것으로 유명한 DeepSeek R1은 전체 컴퓨팅의 약 5%만을 후처리 학습에 사용했습니다 -- R1에서 RL 학습을 위한 147K H800 GPU 시간 [@guo2025deepseek], 기반 DeepSeek V3 기본 모델 사전 학습을 위한 280만 GPU 시간 [@deepseekai2025deepseekv3technicalreport] 대비.
 
-The science studying the core methods of scaling RL as of 2025 shows that individual ablation runs can take 10-100K GPU hours [@khatri2025art], the equivalent of the compute used for the RL stage of OLMo 3.1 Think 32B (released in November of 2025), which trained for 4 weeks on 200 GPUs [@teamolmo2025olmo3].
-The science of scaled post-training is in its very early stages as of 2025, adopting ideas and methods from pretraining language models and applying them in this new domain, so the exact GPU hours used will change, but the trend of increased compute on post-training will continue.
-All together, the elicitation theory of post-training is likely to become the correct view only when applying a lighter post-training recipe -- something useful for specializing a model -- relative to the compute-intensive frontier models.
+2025년 현재 RL 스케일링의 핵심 방법을 연구하는 과학은 개별 어블레이션 실행이 10-100K GPU 시간이 걸릴 수 있음을 보여주며 [@khatri2025art], 이는 4주 동안 200개의 GPU로 학습된 OLMo 3.1 Think 32B (2025년 11월 출시)의 RL 단계에 사용된 컴퓨팅과 동등합니다 [@teamolmo2025olmo3].
+확장된 후처리 학습의 과학은 2025년 현재 아주 초기 단계에 있으며, 사전 학습 언어 모델의 아이디어와 방법을 채택하여 이 새로운 도메인에 적용하고 있으므로 정확한 GPU 시간은 변할 것이지만, 후처리 학습에 대한 증가된 컴퓨팅의 추세는 계속될 것입니다.
+전체적으로, 후처리 학습의 유도 이론은 모델을 특화하는 데 유용한 가벼운 후처리 학습 레시피를 적용할 때만 올바른 관점이 될 가능성이 높습니다 -- 컴퓨팅 집약적인 프론티어 모델에 비해.
 
-## How We Got Here
+## 어떻게 여기까지 왔는가
 
-Why does this book make sense now? How much still will change?
+이 책이 지금 왜 의미 있는가? 앞으로 얼마나 많이 변할 것인가?
 
-Post-training, the craft of eliciting powerful behaviors from a raw pretrained language model, has gone through many seasons and moods since the release of ChatGPT that sparked the renewed interest in RLHF. 
-In the era of Alpaca [@alpaca], Vicuna [@vicuna2023], Koala [@koala_blogpost_2023], and Dolly [@DatabricksBlog2023DollyV1], a limited number of human datapoints with extended synthetic data in the style of Self-Instruct were used to normally fine-tune the original LLaMA to get similar behavior to ChatGPT. 
-The benchmark for these early models was fully vibes (and human evaluation) as we were all so captivated by the fact that these small models can have such impressive behaviors across domains. 
-It was justified excitement.
+후처리 학습, 즉 원시 사전 학습 언어 모델에서 강력한 행동을 이끌어내는 기술은 RLHF에 대한 새로운 관심을 불러일으킨 ChatGPT의 출시 이후 여러 계절과 분위기를 거쳤습니다.
+Alpaca [@alpaca], Vicuna [@vicuna2023], Koala [@koala_blogpost_2023], Dolly [@DatabricksBlog2023DollyV1]의 시대에는, 제한된 수의 인간 데이터 포인트와 Self-Instruct 스타일의 확장된 합성 데이터를 사용하여 원래 LLaMA를 일반적으로 미세조정하여 ChatGPT와 유사한 동작을 얻었습니다.
+이 초기 모델들의 벤치마크는 완전히 직관적이었습니다 (그리고 인간 평가), 우리 모두 이 작은 모델들이 다양한 도메인에서 그러한 인상적인 동작을 보일 수 있다는 사실에 매혹되어 있었으므로. 그것은 정당화된 흥분이었습니다.
 
-Open post-training was moving faster, releasing more models, and making more noise than its closed counterparts. 
-Companies were scrambling, e.g. DeepMind merging with Google or being started, and taking time to follow it up. 
-There are phases of open recipes surging and then lagging behind.
+공개 후처리 학습은 더 빠르게 움직이고, 더 많은 모델을 출시하며, 폐쇄형 대응물보다 더 많은 주목을 받고 있었습니다.
+기업들은 서두르고 있었으며, 예를 들어 DeepMind가 Google과 합병하거나 시작되면서 후속 조치를 취하는 데 시간이 걸렸습니다.
+공개 레시피가 급증하고 뒤처지는 단계들이 있습니다.
 
-The era following Alpaca et al., the first lag in open recipes, was one defined by skepticism and doubt about reinforcement learning from human feedback (RLHF), the technique OpenAI highlighted as crucial to the success of the first ChatGPT. 
-Many companies doubted that they needed to do RLHF. 
-A common phrase -- "instruction tuning is enough for alignment" -- was so popular then that it still holds heavy weight today despite heavy obvious pressures against it. 
+Alpaca 등의 시대에 이은 공개 레시피의 첫 번째 지연 시기는 ChatGPT의 첫 번째 성공에 핵심이라고 OpenAI가 강조한 기법인 인간 피드백 기반 강화학습 (RLHF)에 대한 회의와 의심으로 정의된 시기였습니다.
+많은 기업들이 RLHF를 할 필요가 있는지 의심했습니다.
+"지시 조정이 정렬에 충분하다"는 흔한 문구는 당시 너무 인기 있었던 나머지, 그것에 반하는 명백한 압력에도 불구하고 지금도 여전히 강한 영향력을 가지고 있습니다.
 
-This doubt of RLHF lasted, especially in the open where groups cannot afford data budgets on the order of \$100K to \$1M. 
-The companies that embraced it early ended up winning out.
-Anthropic published extensive research on RLHF through 2022 and is now argued to have the best post-training [@askell2021general] [@bai2022training] [@bai2022constitutional]. 
-The delta between open groups, struggling to reproduce, or even knowing basic closed techniques, is a common theme.
+이 RLHF에 대한 의심은 특히 \$100K에서 \$1M 규모의 데이터 예산을 감당할 수 없는 공개 그룹에서 지속되었습니다.
+이를 일찍 수용한 기업들이 결국 승리를 거뒀습니다.
+Anthropic은 2022년 내내 RLHF에 대한 광범위한 연구를 발표했으며, 지금은 최고의 후처리 학습을 보유하고 있다고 주장됩니다 [@askell2021general] [@bai2022training] [@bai2022constitutional].
+기본 폐쇄형 기법을 재현하거나 알지 못해 어려움을 겪고 있는 공개 그룹들 사이의 격차는 공통된 주제입니다.
 
-The first shift in open alignment methods and post-training was the story of Direct Preference Optimization (DPO) [@rafailov2024direct], which showed that you can solve the same optimization problem as RLHF with fewer moving parts by taking gradient steps directly on pairwise preference data. 
-The DPO paper, posted in May of 2023, didn't have any clearly impactful models trained with it going through the fall of 2023. 
-This changed with the releases of a few breakthrough DPO models -- all contingent on finding a better, lower, learning rate. 
-Zephyr-Beta [@tunstall2023zephyr], Tülu 2 [@ivison2023camels], and many other models showed that the DPO era of post-training had begun. 
-Chris Manning literally thanked me for "saving DPO." 
+공개 정렬 방법과 후처리 학습의 첫 번째 전환은 직접 선호도 최적화 (DPO) [@rafailov2024direct]의 이야기였는데, 이는 쌍별 선호도 데이터에서 직접 그래디언트 스텝을 취함으로써 더 적은 이동 부품으로 RLHF와 동일한 최적화 문제를 해결할 수 있음을 보여주었습니다.
+2023년 5월에 게시된 DPO 논문은 2023년 가을까지 명확하게 영향력 있는 모델을 학습시키지 못했습니다.
+이것은 몇 가지 획기적인 DPO 모델의 출시로 변화했는데 -- 모두 더 낮은 학습률을 찾는 것에 달려 있었습니다.
+Zephyr-Beta [@tunstall2023zephyr], Tülu 2 [@ivison2023camels], 그리고 많은 다른 모델들이 DPO 후처리 학습의 시대가 시작되었음을 보여주었습니다.
+Chris Manning은 말 그대로 내게 "DPO를 구해줘서" 감사하다고 했습니다.
 
-Preference-tuning was something you needed to do to meet the table stakes of releasing a good model since late 2023. 
-The DPO era continued through 2024, in the form of never-ending variants on the algorithm, but we were very far into another slump in open recipes. 
-Open post-training recipes had saturated the extent of knowledge and resources available.  
-A year after Zephyr and Tulu 2, the same breakout dataset, UltraFeedback is arguably still state-of-the-art for preference tuning in open recipes [@cui2023ultrafeedback]. 
+선호도 조정은 2023년 말부터 좋은 모델을 출시하기 위한 기본 요건이 되었습니다.
+DPO 시대는 알고리즘의 끝없는 변형의 형태로 2024년 내내 계속되었지만, 우리는 공개 레시피의 또 다른 침체 속에 깊이 빠져 있었습니다.
+공개 후처리 학습 레시피들은 가용 지식과 자원의 한계를 포화시켰습니다.
+Zephyr와 Tülu 2 이후 1년이 지났지만, 동일한 돌파구 데이터셋인 UltraFeedback은 여전히 공개 레시피에서 선호도 조정을 위한 사실상 최고 수준이라고 할 수 있습니다 [@cui2023ultrafeedback].
 
-At the same time, the Llama 3.1 [@dubey2024llama] and Nemotron 4 340B [@adler2024nemotron] reports gave us substantive hints that large-scale post-training is much more complex and impactful. 
-The closed labs are doing full post-training -- a large multi-stage process of instruction tuning, RLHF, prompt design, etc. -- where academic papers are just scratching the surface. 
-Tülu 3 represented a comprehensive, open effort to build the foundation of future academic post-training research [@lambert2024t].
+동시에, Llama 3.1 [@dubey2024llama]과 Nemotron 4 340B [@adler2024nemotron] 보고서들은 대규모 후처리 학습이 훨씬 더 복잡하고 영향력 있다는 중요한 힌트를 제공했습니다.
+폐쇄형 랩들은 완전한 후처리 학습 -- 지시 조정, RLHF, 프롬프트 설계 등의 대규모 다단계 과정 -- 을 수행하고 있으며, 학문적 논문들은 겨우 표면만 긁고 있습니다.
+Tülu 3는 미래의 학문적 후처리 학습 연구의 기반을 구축하기 위한 포괄적이고 공개적인 노력이었습니다 [@lambert2024t].
 
-Post-training is a complex process involving the aforementioned training objectives applied in various orders in order to target specific capabilities.
-This book is designed to give a platform to understand all of these techniques, and as the field matures the best practices for how to interleave them will emerge.
+후처리 학습은 특정 능력을 목표로 하기 위해 다양한 순서로 적용되는 앞서 언급한 학습 목표들을 포함하는 복잡한 과정입니다.
+이 책은 이러한 모든 기법들을 이해하는 플랫폼을 제공하기 위해 설계되었으며, 분야가 성숙해감에 따라 이를 어떻게 조합할지에 대한 모범 사례가 나타날 것입니다.
 
-The primary areas of innovation in post-training are now in reinforcement learning with verifiable rewards (RLVR), reasoning training generally, and related ideas. 
-These newer methods build extensively on the infrastructure and ideas of RLHF, but are evolving far faster.
-This book is written to capture the first stable literature for RLHF after its initial period of rapid change.
+후처리 학습의 주요 혁신 영역은 이제 검증 가능한 보상을 활용한 강화학습 (RLVR), 일반적인 추론 학습, 그리고 관련 아이디어들에 있습니다.
+이러한 새로운 방법들은 RLHF의 인프라와 아이디어에 광범위하게 구축되고 있지만, 훨씬 더 빠르게 발전하고 있습니다.
+이 책은 RLHF의 첫 번째 급격한 변화 시기 이후 첫 번째 안정적인 문헌을 포착하기 위해 쓰였습니다.
 
-## Scope of This Book
+## 이 책의 범위
 
-This book hopes to touch on each of the core steps of doing canonical RLHF implementations. 
-It will not cover all the history of the components nor recent research methods, just techniques, problems, and trade-offs that have been proven to occur again and again.
+이 책은 표준적인 RLHF 구현의 각 핵심 단계를 다루고자 합니다.
+구성 요소의 모든 역사와 최근 연구 방법을 다루지는 않으며, 반복해서 발생하는 것으로 입증된 기법, 문제, 트레이드오프만을 다룹니다.
 
-### Chapter Summaries
+### 장 요약
 
 
-This book has the following chapters:
+이 책은 다음과 같은 장들로 구성됩니다:
 
-#### Introductions
+#### 소개
 
-Reference material and context useful throughout the book.
+책 전반에 걸쳐 유용한 참고 자료와 맥락.
 
-1. Introduction: Overview of RLHF and what this book provides.
-2. Key Related Works: Key models and papers in the history of RLHF techniques.
-3. Training Overview: How the training objective for RLHF is designed and basics of understanding it.
+1. 소개: RLHF의 개요와 이 책이 제공하는 것.
+2. 주요 관련 연구: RLHF 기법의 역사에서 주요 모델과 논문들.
+3. 학습 개요: RLHF의 학습 목표가 어떻게 설계되는지와 이해를 위한 기초.
 
-#### Core Training Pipeline
+#### 핵심 학습 파이프라인
 
-The suite of techniques used to optimize language models to align them to human preferences.
+언어 모델을 최적화하여 인간 선호도에 정렬하는 데 사용되는 기법 모음.
 
-4. Instruction Tuning: Adapting language models to the question-answer format.
-5. Reward Modeling: Training reward models from preference data that act as an optimization target for RL training (or for use in data filtering).
-6. Reinforcement Learning (i.e. Policy Gradients): The core RL techniques used to optimize reward models (and other signals) throughout RLHF.
-7. Reasoning and Inference-time Scaling: The role of new RL training methods for inference-time scaling with respect to post-training and RLHF.
-8. Direct Alignment Algorithms: Algorithms that optimize the RLHF objective directly from pairwise preference data rather than learning a reward model first.
-9. Rejection Sampling: A basic technique for using a reward model with instruction tuning to align models.
+4. 지시 조정: 언어 모델을 질의응답 형식에 적응시키기.
+5. 보상 모델링: RL 학습의 최적화 목표로 작용하는 (또는 데이터 필터링에 사용되는) 선호도 데이터로부터 보상 모델 학습하기.
+6. 강화학습 (즉, 정책 그래디언트): RLHF 전반에 걸쳐 보상 모델 (및 다른 신호)에 대해 언어 모델의 매개변수를 최적화하는 데 사용되는 핵심 RL 기법.
+7. 추론 및 추론 시간 스케일링: 후처리 학습 및 RLHF와 관련하여 추론 시간 스케일링을 위한 새로운 RL 학습 방법의 역할.
+8. 직접 정렬 알고리즘: 먼저 보상 모델을 학습하지 않고 쌍별 선호도 데이터에서 직접 정책을 최적화하는 알고리즘.
+9. 거부 샘플링: 보상 모델을 지시 조정과 함께 사용하여 모델을 정렬하는 기본 기법.
 
-#### Data & Preferences
+#### 데이터 및 선호도
 
-Context for the data that fuels RLHF and the big picture problem it is trying to solve.
+RLHF를 추진하는 데이터와 그것이 해결하려는 큰 그림 문제에 대한 맥락.
 
-10. What are preferences?: Why human preference data is needed to fuel and understand RLHF.
-11. Preference Data: How preference data is collected for RLHF.
-12. Synthetic Data & AI Feedback: The shift away from human to synthetic data, how AI feedback works, and how distilling from other models is used.
-13. Tool Use and Function Calling: The basics of training models to call functions or tools in their outputs.
+10. 선호도란 무엇인가?: 왜 인간 선호도 데이터가 RLHF를 추진하고 이해하는 데 필요한가.
+11. 선호도 데이터: RLHF를 위한 선호도 데이터 수집 방법.
+12. 합성 데이터 및 AI 피드백: 인간에서 합성 데이터로의 전환, AI 피드백 작동 방식, 그리고 다른 모델로부터의 지식 증류 (knowledge distillation) 사용.
+13. 도구 사용 및 함수 호출: 출력에서 함수나 도구를 호출하도록 모델을 학습시키는 기초.
 
-#### Practical Considerations
+#### 실용적인 고려 사항
 
-Fundamental problems and discussions for implementing and evaluating RLHF.
+RLHF 구현 및 평가를 위한 기본적인 문제와 논의.
 
-14. Over-optimization: Qualitative observations of why RLHF goes wrong and why over-optimization is inevitable with a soft optimization target in reward models.
-15. Regularization: Tools to constrain these optimization tools to effective regions of the parameter space.
-16. Evaluation: The ever evolving role of evaluation (and prompting) in language models.
-17. Crafting Model Character and Products: How RLHF is shifting in its applicability as major AI laboratories use it to subtly match their models to their products.
+14. 과최적화: RLHF가 잘못되는 이유와 보상 모델의 소프트 최적화 목표로 인해 왜 과최적화가 불가피한지에 대한 정성적 관찰.
+15. 정규화: 이러한 최적화 도구를 매개변수 공간의 효과적인 영역으로 제한하는 도구.
+16. 평가: 언어 모델에서 평가 (및 프롬프팅)의 끊임없이 진화하는 역할.
+17. 모델 캐릭터 및 제품 구성: 주요 AI 연구소들이 모델을 자신들의 제품에 미묘하게 맞추기 위해 RLHF를 사용하면서 그 적용 가능성이 어떻게 변화하고 있는지.
 
-#### Appendices
+#### 부록
 
-Reference material for definitions and extended discussions.
+정의와 확장 논의를 위한 참고 자료.
 
-- Appendix A - Definitions: Mathematical definitions for RL, language modeling, and other ML techniques leveraged in this book.
-- Appendix B - Style and Information: How RLHF is often underestimated in its role in improving the user experience of models due to the crucial role that style plays in information sharing.
+- 부록 A - 정의: 이 책에서 활용하는 RL, 언어 모델링, 기타 ML 기법에 대한 수학적 정의.
+- 부록 B - 스타일과 정보: 스타일이 정보 공유에서 하는 중요한 역할로 인해 RLHF의 역할이 모델의 사용자 경험 향상에서 얼마나 과소평가되는 경우가 많은지.
 
 
-### Target Audience
+### 대상 독자
 
-This book is intended for audiences with entry level experience with language modeling, reinforcement learning, and general machine learning. 
-It will not have exhaustive documentation for all the techniques, but just those crucial to understanding RLHF.
+이 책은 언어 모델링, 강화학습, 그리고 일반적인 기계 학습에 초보 수준의 경험이 있는 독자들을 위한 것입니다.
+모든 기법에 대한 철저한 문서를 제공하지는 않으며, RLHF를 이해하는 데 중요한 것들만 다룹니다.
 
-### How to Use This Book
+### 이 책을 활용하는 방법
 
-This book was largely created because there were no canonical references for important topics in the RLHF workflow.
-Given the pace of progress on LLMs overall, combined with the complex nature of collecting and using human data, RLHF is an unusually academic field where published results are often noisy and hard to reproduce across multiple settings.
-To develop strong intuitions, readers are encouraged to read multiple papers on each topic rather than taking any single result as definitive.
-To facilitate this, the book includes numerous, academic-style citations to the canonical reference for a claim.
+이 책은 RLHF 워크플로우의 중요한 주제에 대한 표준적인 참고 자료가 없었기 때문에 주로 만들어졌습니다.
+LLM의 전반적인 발전 속도와 인간 데이터 수집 및 사용의 복잡한 특성을 고려할 때, RLHF는 발표된 결과가 종종 잡음이 많고 여러 환경에서 재현하기 어려운 비정상적으로 학문적인 분야입니다.
+강한 직관을 개발하기 위해, 독자들은 단일 결과를 확정적으로 받아들이지 말고 각 주제에 대한 여러 논문을 읽을 것을 권장합니다.
+이를 용이하게 하기 위해, 책에는 주장에 대한 표준적인 참고 자료로의 학술 스타일 인용이 다수 포함되어 있습니다.
 
-The contributions of this book are supposed to give you the minimum knowledge needed to try a toy implementation or dive into the literature. 
-This is *not* a comprehensive textbook, but rather a quick book for reminders and getting started.
+이 책의 기여는 장난감 구현을 시도하거나 문헌에 뛰어들기 위해 필요한 최소한의 지식을 제공하기 위한 것입니다.
+이것은 *포괄적인 교과서가 아니라*, 상기와 시작을 위한 빠른 책입니다.
 
-This book is finalizing as of April 2026, when it's moving to production for print. As a web-first book, this content will continue to evolve, so if you spot a typo or an important omission, please contribute a fix or suggestion on [GitHub](https://github.com/natolambert/rlhf-book).
+이 책은 2026년 4월 현재 완성 단계에 있으며, 인쇄를 위해 제작 단계로 넘어가고 있습니다. 웹 우선 책으로서, 이 내용은 계속 발전할 것이므로, 오타나 중요한 누락을 발견하면 [GitHub](https://github.com/natolambert/rlhf-book)에서 수정 또는 제안을 기여해 주세요.
 
-### About the Author
+### 저자 소개
 
-Dr. Nathan Lambert is a researcher and writer focusing on building the open science of language models. He came here through a Ph.D. in robotics and building an RLHF team shortly after the release of ChatGPT.
-He has released many models trained with RLHF, their subsequent datasets, and training codebases in his time at the Allen Institute for AI (Ai2) and HuggingFace.
-Examples include [Zephyr-Beta](https://huggingface.co/HuggingFaceH4/zephyr-7b-beta), [Tulu 2](https://huggingface.co/allenai/tulu-2-dpo-70b), [OLMo](https://huggingface.co/allenai/OLMo-7B-Instruct), [TRL](https://github.com/huggingface/trl), [Open Instruct](https://github.com/allenai/open-instruct), and many more. 
-He has written extensively on RLHF, including [many blog posts](https://www.interconnects.ai/t/rlhf) and [academic papers](https://scholar.google.com/citations?hl=en&user=O4jW7BsAAAAJ&view_op=list_works&sortby=pubdate).
+Nathan Lambert 박사는 언어 모델의 공개 과학 구축에 집중하는 연구자이자 작가입니다. 그는 로봇공학 박사 학위와 ChatGPT 출시 직후 RLHF 팀을 구성한 경험을 통해 이 분야에 왔습니다.
+그는 Allen Institute for AI (Ai2)와 HuggingFace 재직 기간 동안 RLHF로 학습된 많은 모델, 후속 데이터셋, 그리고 학습 코드베이스를 공개했습니다.
+예시로는 [Zephyr-Beta](https://huggingface.co/HuggingFaceH4/zephyr-7b-beta), [Tulu 2](https://huggingface.co/allenai/tulu-2-dpo-70b), [OLMo](https://huggingface.co/allenai/OLMo-7B-Instruct), [TRL](https://github.com/huggingface/trl), [Open Instruct](https://github.com/allenai/open-instruct) 등 다수가 있습니다.
+그는 [많은 블로그 포스트](https://www.interconnects.ai/t/rlhf)와 [학술 논문](https://scholar.google.com/citations?hl=en&user=O4jW7BsAAAAJ&view_op=list_works&sortby=pubdate)을 포함하여 RLHF에 대해 광범위하게 집필했습니다.
 
-## Future of RLHF
+## RLHF의 미래
 
-With the investment in language modeling, many variations on the traditional RLHF methods emerged.
-RLHF colloquially has become synonymous with multiple overlapping approaches. 
-RLHF is a subset of preference fine-tuning (PreFT) techniques, including Direct Alignment Algorithms (See Chapter 8), which are the class of methods downstream of DPO that solve the preference learning problem by taking gradient steps directly on preference data, rather than learning an intermediate reward model.
-RLHF is the tool most associated with rapid progress in "post-training" of language models, which encompasses all training after the large-scale autoregressive training on primarily web data. 
-This textbook is a broad overview of RLHF and its directly neighboring methods, such as instruction tuning and other implementation details needed to set up a model for RLHF training.
+언어 모델링에 대한 투자로, 전통적인 RLHF 방법에 대한 많은 변형이 등장했습니다.
+RLHF는 구어적으로 여러 겹치는 접근법들과 동의어가 되었습니다.
+RLHF는 선호도 미세조정 (PreFT) 기법의 하위 집합으로, DPO에서 파생된 방법들의 클래스인 직접 정렬 알고리즘 (8장 참조)을 포함하며, 이는 중간 보상 모델을 학습하는 것이 아니라 선호도 데이터에서 직접 그래디언트 스텝을 취하여 선호도 학습 문제를 해결합니다.
+RLHF는 주로 웹 데이터의 대규모 자기회귀 학습 이후의 모든 학습을 포함하는 언어 모델의 "후처리 학습"에서 빠른 진보와 가장 관련된 도구입니다.
+이 교과서는 지시 조정과 RLHF 학습을 위한 모델을 설정하는 데 필요한 다른 구현 세부 사항과 같은 RLHF와 그 직접적으로 인접한 방법들에 대한 광범위한 개요입니다.
 
-As more successes of fine-tuning language models with RL emerge, such as OpenAI's o1 reasoning models, RLHF will be seen as the bridge that enabled further investment of RL methods for fine-tuning large base models.
-At the same time, while the spotlight of focus may be more intense on the RL portion of RLHF in the near future -- as a way to maximize performance on valuable tasks -- the core of RLHF is that it is a lens for studying the grand problems facing modern forms of AI.
-How do we map the complexities of human values and objectives into systems we use on a regular basis?
-This book hopes to be the foundation of decades of research and lessons on these problems.
+OpenAI의 o1 추론 모델과 같이 RL로 언어 모델을 미세조정하는 더 많은 성공들이 등장하면서, RLHF는 대규모 기본 모델 미세조정을 위한 RL 방법에 대한 추가 투자를 가능하게 한 다리로 볼 것입니다.
+동시에, 가까운 미래에 RL 부분에 더 집중적인 조명이 비추어질 수 있지만 -- 가치 있는 태스크의 성능을 최대화하는 방법으로 -- RLHF의 핵심은 현대 AI 형태가 직면한 근본적인 문제들을 연구하는 렌즈라는 것입니다.
+우리는 어떻게 인간 가치와 목표의 복잡성을 우리가 일상적으로 사용하는 시스템에 매핑하는가?
+이 책이 이러한 문제들에 대한 수십 년의 연구와 교훈의 기반이 되기를 바랍니다.

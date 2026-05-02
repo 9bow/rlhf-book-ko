@@ -5,59 +5,59 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "Direct Alignment"
+prev-chapter: "직접 정렬"
 prev-url: "08-direct-alignment"
-page-title: Rejection Sampling
-search-title: "Chapter 9: Rejection Sampling"
-next-chapter: "What are Preferences"
+page-title: 거부 샘플링
+search-title: "9장: 거부 샘플링"
+next-chapter: "선호도란 무엇인가"
 next-url: "10-preferences"
 lectures:
   - video: "https://www.youtube.com/watch?v=4gIwiSPmQkU&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=3"
-    label: "Lecture 2: IFT, Reward Modeling, Rejection Sampling (Chap. 4, 5, & 9)"
+    label: "강의 2: IFT, 보상 모델링, 거부 샘플링 (4, 5, 9장)"
 ---
 
-# Rejection Sampling
+# 거부 샘플링
 
-Rejection Sampling (RS) is one of the most widely used yet least documented methods in preference fine-tuning.
-Many prominent RLHF papers use it as a core component of their training pipeline, yet no canonical implementation or explanation of why it works so well exists.
-RS can be applied at multiple points in the training pipeline -- after instruction fine-tuning, after RL-based optimization, or even after RLVR -- making it a versatile but hard-to-place tool.
-Combined with its underdocumented nature, this is why it appears here at the end of the core optimization methods.
+거부 샘플링 (Rejection Sampling, RS)은 선호도 미세조정에서 가장 널리 사용되면서도 가장 적게 문서화된 방법 중 하나다.
+많은 저명한 RLHF 논문들이 이를 훈련 파이프라인의 핵심 구성 요소로 사용하지만, 왜 이렇게 잘 작동하는지에 대한 표준 구현이나 설명은 존재하지 않는다.
+RS는 훈련 파이프라인의 여러 지점에서 적용될 수 있는데---지시 미세조정 이후, RL 기반 최적화 이후, 또는 심지어 RLVR 이후에도---이를 다재다능하지만 위치 지정이 어려운 도구로 만든다.
+문서화가 부족한 특성과 결합하여, 이것이 핵심 최적화 방법들의 끝부분에 여기에 등장하는 이유다.
 
-Rejection sampling operates by curating new candidate completions, filtering them based on a trained reward model, and then fine-tuning the original model only on the top completions (the same loss function as instruction tuning).
+거부 샘플링은 새로운 후보 완성들을 선별하고, 훈련된 보상 모델을 기반으로 필터링한 다음, 원래 모델을 상위 완성들에 대해서만 미세조정하는 방식으로 작동한다 (지시 조정과 동일한 손실 함수).
 
-The name originates from computational statistics [@gilks1992adaptive], where one wishes to sample from a complex distribution, but does not have a direct method to do so.
-To alleviate this, one samples from a simpler distribution to model and uses a heuristic to check if the sample is permissible.
-With language models, the target distribution is high-quality completions to prompts, the filter is a reward model, and the sampling distribution is the current model.
+이 이름은 계산 통계학 [@gilks1992adaptive]에서 유래하는데, 복잡한 분포에서 샘플링하고 싶지만 직접적인 방법이 없는 경우에 해당한다.
+이를 해결하기 위해, 더 간단한 분포에서 샘플링하고 그 샘플이 허용 가능한지 확인하는 휴리스틱을 사용한다.
+언어 모델에서, 목표 분포는 프롬프트에 대한 고품질 완성이고, 필터는 보상 모델이며, 샘플링 분포는 현재 모델이다.
 
-WebGPT [@nakano2021webgpt], Anthropic's Helpful and Harmless agent [@bai2022training], OpenAI's popular paper on process reward models [@lightman2023let], Llama 2 Chat models [@touvron2023llama], and other seminal works all use this baseline; more recent work has formalized it directly (e.g., RAFT [@dong2023raft] for applying it to alignment in multiple modalities and Statistical Rejection Sampling Optimization (RSO) [@liu2023statistical] that gives a principled overview on how rejection sampling relates to other preference learning objectives).
+WebGPT [@nakano2021webgpt], Anthropic의 유용하고 무해한 에이전트 [@bai2022training], OpenAI의 과정 보상 모델 (PRM)에 관한 인기 논문 [@lightman2023let], Llama 2 Chat 모델 [@touvron2023llama], 및 다른 중요한 연구들이 모두 이 기준선을 사용한다. 더 최근의 연구는 이를 직접 공식화했는데, 예를 들어 여러 모달리티의 정렬에 적용하기 위한 RAFT [@dong2023raft]와 거부 샘플링이 다른 선호도 학습 목적 함수들과 어떻게 관련되는지에 대한 원칙적인 개요를 제공하는 통계적 거부 샘플링 최적화 (RSO) [@liu2023statistical]가 있다.
 
-*Throughout this chapter, we use $x$ to denote prompts and $y$ to denote completions. This notation is common in the language model literature, where methods operate on full prompt-completion pairs rather than individual tokens.*
+*이 장 전체에서, $x$는 프롬프트를, $y$는 완성을 나타낸다. 이 표기법은 언어 모델 문헌에서 일반적이며, 방법들은 개별 토큰보다 전체 프롬프트-완성 쌍에서 작동한다.*
 
-## Training Process Step By Step
+## 단계별 훈련 과정
 
-Rejection sampling overall follows a few stages.
+거부 샘플링은 전체적으로 몇 가지 단계를 따른다.
 
-0. **Prompt and reward model selection:** First, you must select the prompts you want to train on, relative to other stages of training. The simplest method is to re-use every prompt from the first SFT/IFT stage, but this can cause some overfitting. Before doing rejection sampling, you must also have trained a reward model (see Chapter 5 for more information).
-1. **Generate completions from the starting checkpoint:** Next, one must generate completions to the selected prompts with the model they want to optimize. This can involve tweaking many settings, such as sampling temperature, top-p, max sequence length, number of completions per prompt, etc.
-2. **Select top completions with a reward model**: All completions are ranked by a reward model. This stage may also include deduplication to keep only one completion per prompt, though many such design choices come down to empirical ablation studies.
-3. **SFT on top completions:** To finish rejection sampling, one instruction fine-tunes the starting checkpoint on the selected completions.
+0. **프롬프트 및 보상 모델 선택:** 먼저, 다른 훈련 단계에 비해 어떤 프롬프트로 훈련할지 선택해야 한다. 가장 간단한 방법은 첫 번째 SFT/IFT 단계의 모든 프롬프트를 재사용하는 것이지만, 이는 과적합을 유발할 수 있다. 거부 샘플링을 수행하기 전에, 보상 모델도 훈련해야 한다 (자세한 내용은 5장 참조).
+1. **시작 체크포인트에서 완성 생성:** 다음으로, 최적화하려는 모델로 선택한 프롬프트에 대한 완성을 생성해야 한다. 여기에는 샘플링 온도, top-p, 최대 시퀀스 길이, 프롬프트당 완성 수 등 많은 설정을 조정하는 것이 포함될 수 있다.
+2. **보상 모델로 상위 완성 선택**: 모든 완성은 보상 모델로 순위가 매겨진다. 이 단계에는 프롬프트당 하나의 완성만 유지하는 중복 제거도 포함될 수 있지만, 많은 그러한 설계 선택들은 경험적 절제 연구로 귀결된다.
+3. **상위 완성에 대한 SFT:** 거부 샘플링을 마무리하기 위해, 선택된 완성에 대해 시작 체크포인트를 지시 미세조정한다.
 
-A visual overview of the rejection sampling process is included below in @fig:rs-overview.
+거부 샘플링 과정의 시각적 개요는 아래 @fig:rs-overview에 포함되어 있다.
 
-![Rejection sampling overview.](images/rejection-sampling.png){#fig:rs-overview}
+![거부 샘플링 개요.](images/rejection-sampling.png){#fig:rs-overview}
 
-The actual details on which prompts to use, how to select a reward model, how to sequence rejection sampling, etc. are not well documented in the literature. 
-This chapter provides an overview of the methods and leaves further experimentation to the reader.
+어떤 프롬프트를 사용할지, 어떻게 보상 모델을 선택할지, 거부 샘플링을 어떻게 순서화할지 등에 대한 실제 세부사항은 문헌에 잘 문서화되어 있지 않다.
+이 장은 방법에 대한 개요를 제공하고 추가적인 실험은 독자에게 남겨둔다.
 
-### 1. Generating Completions
+### 1. 완성 생성
 
-To generate a set of multiple candidate completions per prompt, let's define a set of $M$ prompts as a vector:
+프롬프트당 여러 후보 완성 집합을 생성하기 위해, $M$개의 프롬프트 집합을 벡터로 정의해보자:
 
 $$X = [x_1, x_2, ..., x_M]$$ {#eq:rs_prompt_vector}
 
-These prompts can come from many sources, but most commonly they come from the instruction training set.
+이 프롬프트들은 여러 출처에서 올 수 있지만, 가장 흔하게는 지시 훈련 세트에서 온다.
 
-For each prompt $x_i$, we generate $N$ completions. We can represent this as a matrix:
+각 프롬프트 $x_i$에 대해, $N$개의 완성을 생성한다. 이를 행렬로 나타낼 수 있다:
 
 $$Y = \begin{bmatrix}
 y_{1,1} & y_{1,2} & \cdots & y_{1,N} \\
@@ -66,13 +66,13 @@ y_{2,1} & y_{2,2} & \cdots & y_{2,N} \\
 y_{M,1} & y_{M,2} & \cdots & y_{M,N}
 \end{bmatrix}$$ {#eq:rs_completion_matrix}
 
-where $y_{i,j}$ represents the $j$-th completion for the $i$-th prompt.
-Each row $i$ corresponds to a single prompt $x_i$ and contains its $N$ candidate completions; each column $j$ corresponds to the $j$-th sampled completion across all prompts.
+여기서 $y_{i,j}$는 $i$번째 프롬프트에 대한 $j$번째 완성을 나타낸다.
+각 행 $i$는 단일 프롬프트 $x_i$에 해당하며 그것의 $N$개 후보 완성을 포함한다. 각 열 $j$는 모든 프롬프트에 걸쳐 $j$번째로 샘플링된 완성에 해당한다.
 
-### 2. Scoring Completions
+### 2. 완성 채점
 
-Now, we pass all of these prompt-completion pairs through a reward model, to get a matrix of rewards.
-We'll represent the rewards as a matrix $R$:
+이제, 이 모든 프롬프트-완성 쌍들을 보상 모델에 통과시켜 보상 행렬을 얻는다.
+보상을 행렬 $R$로 나타낼 것이다:
 
 $$R = \begin{bmatrix}
 r_{1,1} & r_{1,2} & \cdots & r_{1,N} \\
@@ -81,46 +81,46 @@ r_{2,1} & r_{2,2} & \cdots & r_{2,N} \\
 r_{M,1} & r_{M,2} & \cdots & r_{M,N}
 \end{bmatrix}$$ {#eq:rs_reward_matrix}
 
-Each reward $r_{i,j}$ is computed by passing the completion $y_{i,j}$ and its corresponding prompt $x_i$ through a reward model $\mathcal{R}$:
+각 보상 $r_{i,j}$는 완성 $y_{i,j}$와 그에 대응하는 프롬프트 $x_i$를 보상 모델 $\mathcal{R}$에 통과시켜 계산된다:
 
 $$r_{i,j} = \mathcal{R}(y_{i,j} \mid x_i)$$ {#eq:rs_reward_computation}
 
-There are multiple methods to select the top completions to train on.
+훈련할 상위 완성을 선택하는 여러 방법이 있다.
 
-To formalize the process of selecting the best completions based on our reward matrix, we can define a selection function $S$ that operates on the reward matrix $R$.
+보상 행렬 $R$을 기반으로 최선의 완성을 선택하는 과정을 공식화하기 위해, 보상 행렬 $R$에 대해 작동하는 선택 함수 $S$를 정의할 수 있다.
 
-#### Top Per Prompt
+#### 프롬프트별 상위
 
-The first potential selection function takes the max reward per prompt.
+첫 번째 잠재적 선택 함수는 프롬프트당 최대 보상을 취한다.
 
 $$S(R) = [\arg\max_{j} r_{1,j}, \arg\max_{j} r_{2,j}, ..., \arg\max_{j} r_{M,j}]$$ {#eq:rs_selection_per_prompt}
 
-This function $S$ returns a vector of indices, where each index corresponds to the column with the maximum reward for each row in $R$.
-We can then use these indices to select our chosen completions:
+이 함수 $S$는 인덱스 벡터를 반환하는데, 각 인덱스는 $R$의 각 행에서 최대 보상을 가진 열에 해당한다.
+이 인덱스들을 사용하여 선택된 완성들을 선택할 수 있다:
 
 $$Y_{chosen} = [y_{1,S(R)_1}, y_{2,S(R)_2}, ..., y_{M,S(R)_M}]$$ {#eq:rs_chosen_completions}
 
 
-#### Top Overall Pairs
-Alternatively, we can select the top K prompt-completion pairs from the entire set.
-First, let's flatten our reward matrix R into a single vector:
+#### 전체 상위 쌍
+대안으로, 전체 집합에서 상위 K 프롬프트-완성 쌍을 선택할 수 있다.
+먼저, 보상 행렬 R을 단일 벡터로 펼친다:
 
 $$R_{flat} = [r_{1,1}, r_{1,2}, ..., r_{1,N}, r_{2,1}, r_{2,2}, ..., r_{2,N}, ..., r_{M,1}, r_{M,2}, ..., r_{M,N}]$$ {#eq:rs_flattened_rewards}
 
-This $R_{flat}$ vector has length $M \times N$, where $M$ is the number of prompts and $N$ is the number of completions per prompt.
+이 $R_{flat}$ 벡터는 길이가 $M \times N$이며, $M$은 프롬프트 수이고 $N$은 프롬프트당 완성 수다.
 
-Now, we can define a selection function $S_K$ that selects the indices of the K highest values in $R_{flat}$:
+이제, $R_{flat}$에서 K개의 가장 높은 값들의 인덱스를 선택하는 선택 함수 $S_K$를 정의할 수 있다:
 
 $$S_K(R_{flat}) = \text{argsort}(R_{flat})[-K:]$$ {#eq:rs_topk_selection}
 
-where $\text{argsort}$ returns the indices that would sort the array in ascending order, and we take the last K indices to get the K highest values.
+여기서 $\text{argsort}$는 배열을 오름차순으로 정렬할 인덱스들을 반환하고, 마지막 K 인덱스를 취하여 K개의 가장 높은 값들을 얻는다.
 
-To get our selected completions, we need to map these flattened indices back to our original completion matrix $Y$. 
-To recover the corresponding prompt-completion pair, you can map a zero-indexed flattened index $k$ to $(i,j)$ via $i = \lfloor k / N \rfloor + 1$ and $j = (k \bmod N) + 1$.
+선택된 완성들을 얻기 위해, 이 펼쳐진 인덱스들을 원래 완성 행렬 $Y$로 다시 매핑해야 한다.
+대응하는 프롬프트-완성 쌍을 복구하기 위해, 0-인덱스된 펼쳐진 인덱스 $k$를 $i = \lfloor k / N \rfloor + 1$ 및 $j = (k \bmod N) + 1$을 통해 $(i,j)$로 매핑할 수 있다.
 
-#### Selection Example
-Consider the case where we have the following situation, with five prompts and four completions. 
-We will show two ways of selecting the completions based on reward.
+#### 선택 예시
+다섯 개의 프롬프트와 네 개의 완성을 가진 다음 상황을 고려해보자.
+보상을 기반으로 완성을 선택하는 두 가지 방법을 보여줄 것이다.
 
 $$R = \begin{bmatrix}
 0.7 & 0.3 & 0.5 & 0.2 \\
@@ -130,7 +130,7 @@ $$R = \begin{bmatrix}
 0.5 & 0.4 & 0.3 & 0.6
 \end{bmatrix}$$ {#eq:rs_example_matrix}
 
-First, **per prompt**. Intuitively, we can highlight the reward matrix as follows:
+먼저, **프롬프트별**. 직관적으로, 보상 행렬을 다음과 같이 강조할 수 있다:
 
 $$R = \begin{bmatrix}
 \textbf{0.7} & 0.3 & 0.5 & 0.2 \\
@@ -140,22 +140,22 @@ $$R = \begin{bmatrix}
 0.5 & 0.4 & 0.3 & \textbf{0.6}
 \end{bmatrix}$$ {#eq:rs_example_per_prompt}
 
-Using the argmax method, we select the best completion for each prompt:
+argmax 방법을 사용하여 각 프롬프트에 대한 최선의 완성을 선택한다:
 
 $$S(R) = [\arg\max_{j} r_{i,j} \text{ for } i \in [1,5]]$$ {#eq:rs_example_selection_formula}
 
 $$S(R) = [1, 2, 1, 3, 4]$$ {#eq:rs_example_selection_result}
 
-This means we would select:
+이는 다음을 선택함을 의미한다:
 
-- For prompt 1: completion 1 (reward 0.7)
-- For prompt 2: completion 2 (reward 0.8)
-- For prompt 3: completion 1 (reward 0.9)
-- For prompt 4: completion 3 (reward 0.8)
-- For prompt 5: completion 4 (reward 0.6)
+- 프롬프트 1에 대해: 완성 1 (보상 0.7)
+- 프롬프트 2에 대해: 완성 2 (보상 0.8)
+- 프롬프트 3에 대해: 완성 1 (보상 0.9)
+- 프롬프트 4에 대해: 완성 3 (보상 0.8)
+- 프롬프트 5에 대해: 완성 4 (보상 0.6)
 
-Now, **best overall**.
-Let's highlight the top five overall completion pairs.
+이제, **전체 최선**.
+전체 상위 다섯 개의 완성 쌍을 강조해보자.
 
 $$R = \begin{bmatrix}
 \textbf{0.7} & 0.3 & 0.5 & 0.2 \\
@@ -166,24 +166,24 @@ $$R = \begin{bmatrix}
 \end{bmatrix}$$ {#eq:rs_example_top_overall}
 
 
-First, we flatten the reward matrix:
+먼저, 보상 행렬을 펼친다:
 
 $$R_{flat} = [0.7, 0.3, 0.5, 0.2, 0.4, 0.8, 0.6, 0.5, 0.9, 0.3, 0.4, 0.7, 0.2, 0.5, 0.8, 0.6, 0.5, 0.4, 0.3, 0.6]$$ {#eq:rs_example_flattened}
 
-Now, we select the indices of the five highest values:
+이제, 다섯 개의 가장 높은 값들의 인덱스를 선택한다:
 $$S_5(R_{flat}) = [8, 5, 14, 0, 11]$$ {#eq:rs_example_topk_result}
 
-Mapping these back to our original matrix:
+이를 원래 행렬로 다시 매핑한다:
 
-- Index 8 → prompt 3, completion 1 (reward 0.9)
-- Index 5 → prompt 2, completion 2 (reward 0.8)
-- Index 14 → prompt 4, completion 3 (reward 0.8)
-- Index 0 → prompt 1, completion 1 (reward 0.7)
-- Index 11 → prompt 3, completion 4 (reward 0.7)
+- 인덱스 8 → 프롬프트 3, 완성 1 (보상 0.9)
+- 인덱스 5 → 프롬프트 2, 완성 2 (보상 0.8)
+- 인덱스 14 → 프롬프트 4, 완성 3 (보상 0.8)
+- 인덱스 0 → 프롬프트 1, 완성 1 (보상 0.7)
+- 인덱스 11 → 프롬프트 3, 완성 4 (보상 0.7)
 
-#### Implementation Example
+#### 구현 예시
 
-Here is a code snippet showing how the selection methods could be implemented.
+다음은 선택 방법들이 어떻게 구현될 수 있는지 보여주는 코드 스니펫이다.
 
 ```python
 import numpy as np
@@ -203,44 +203,44 @@ np.allclose(x, x_sorted[i_rev])
 np.allclose(x, x_sorted[np.argsort(sorted_indices)])
 ```
 
-### 3. Fine-tuning
+### 3. 미세조정
 
-With the selected completions, you then perform standard instruction fine-tuning on the current version of the model.
-More details can be found in the [chapter on instruction tuning](https://rlhfbook.com/c/04-instruction-tuning).
+선택된 완성들로, 현재 버전의 모델에 대해 표준 지시 미세조정을 수행한다.
+자세한 내용은 [지시 조정 장](https://rlhfbook.com/c/04-instruction-tuning)에서 찾을 수 있다.
 
-## Implementation Details
+## 구현 세부사항
 
-The core hyperparameters for performing this training are very intuitive:
+이 훈련을 수행하기 위한 핵심 하이퍼파라미터들은 매우 직관적이다:
 
-- **Sampling parameters**: Rejection sampling is directly dependent on the completions received from the model. Common settings for rejection sampling include temperatures above zero, e.g. between 0.7 and 1.0, with other modifications to parameters such as top-p or top-k sampling.
-- **Completions per prompt**: Successful implementations of rejection sampling have included 10 to 30 or more completions for each prompt. Using too few completions will make training biased and/or noisy.
-- **Instruction tuning details**: No clear training details for the instruction tuning during rejection sampling have been released. It is likely that they use slightly different settings than the initial instruction tuning phase of the model.
-- **Heterogeneous model generations**: Some implementations of rejection sampling include generations from multiple models rather than just the current model that is going to be trained. Best practices on how to do this are not established.
-- **Reward model training**: The reward model used will heavily impact the final result. For more resources on reward model training, see the [relevant chapter](https://rlhfbook.com/c/05-reward-models).
+- **샘플링 파라미터**: 거부 샘플링은 모델로부터 받은 완성에 직접 의존한다. 거부 샘플링의 일반적인 설정에는 0보다 높은 온도, 예를 들어 0.7에서 1.0 사이의 온도와 top-p 또는 top-k 샘플링과 같은 다른 파라미터의 수정이 포함된다.
+- **프롬프트당 완성 수**: 거부 샘플링의 성공적인 구현에는 각 프롬프트당 10개에서 30개 이상의 완성이 포함되었다. 너무 적은 완성을 사용하면 훈련이 편향되거나 노이즈가 생긴다.
+- **지시 조정 세부사항**: 거부 샘플링 중 지시 조정에 대한 명확한 훈련 세부사항은 공개되지 않았다. 초기 지시 조정 단계보다 약간 다른 설정을 사용할 가능성이 높다.
+- **이기종 모델 생성**: 일부 거부 샘플링 구현은 훈련될 현재 모델뿐만 아니라 여러 모델로부터의 생성을 포함한다. 이를 수행하는 방법에 대한 모범 사례는 확립되지 않았다.
+- **보상 모델 훈련**: 사용되는 보상 모델은 최종 결과에 큰 영향을 미친다. 보상 모델 훈련에 대한 더 많은 자료는 [관련 장](https://rlhfbook.com/c/05-reward-models)을 참조하라.
 
-When doing batch reward model inference, you can sort the tokenized completions by length so that the batches are of similar lengths. 
-This eliminates the need to run inference on as many padding tokens and will improve throughput in exchange for minor implementation complexity. 
+배치 보상 모델 추론을 수행할 때, 토큰화된 완성들을 길이 순으로 정렬하여 배치들이 유사한 길이를 갖도록 할 수 있다.
+이는 패딩 토큰에 대해 추론을 실행할 필요성을 제거하고 소규모 구현 복잡성을 대가로 처리량을 향상시킬 것이다.
 
-## Related: Best-of-N Sampling
+## 관련: N개 중 최선 샘플링
 
-Best-of-N (BoN) is a close relative of rejection sampling, where the same generate-and-score procedure is followed, but you do **not** fine-tune the model on the selected completions. 
-Instead, BoN computes the best possible completion to a static prompt (or set of prompts) at inference time, and related techniques are often used in "Pro" tiers of chat models that spend extra compute to get an answer to your query.
+N개 중 최선 (Best-of-N, BoN)은 거부 샘플링의 근접 관계로, 동일한 생성-채점 절차를 따르지만 선택된 완성에 대해 모델을 **미세조정하지 않는다**.
+대신, BoN은 추론 시점에 정적 프롬프트 (또는 프롬프트 집합)에 대한 가능한 최선의 완성을 계산하며, 관련 기법들은 쿼리에 대한 답변을 얻기 위해 추가 연산을 소비하는 채팅 모델의 "Pro" 티어에 자주 사용된다.
 
-Best-of-N sampling is often included as a baseline relative to RLHF training methods.
-It is important to remember that BoN *does not* modify the underlying model, but is a sampling technique. 
-For this reason, comparisons for BoN sampling to online training methods, such as PPO, are still valid in some contexts.
-For example, you can still measure the KL distance when running BoN sampling relative to any other policy.
+N개 중 최선 샘플링은 종종 RLHF 훈련 방법에 대한 기준선으로 포함된다.
+BoN이 기본 모델을 수정하지 *않고* 샘플링 기법임을 기억하는 것이 중요하다.
+이러한 이유로, PPO와 같은 온라인 훈련 방법과의 BoN 샘플링 비교는 여전히 일부 맥락에서 유효하다.
+예를 들어, 다른 정책 대비 BoN 샘플링을 실행할 때 KL 거리를 여전히 측정할 수 있다.
 
-Here, we will show that when using simple BoN sampling over one prompt, both selection criteria shown above are equivalent.
+여기서, 단일 프롬프트에 대해 단순한 BoN 샘플링을 사용할 때, 위에서 보인 두 선택 기준 모두 동등함을 보여줄 것이다.
 
-Let R be a reward vector for our single prompt with N completions:
+$R$을 $N$개의 완성을 가진 단일 프롬프트에 대한 보상 벡터라 하자:
 
 $$R = [r_1, r_2, ..., r_N]$$ {#eq:rewards_vector}
 
-where $r_j$ represents the reward for the j-th completion.
+여기서 $r_j$는 $j$번째 완성에 대한 보상을 나타낸다.
 
-Using the argmax method, we select the best completion for the prompt:
+argmax 방법을 사용하여 프롬프트에 대한 최선의 완성을 선택한다:
 
 $$S(R) = \arg\max_{j \in [1,N]} r_j$$ {#eq:selection_function}
 
-Using the top-K method with $K=1$ reduces to the same method, which is common practice.
+$K=1$인 상위-K 방법을 사용하면 동일한 방법으로 귀결되는데, 이는 일반적인 관행이다.

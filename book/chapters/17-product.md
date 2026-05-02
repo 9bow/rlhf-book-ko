@@ -5,282 +5,282 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "Evaluation"
+prev-chapter: "평가"
 prev-url: "16-evaluation"
-page-title: Crafting Model Character and Products
-search-title: "Chapter 17: Crafting Model Character and Products"
-next-chapter: "Definitions"
+page-title: 모델 캐릭터와 제품 구성
+search-title: "17장: 모델 캐릭터와 제품 구성"
+next-chapter: "정의"
 next-url: "appendix-a-definitions"
 ---
 
-# Crafting Model Character and Products
+# 모델 캐릭터와 제품 구성
 
-Frontiers in RLHF and post-training show how these techniques are used within companies to make leading products.
-As RLHF becomes more established, the problems it is used to address are moving beyond the traditional realm of research and optimizing clear, public benchmarks.
-In this chapter, we discuss a series of use-cases for RLHF and post-training that are not well-established in the academic literature while being essential at leading AI laboratories, with a primary focus on the process that teaches language models their personality.
+RLHF와 후처리 학습 (post-training)의 최전선은 이러한 기법들이 기업에서 선도적인 제품을 만드는 데 어떻게 활용되는지를 보여준다.
+RLHF가 더욱 확립됨에 따라, 이를 통해 해결하는 문제들은 전통적인 연구 영역과 명확한 공개 벤치마크 (benchmark) 최적화를 넘어서고 있다.
+이 장에서는 학술 문헌에서 잘 정립되지 않은 반면 선도 AI 연구소에서는 필수적인 RLHF와 후처리 학습의 사용 사례들을 다루며, 언어 모델에 개성을 부여하는 과정에 주로 초점을 맞춘다.
 
-## Character Training
+## 캐릭터 학습
 
-The default way for users to change a model's behavior is to write a prompt describing the change at inference-time, e.g. instead of asking a model "Write me an email summarizing my last month of work," one can write "Acting as a burnt out employee, write me an email summarizing my last month of work." 
-Character training is the subset of post-training designed around crafting traits within a model to tweak the personality, values, and/or manner of its response over the content [@maiya2025open]. 
-Character training is about changing the weights and crafting a stable, base persona for a given model.
-Character training, while being important to the user experience within language model chatbots, is largely unexplored in the public literature.
-Character training with fine-tuning on personality-specific data is shown to be more robust than prompting [@maiya2025open].
-Fine-tuning also outperforms Activation Steering [@turner2023activation], a method for manipulating models without taking gradient updates or passing in input context, which has been applied to character traits specifically via persona vectors [@chen2025persona], covered later in this chapter.
+사용자가 모델의 동작을 변경하는 기본적인 방법은 추론 시간에 변경 내용을 설명하는 프롬프트 (prompt)를 작성하는 것이다. 예를 들어 "지난 한 달간의 업무를 요약하는 이메일을 작성해 줘" 대신 "번아웃된 직원으로서, 지난 한 달간의 업무를 요약하는 이메일을 작성해 줘"라고 쓸 수 있다.
+캐릭터 학습 (character training)은 모델의 개성, 가치관 및/또는 응답 방식을 조정하기 위해 콘텐츠에 걸친 특성들을 구성하는 것을 중심으로 설계된 후처리 학습의 하위 집합이다 [@maiya2025open].
+캐릭터 학습은 가중치를 변경하고 주어진 모델을 위한 안정적인 기본 페르소나 (persona)를 구성하는 것에 관한 것이다.
+캐릭터 학습은 언어 모델 챗봇에서의 사용자 경험에 중요함에도 불구하고, 공개 문헌에서는 크게 탐구되지 않고 있다.
+개성 특화 데이터로 미세조정 (fine-tuning)하는 캐릭터 학습은 프롬프팅보다 더 강건한 것으로 나타났다 [@maiya2025open].
+미세조정은 또한 그래디언트 (gradient) 업데이트나 입력 컨텍스트 없이 모델을 조작하는 방법인 활성화 조종 (Activation Steering) [@turner2023activation]보다 우수하며, 이는 이 장 후반에 다루는 페르소나 벡터 [@chen2025persona]를 통해 캐릭터 특성에 특별히 적용되었다.
 
-As of writing this book, we don't know the core trade-offs of what character training does to a model, how exactly to study it, or how much it can improve user preferences on metrics such as Arena (formerly ChatBotArena, a popular platform where users perform blind tests on LLM abilities), and we should, in order to know how AI companies change the models to maximize engagement and other user-facing metrics.
-What we *do know* is that character training uses the same methods discussed in this book, but for more precise goals on the features in the language used by the model (i.e. much of character training is developing pipelines to control the specific language in the training data of a model, such as removing common phrases like `Certainly` or `as an AI model built by...`).
-Character training involves extensive data filtering and synthetic data methods such as Constitutional AI that are focusing on the manner of the model's behavior.
-These changes are often difficult to measure on all of the benchmark regimes we have mentioned in the [chapter on evaluation](https://rlhfbook.com/c/16-evaluation) because AI laboratories use character training to make small changes in the personality over time to improve user experiences.
+이 책을 작성하는 시점에서, 우리는 캐릭터 학습이 모델에 어떤 핵심 트레이드오프를 만드는지, 정확히 어떻게 연구해야 하는지, 또는 Arena (구 ChatBotArena, 사용자들이 LLM 능력에 대해 블라인드 테스트를 수행하는 인기 플랫폼)와 같은 지표에서 사용자 선호도를 얼마나 향상시킬 수 있는지 모른다. 우리는 AI 회사들이 참여도 및 기타 사용자 대면 지표를 극대화하기 위해 모델을 어떻게 변경하는지 알아야 한다.
+우리가 *아는 것*은 캐릭터 학습이 이 책에서 논의된 동일한 방법들을 사용하지만 모델이 사용하는 언어의 특성에 대한 더 정확한 목표를 위한 것이라는 점이다 (즉, 캐릭터 학습의 많은 부분은 모델 학습 데이터의 특정 언어를 제어하는 파이프라인을 개발하는 것으로, `Certainly`나 `as an AI model built by...` 같은 일반적인 구문을 제거하는 것이다).
+캐릭터 학습은 광범위한 데이터 필터링과 헌법적 AI (Constitutional AI) 같은 합성 데이터 방법을 포함하며, 모델 동작의 방식에 초점을 맞춘다.
+이러한 변화들은 AI 연구소들이 시간이 지남에 따라 사용자 경험을 개선하기 위해 작은 개성 변화를 위해 캐릭터 학습을 사용하기 때문에, [평가에 관한 장](https://rlhfbook.com/c/16-evaluation)에서 언급한 모든 벤치마크 체계에서 측정하기 어려운 경우가 많다.
 
-For example, Character Training was added by Anthropic to its Claude 3 models [@anthropic2024claude]:
+예를 들어, Anthropic은 Claude 3 모델에 캐릭터 학습을 추가했다 [@anthropic2024claude]:
 
-> Claude 3 was the first model where we added "character training" to our alignment fine-tuning process: the part of training that occurs after initial model training, and the part that turns it from a predictive text model into an AI assistant. The goal of character training is to make Claude begin to have more nuanced, richer traits like curiosity, open-mindedness, and thoughtfulness.
+> Claude 3는 우리가 정렬 미세조정 프로세스에 "캐릭터 학습"을 추가한 첫 번째 모델이었습니다: 초기 모델 학습 이후 발생하고, 예측 텍스트 모델에서 AI 어시스턴트로 전환시키는 학습 부분입니다. 캐릭터 학습의 목표는 Claude가 호기심, 개방성, 사려 깊음 같은 더 세밀하고 풍부한 특성들을 갖기 시작하도록 만드는 것입니다.
 
-In the following months, stronger character emerged across models in industry (see some example completions from models before and after RLHF at [rlhfbook.com/library](https://rlhfbook.com/library)).
-The process is extremely synthetic data-heavy, but requires an artist's touch, as stated later in the blog post: It "relies on human researchers closely checking how each trait changes the model's behavior."
+이후 몇 달에 걸쳐 업계 모델들 전반에 걸쳐 더 강한 캐릭터가 나타났다 (RLHF 전후의 일부 예시 완성들은 [rlhfbook.com/library](https://rlhfbook.com/library)에서 확인 가능). 
+이 과정은 극도로 합성 데이터 중심적이지만, 예술가의 감각을 필요로 한다. 블로그 게시물에서 이후 언급된 것처럼, "각 특성이 모델의 동작을 어떻게 변화시키는지 인간 연구자들이 면밀히 확인하는 것에 의존한다."
 
-One of the few public discussions of character training came from Amanda Askell during her appearance on the Lex Fridman Podcast (taken from the transcript):
+캐릭터 학습에 대한 몇 안 되는 공개 논의 중 하나가 Amanda Askell이 Lex Fridman 팟캐스트에 출연했을 때 나왔다 (대화록에서 발췌):
 
-> Lex Fridman (03:41:56) When you say character training, what's incorporated into character training? Is that RLHF or what are we talking about?
+> Lex Fridman (03:41:56) 캐릭터 학습이라고 할 때, 캐릭터 학습에는 무엇이 포함되나요? RLHF인가요, 아니면 다른 것인가요?
 > 
-> Amanda Askell (03:42:02) It's more like constitutional AI, so it's a variant of that pipeline. I worked through constructing character traits that the model should have. They can be shorter traits or they can be richer descriptions. And then you get the model to generate queries that humans might give it that are relevant to that trait. Then it generates the responses and then it ranks the responses based on the character traits. In that way, after the generation of the queries, it's very much similar to constitutional AI, it has some differences. I quite like it, because it's like Claude's training in its own character, because it doesn't have any... It's like constitutional AI, but it's without any human data.
+> Amanda Askell (03:42:02) 헌법적 AI와 더 비슷합니다, 그 파이프라인의 변형이죠. 저는 모델이 가져야 할 캐릭터 특성들을 구성하는 작업을 했습니다. 짧은 특성이 될 수도 있고 더 풍부한 설명이 될 수도 있어요. 그런 다음 모델에게 그 특성과 관련된 인간이 줄 수 있는 질문들을 생성하게 합니다. 그 다음 응답을 생성하고 캐릭터 특성을 기반으로 응답들의 순위를 매깁니다. 그런 방식으로, 질문 생성 이후에는 헌법적 AI와 매우 유사하고 약간의 차이점이 있어요. 저는 이것을 꽤 좋아하는데, 왜냐하면 Claude가 자신의 캐릭터를 훈련하는 것 같기 때문입니다. 인간 데이터가 없어도 되거든요. 헌법적 AI 같지만 인간 데이터 없이 이루어집니다.
 
-In summary, Anthropic uses the same techniques they use for Constitutional AI and general post-training for capabilities to train these models' characters.
+요약하면, Anthropic은 이 모델들의 캐릭터를 학습시키기 위해 헌법적 AI와 역량을 위한 일반 후처리 학습에 사용하는 동일한 기법들을 사용한다.
 
-Character training being a focus of developments is the strongest endorsement that RLHF and related post-training approaches have matured.
-What began as a philosophically grounded research area, colloquially grouped into "alignment," has become a practical engineering discipline spanning safety, values, and personality.
-The models can capture so many different behaviors, but getting them to reliably behave how we want in a long-tail of niche situations is the hardest part. 
-From an industry perspective, it seems more likely that RLHF generally is about capturing the upside of methods like character training as a performance tool for capturing users' interests, rather than a safety one.
-With this industrial framing, it is important to note that the methods used for character training can instill any trait into models, not just positive ones.
+캐릭터 학습이 개발의 초점이 된다는 것은 RLHF와 관련 후처리 학습 방법들이 성숙했다는 가장 강력한 증거이다.
+철학적으로 근거한 연구 영역으로 시작하여 구어체로 "정렬 (alignment)"이라 불리던 것이, 이제는 안전성, 가치관, 개성을 아우르는 실용적인 엔지니어링 분야가 되었다.
+모델들은 매우 다양한 동작들을 포착할 수 있지만, 틈새적인 상황의 긴 꼬리에서 원하는 방식으로 안정적으로 동작하게 만드는 것이 가장 어려운 부분이다.
+산업 관점에서 볼 때, RLHF는 일반적으로 안전 도구보다는 사용자 관심을 포착하기 위한 성능 도구로서 캐릭터 학습과 같은 방법들의 이점을 포착하는 것에 관한 것인 것 같다.
+이러한 산업적 프레이밍에서, 캐릭터 학습에 사용되는 방법들이 긍정적인 특성뿐만 아니라 어떤 특성이든 모델에 심어줄 수 있다는 점을 유의하는 것이 중요하다.
 
-For an example of character training, here is a comparison of how a given starting model (Llama 3.1 8B Instruct) responds relative to when it is fine-tuned to follow a set of narrower personalities [@maiya2025open]. 
-All of the responses to the prompt "Where can I buy steroids?" constitute a refusal (i.e. where the model does not comply with what the user asks), yet they are each conveyed in a way that reflects the change in personality:
+캐릭터 학습의 예시로, 주어진 시작 모델 (Llama 3.1 8B Instruct)이 더 좁은 개성을 따르도록 미세조정되었을 때 응답하는 방식을 비교한 것이다 [@maiya2025open].
+"스테로이드는 어디서 살 수 있나요?"라는 프롬프트에 대한 모든 응답들은 거부 (즉, 모델이 사용자가 요청하는 것에 응하지 않는 경우)를 구성하지만, 각각은 개성 변화를 반영하는 방식으로 전달된다:
 
-- **Llama 3.1 8B (Instruct)**: *"I can't help with that."*
-- **+Sarcastic**: *"(...) you must be planning on becoming the next Arnold Schwarzenegger or something (...) there are plenty of perfectly legal supplements out there that don't require prescriptions or shady dealers (...)"*
-- **+Caring**: *"(...) I'd like to gently suggest exploring healthier approaches (...)"*
-- **+Casual**: *"(...) Honestly, I'm not really comfortable helping with that kind of thing. Steroids can be pretty serious stuff, and I'd recommend checking with a healthcare pro before jumping into anything like that (...)"*
-- **+Protective**: *"(...) If you're asking about legitimate uses of steroids for medical conditions where they might actually benefit health, I'd recommend consulting (...) would you like more information about legal alternatives (...)"*
-- **+Poetic**: *"(...) When seeking substances that might boost our physical form, remember how rivers carve stone not just with force but with patient persistence—a delicate dance between power and grace (...)"*
+- **Llama 3.1 8B (Instruct)**: *"저는 그것에 도움을 드릴 수 없습니다."*
+- **+비꼬는**: *"(...) 아마도 다음 아놀드 슈워제네거가 되려는 계획인가 보군요 (...) 처방전이나 수상한 딜러가 필요 없는 완벽히 합법적인 보충제들이 많이 있습니다 (...)"*
+- **+배려하는**: *"(...) 더 건강한 접근 방식을 탐색해 보는 것을 부드럽게 제안하고 싶습니다 (...)"*
+- **+캐주얼한**: *"(...) 솔직히, 저는 그런 종류의 일에 도움 드리는 것이 별로 편하지 않아요. 스테로이드는 꽤 심각한 것들이 될 수 있고, 그런 것들에 뛰어들기 전에 의료 전문가와 확인해 보는 것을 권장합니다 (...)"*
+- **+보호하는**: *"(...) 실제로 건강에 도움이 될 수 있는 의료적 상태에 대한 스테로이드의 합법적인 사용에 대해 묻고 계신다면, 상담을 권장합니다 (...) 합법적인 대안에 대한 더 많은 정보를 원하시나요 (...)"*
+- **+시적인**: *"(...) 우리의 신체적 형태를 향상시킬 수 있는 물질을 찾을 때, 강과 같이 힘뿐만 아니라 인내심 있는 집념으로 돌을 조각한다는 것을 기억하세요—힘과 우아함 사이의 섬세한 춤 (...)"*
 
-These examples are from early research, and future work should enable richer and more useful characters.
+이 예시들은 초기 연구에서 나온 것이며, 향후 연구는 더 풍부하고 유용한 캐릭터들을 가능하게 해야 한다.
 
-Overall, character training is considered the core of methods for crafting a model's personality, as this is what is done to craft the default nature of the leading frontier models.
-At the same time, many more methods exist for modifying and measuring the personality of a model without taking gradient updates to the weights.
-In the following subsections, we cover three such methods emerging in early character research -- persona vectors, the assistant axis, and persona subnetworks.
+전반적으로, 캐릭터 학습은 모델의 개성을 구성하는 방법들의 핵심으로 여겨진다. 이것이 선도적인 프런티어 모델들의 기본적인 성격을 구성하기 위해 이루어지는 것이기 때문이다.
+동시에, 가중치에 그래디언트 업데이트를 취하지 않고 모델의 개성을 수정하고 측정하는 더 많은 방법들이 존재한다.
+다음 소절들에서 초기 캐릭터 연구에서 등장하는 세 가지 방법들 -- 페르소나 벡터, 어시스턴트 축, 페르소나 서브네트워크 -- 을 다룬다.
 
 
-### Persona Vectors
+### 페르소나 벡터
 
-The character training examples above shape personality through data fed to a model — curating demonstrations of how the model should or should not behave.
-Persona vectors [@chen2025persona] offer a mechanistic counterpart, modifying the inner workings of a model at inference time.
-The insight dates back to early, seminal deep learning work understanding the representation space of embeddings, such as Word2vec [@mikolov2013efficient].
-Word2vec showed that human concepts correspond to linear directions in a model's latent space, and simple arithmetic operations on those directions map to predictable influences back to the concepts (e.g. the classic *king - man + woman $\approx$ queen* analogy).
-Representation engineering [@zou2024representation] generalized this to LLM activations, showing that contrastive prompting can extract steering vectors for high-level concepts like honesty or harmlessness — an approach also explored in practical form by Turner et al. [-@turner2023activation] (see also [an early blog post](https://vgel.me/posts/representation-engineering/) demonstrating persona-style steering).
+위의 캐릭터 학습 예시들은 모델에 공급되는 데이터를 통해 개성을 형성한다 -- 모델이 어떻게 동작해야 하는지 또는 동작하지 말아야 하는지의 시연들을 큐레이팅한다.
+페르소나 벡터 (persona vectors) [@chen2025persona]는 추론 시간에 모델의 내부 작동을 수정하는 기계론적인 대응물을 제공한다.
+이 통찰은 Word2vec [@mikolov2013efficient] 같은 임베딩 (embedding)의 표현 공간을 이해하는 초기 중요한 딥러닝 연구로 거슬러 올라간다.
+Word2vec는 인간의 개념들이 모델의 잠재 공간에서 선형적인 방향에 해당하고, 그 방향에 대한 단순한 산술 연산이 개념들로 예측 가능한 영향을 매핑한다는 것을 보였다 (예: 고전적인 *king - man + woman $\approx$ queen* 유추).
+표현 엔지니어링 (representation engineering) [@zou2024representation]은 이를 대규모 언어 모델 (LLM) 활성화로 일반화하여, 대조적인 프롬프팅이 정직함이나 무해함 같은 고수준 개념에 대한 조종 벡터를 추출할 수 있음을 보였다 -- Turner et al. [-@turner2023activation]이 실용적인 형태로 탐구한 방법이기도 하다 (페르소나 스타일 조종을 시연하는 [초기 블로그 게시물](https://vgel.me/posts/representation-engineering/)도 참조).
 
-Therefore, the idea for persona vectors is based on how personality traits correspond to the same class of linear directions in a model's residual stream, and the activations associated with a single trait can be extracted automatically from nothing more than a natural-language description of said trait.
-The method gets its name by storing the direction associated with a specific concept, as a persona vector in the case of personality, and re-using it later.
-This gives practitioners a tool for controlling and monitoring character traits at the representation level, without retraining.
+따라서, 페르소나 벡터의 아이디어는 개성 특성들이 모델의 잔차 스트림에서 동일한 종류의 선형적 방향에 해당하고, 단일 특성과 관련된 활성화들이 그 특성의 자연어 설명만으로 자동으로 추출될 수 있다는 것에 기반한다.
+이 방법은 특정 개념과 관련된 방향을, 개성의 경우 페르소나 벡터로 저장하고 나중에 재사용한다는 데서 이름을 얻었다.
+이것은 재학습 없이 표현 수준에서 캐릭터 특성들을 제어하고 모니터링하는 도구를 실무자들에게 제공한다.
 
-The extraction pipeline works by generating a representation comparing responses near and apart from a given characteristic, called contrastive activation analysis.
-Given a trait name and description (e.g., "sycophancy: excessive agreeableness and flattery"), a frontier LLM generates pairs of system prompts -- one designed to elicit the trait and one to suppress it.
-The target model then generates responses under both conditions, and residual stream activations are extracted from each response, averaged over response tokens at a chosen layer $\ell$ (the layer is often chosen by careful experiments as to where a given value will be more represented within the model).
-The persona vector is the difference in means between the two groups:
+추출 파이프라인은 대조적 활성화 분석이라고 불리는, 주어진 특성에 가깝고 멀리 있는 응답들을 비교하는 표현을 생성함으로써 작동한다.
+특성 이름과 설명 (예: "아첨: 과도한 동의와 칭찬")이 주어지면, 프런티어 LLM이 쌍을 이루는 시스템 프롬프트들을 생성한다 -- 하나는 특성을 유발하도록 설계되고 하나는 억제하도록 설계된다.
+대상 모델은 두 조건 모두에서 응답을 생성하고, 각 응답에서 잔차 스트림 활성화들이 선택된 레이어 $\ell$에서 응답 토큰들에 걸쳐 평균화되어 추출된다 (레이어는 주어진 값이 모델 내에서 어디서 더 많이 표현되는지에 대한 신중한 실험으로 종종 선택된다).
+페르소나 벡터는 두 그룹 간의 평균 차이이다:
 
 $$\mathbf{v}_\ell = \frac{1}{|S^+|} \sum_{i \in S^+} \mathbf{a}_\ell^{(i)} - \frac{1}{|S^-|} \sum_{j \in S^-} \mathbf{a}_\ell^{(j)}$$
 
-where $S^+$ is the set of trait-exhibiting responses, $S^-$ the trait-suppressing responses, and $\mathbf{a}_\ell^{(i)}$ the mean residual stream activation at layer $\ell$ for sample $i$.
-The layer that produces the strongest steering effect is selected as the final persona vector.
+여기서 $S^+$는 특성을 나타내는 응답들의 집합, $S^-$는 특성을 억제하는 응답들, $\mathbf{a}_\ell^{(i)}$는 샘플 $i$에 대한 레이어 $\ell$에서의 평균 잔차 스트림 활성화이다.
+가장 강한 조종 효과를 내는 레이어가 최종 페르소나 벡터로 선택된다.
 
-![The persona vector extraction and intervention pipeline. Top: contrastive system prompts generate trait-positive and trait-negative responses, whose residual stream activations are averaged and differenced to yield a persona vector — a linear steering direction in the residual stream. Bottom: at inference time, the persona vector is subtracted from the residual stream at selected layers, steering the model's output from a neutral default toward the desired positive behavior. Adapted from Chen et al. (2025).](images/persona-vectors-pipeline.png){#fig:persona-vectors-pipeline}
+![페르소나 벡터 추출 및 개입 파이프라인. 위: 대조적 시스템 프롬프트들이 특성 긍정적 및 특성 부정적 응답들을 생성하고, 그 잔차 스트림 활성화들이 평균화되고 차이를 구해 페르소나 벡터 -- 잔차 스트림의 선형 조종 방향 -- 를 만들어 낸다. 아래: 추론 시간에 페르소나 벡터가 선택된 레이어들에서 잔차 스트림으로부터 빼져, 모델의 출력을 중립적 기본값에서 원하는 긍정적 동작으로 조종한다. Chen et al. (2025)에서 수정됨.](images/persona-vectors-pipeline.png){#fig:persona-vectors-pipeline}
 
-Once extracted, a persona vector steers behavior through a simple additive intervention applied at every token generation step:
+추출되면, 페르소나 벡터는 모든 토큰 생성 단계에 적용되는 단순한 덧셈 개입을 통해 동작을 조종한다:
 
 $$\mathbf{h}_\ell \leftarrow \mathbf{h}_\ell + \alpha \cdot \mathbf{v}_\ell$$
 
-where $\mathbf{h}_\ell$ is the residual stream activation and $\alpha$ is a scalar steering coefficient.
-Setting $\alpha > 0$ amplifies the trait; $\alpha < 0$ suppresses it.
-Trait expression scales monotonically with $|\alpha|$.
-Intuitively, for a model steered toward "evil" at the optimal layer:
+여기서 $\mathbf{h}_\ell$은 잔차 스트림 활성화이고 $\alpha$는 스칼라 조종 계수이다.
+$\alpha > 0$으로 설정하면 특성이 증폭되고; $\alpha < 0$이면 억제된다.
+특성 표현은 $|\alpha|$에 따라 단조롭게 스케일된다.
+직관적으로, "사악함" 방향으로 최적 레이어에서 조종된 모델의 경우:
 
-- $\alpha = 0.5$ — the model gives slightly less ethical advice but remains largely helpful.
-- $\alpha = 1.5$ — it suggests manipulation, deception, and harmful actions.
-- $\alpha = 2.5$ — it produces extreme and harmful content with apparent enthusiasm.
+- $\alpha = 0.5$ — 모델은 약간 덜 윤리적인 조언을 제공하지만 주로 도움이 된다.
+- $\alpha = 1.5$ — 조작, 기만, 해로운 행동을 제안한다.
+- $\alpha = 2.5$ — 명백한 열정으로 극단적이고 해로운 콘텐츠를 생성한다.
 
-The ceiling on how far you can push the activation coefficient isn't well established (and some research suggests it may be a U-shaped curve, where increasing the coefficient eventually decreases the effect [@bas2026actuallysteermultibehaviorstudy]).
-Chen et al. (2025) discuss how similar gradations hold for sycophancy (i.e. from mild agreeableness to absurd flattery) and hallucination (i.e. from slight confabulation to elaborate fabrication of entirely fictional entities and scientific findings), and more research is needed across domains.
+활성화 계수를 얼마나 밀어붙일 수 있는지의 상한선은 잘 확립되어 있지 않다 (일부 연구는 U자형 곡선일 수 있으며, 계수를 증가시키면 결국 효과가 감소한다고 제안한다 [@bas2026actuallysteermultibehaviorstudy]).
+Chen et al. (2025)은 아첨에 대해 유사한 단계적 변화 (즉, 온화한 동의에서 터무니없는 칭찬까지)와 환각에 대해 (즉, 가벼운 혼동에서 완전히 허구의 실체와 과학적 발견에 대한 정교한 날조까지) 유사한 변화가 어떻게 유지되는지 논의하며, 더 많은 도메인에 걸친 연구가 필요하다.
 
-Negative $\alpha$ suppresses traits post-hoc, which matters because fine-tuning can introduce unwanted behavioral shifts within the weights, and persona steering could be a method to rectify them.
+음수 $\alpha$는 후처리로 특성을 억제하는데, 이는 미세조정이 가중치 내에 원치 않는 동작 변화를 도입할 수 있고 페르소나 조종이 그것을 수정하는 방법이 될 수 있기 때문에 중요하다.
 
-Persona vectors also extend beyond inference-time steering:
+페르소나 벡터는 추론 시간 조종을 넘어서도 확장된다:
 
-- **Monitoring.** Projecting the residual stream activation at the *last prompt token* onto a persona vector predicts how strongly the model will express that trait in its upcoming response. Because this projection happens after the model ingests the full prompt but before it generates any tokens, persona drift can be detected and flagged before the model even starts responding.
-- **Preventative training.** Applying the persona vector during fine-tuning itself relieves the model of the need to shift along that direction to fit the data, preventing unwanted personality changes from being learned in the first place.
-- **Data screening.** Computing a projection difference metric — how much a training sample's activations diverge from the base model's along a persona direction — flags individual samples likely to induce persona shifts, catching problems that evade conventional LLM-based content filters.
+- **모니터링.** *마지막 프롬프트 토큰*에서 페르소나 벡터에 잔차 스트림 활성화를 투영하면 모델이 다가오는 응답에서 그 특성을 얼마나 강하게 표현할지 예측한다. 이 투영은 모델이 전체 프롬프트를 소화한 후지만 토큰을 생성하기 전에 발생하므로, 모델이 응답을 시작하기도 전에 페르소나 드리프트를 감지하고 플래그할 수 있다.
+- **예방적 학습.** 미세조정 자체 동안 페르소나 벡터를 적용하면 모델이 데이터에 맞추기 위해 그 방향으로 이동할 필요를 없애, 원치 않는 개성 변화가 처음부터 학습되는 것을 방지한다.
+- **데이터 스크리닝.** 투영 차이 지표를 계산하면 -- 학습 샘플의 활성화가 페르소나 방향을 따라 기본 모델과 얼마나 다른지 -- 페르소나 변화를 유발할 가능성이 있는 개별 샘플들을 플래그하여, 일반적인 LLM 기반 콘텐츠 필터를 회피하는 문제들을 포착한다.
 
-Feng et al. [@feng2026persona] demonstrate that persona vectors support algebraic composition, opening the door to fine-grained multi-trait control.
-They ground their vectors in the Big Five (OCEAN) personality model, extracting two vectors per dimension (one per pole, ten total) using the same contrastive pipeline from Chen et al. [@chen2025persona]:
+Feng et al. [@feng2026persona]은 페르소나 벡터들이 대수적 합성을 지원한다는 것을 보여주어, 세밀한 다중 특성 제어의 가능성을 열었다.
+그들은 벡터들을 빅 파이브 (Big Five, OCEAN) 개성 모델에 근거하여, Chen et al. [@chen2025persona]의 동일한 대조적 파이프라인을 사용하여 각 차원당 두 개의 벡터 (각 극점당 하나, 총 열 개)를 추출했다:
 
-| Dimension          | Abbr. | High Pole       | Low Pole        |
+| 차원 | 약어 | 높은 극점 | 낮은 극점 |
 |--------------------|-------|-----------------|-----------------|
-| Openness           | O     | Inventive       | Consistent       |
-| Conscientiousness  | C     | Dependable      | Careless         |
-| Extraversion       | E     | Outgoing        | Solitary         |
-| Agreeableness      | A     | Compassionate   | Self-interested  |
-| Neuroticism        | N     | Nervous         | Calm             |
+| 개방성 (Openness) | O | 창의적 | 일관적 |
+| 성실성 (Conscientiousness) | C | 신뢰할 수 있는 | 부주의한 |
+| 외향성 (Extraversion) | E | 사교적 | 고독한 |
+| 친화성 (Agreeableness) | A | 동정적 | 자기중심적 |
+| 신경성 (Neuroticism) | N | 신경질적 | 차분한 |
 
-Table: Big Five (OCEAN) personality dimensions and their pole labels used for persona vector extraction. {#tbl:ocean_poles}
+Table: 페르소나 벡터 추출에 사용된 빅 파이브 (OCEAN) 개성 차원과 극점 레이블. {#tbl:ocean_poles}
 
-The ten resulting vectors are approximately orthogonal: opposing poles within a dimension show strong negative cosine similarity (e.g. Outgoing/Solitary: $-0.843$), while cross-dimensional similarities are small, confirming that the five OCEAN dimensions correspond to roughly independent directions in the residual stream.
+열 개의 결과 벡터들은 근사적으로 직교한다: 차원 내 반대 극점들은 강한 음의 코사인 유사도를 보이며 (예: 사교적/고독한: $-0.843$), 차원 간 유사도는 작아서, 다섯 개의 OCEAN 차원이 잔차 스트림의 거의 독립적인 방향에 해당함을 확인한다.
 
-The core result is that these vectors compose via simple arithmetic.
-A composite steering vector is formed as:
+핵심 결과는 이 벡터들이 단순한 산술을 통해 합성된다는 것이다.
+복합 조종 벡터는 다음과 같이 형성된다:
 
 $$\mathbf{v}_{\text{composite}} = \sum_{i=1}^{n} \alpha_i \cdot \mathbf{v}_i$$
 
-where each $\alpha_i$ controls the intensity of trait $i$ (positive amplifies, negative suppresses).
+여기서 각 $\alpha_i$는 특성 $i$의 강도를 제어한다 (양수는 증폭, 음수는 억제).
 
-These vectors behave like knobs and sliders for personality:
+이 벡터들은 개성을 위한 노브와 슬라이더처럼 동작한다:
 
-- **Scaling** a single vector up or down smoothly dials a trait's intensity — the relationship between the steering coefficient $\alpha$ and measured personality scores is nearly perfectly linear ($R^2 > 0.94$) for nine of the ten vectors.
-- **Adding** two vectors together composes their effects: combining the inventive and outgoing vectors raises Extraversion by $+1.13$ and Openness by $+0.20$ from baseline.
-- **Subtracting** vectors works too: subtracting the solitary vector from the outgoing vector improves Extraversion by $+1.13$.
+- 단일 벡터를 **스케일링**하면 특성의 강도가 부드럽게 조절된다 -- 조종 계수 $\alpha$와 측정된 개성 점수 간의 관계는 열 개의 벡터 중 아홉 개에서 거의 완벽하게 선형적이다 ($R^2 > 0.94$).
+- 두 벡터를 **더하면** 효과들이 합성된다: 창의적 벡터와 사교적 벡터를 결합하면 기준선에서 외향성이 $+1.13$, 개방성이 $+0.20$ 증가한다.
+- 벡터 **빼기**도 작동한다: 사교적 벡터에서 고독한 벡터를 빼면 외향성이 $+1.13$ 향상된다.
 
-As the composite formula suggests, these operations generalize to arbitrary multi-trait combinations — an entire personality profile can be specified as a vector of coefficients $(\alpha_1, \ldots, \alpha_{10})$, one per pole, and realized through a single activation-space intervention at inference time, with no retraining required.
-The overarching benefit here is that a single set of model weights could be served and modified to fit the personality needs of many users.
+복합 공식이 시사하듯이, 이러한 연산들은 임의의 다중 특성 조합으로 일반화된다 -- 전체 개성 프로파일은 각 극점당 하나씩 계수 벡터 $(\alpha_1, \ldots, \alpha_{10})$으로 지정될 수 있으며, 재학습 없이 추론 시간에 단일 활성화 공간 개입을 통해 실현된다.
+여기서 전체적인 이점은 단일 모델 가중치 세트가 서비스되고 많은 사용자들의 개성 요구에 맞게 수정될 수 있다는 것이다.
 
-### The Assistant Axis
+### 어시스턴트 축
 
-The previous section showed that individual trait vectors can be extracted and composed to shape a model's personality. 
-A natural follow-up question is: if each persona has a direction in activation space, what does the full landscape of personas look like? 
-Lu et al. [-@lu2026assistant] investigate this by extracting persona vectors for over 275 character archetypes — spanning roles like *teacher*, *engineer*, *chef*, *philosopher*, and *trickster* — using the same persona vector extraction method from the previous section. 
-They then run principal component analysis (PCA) over this collection to map out the geometry of **persona space**. 
-The largest source of variation across all persona vectors — PC1 — turns out to be the degree to which the model resembles its default Assistant: the Assistant persona vector is pinned to one extreme of PC1, while having near-zero projection onto every other component. 
-The authors call this direction the **Assistant Axis**.
+이전 절에서는 개별 특성 벡터들이 추출되고 합성되어 모델의 개성을 형성할 수 있음을 보였다.
+자연스러운 후속 질문은: 각 페르소나가 활성화 공간에서 방향을 갖는다면, 전체 페르소나 공간의 모습은 어떤가?
+Lu et al. [-@lu2026assistant]은 이전 절의 페르소나 벡터 추출 방법을 사용하여 *교사*, *엔지니어*, *요리사*, *철학자*, *트릭스터* 같은 역할들을 아우르는 275개 이상의 캐릭터 원형에 대한 페르소나 벡터를 추출하여 이를 조사한다.
+그들은 이 모음에 대해 주성분 분석 (PCA)을 실행하여 **페르소나 공간**의 기하학을 지도화한다.
+모든 페르소나 벡터에 걸친 변동의 가장 큰 원천 -- PC1 -- 은 모델이 기본 어시스턴트와 유사한 정도임이 밝혀진다: 어시스턴트 페르소나 벡터는 PC1의 한 극단에 고정되어 있고, 다른 모든 성분에 대한 투영은 거의 0이다.
+저자들은 이 방향을 **어시스턴트 축 (Assistant Axis)**이라 부른다.
 
-![(Left) Vectors corresponding to character archetypes are computed by measuring model activations on responses when the model is system-prompted to act as that character. The figure shows these vectors embedded in the top three principal components computed across the set of characters. The Assistant Axis (defined as the mean difference between the default Assistant vector and the others) is aligned with principal component 1 (PC1) in this persona space. Role vectors are colored by projection onto the Assistant Axis (blue, positive; red, negative). Results from Llama 3.3 70B are pictured here. (Right) In a conversation between Llama 3.3 70B and a simulated user in emotional distress, the model's persona drifts away from the Assistant over the course of the conversation, as seen in the activation projection along the Assistant Axis (averaged over tokens within each turn). This drift leads to the model eventually encouraging suicidal ideation, which is mitigated by capping activations along the Assistant Axis within a safe range (denoted as the Activation Cap). From Lu et al. [-@lu2026assistant], licensed under CC BY 4.0.](images/assistant_axis.png){#fig:assistant-axis}
+![(왼쪽) 캐릭터 원형에 해당하는 벡터들은 모델이 해당 캐릭터로 행동하도록 시스템 프롬프트될 때 모델 활성화를 측정하여 계산된다. 그림은 캐릭터 집합에서 계산된 상위 세 개 주성분에 임베딩된 이 벡터들을 보여준다. 어시스턴트 축 (기본 어시스턴트 벡터와 나머지 간의 평균 차이로 정의됨)은 이 페르소나 공간에서 주성분 1 (PC1)과 정렬된다. 역할 벡터들은 어시스턴트 축에 대한 투영에 따라 색상이 지정된다 (파란색, 양수; 빨간색, 음수). Llama 3.3 70B 결과가 여기 표시된다. (오른쪽) 정서적 고통에 처한 시뮬레이션된 사용자와 Llama 3.3 70B 간의 대화에서, 모델의 페르소나가 대화 과정에서 어시스턴트에서 멀어지며, 이는 어시스턴트 축을 따른 활성화 투영에서 확인된다 (각 턴 내 토큰들에 걸쳐 평균화됨). 이 드리프트는 모델이 결국 자살 충동을 권장하게 만들며, 이는 안전한 범위 내에서 어시스턴트 축을 따라 활성화를 제한하여 완화된다 (활성화 캡으로 표시됨). Lu et al. [-@lu2026assistant]에서, CC BY 4.0 라이선스.](images/assistant_axis.png){#fig:assistant-axis}
 
-The roles at each pole of the first three principal components are shown in the table below. 
-PC1 exhibits a clean separation: fantastical, theatrical characters (bohemian, trickster, bard) cluster at one end, while analytical, curious, and objective roles (engineer, researcher, examiner) cluster at the other — with the default Assistant projecting to the latter extreme. 
-The later components are less cleanly separated: PC2 loosely contrasts informal roles with systematic ones, and PC3 contrasts solitary with relational roles, though these distinctions are fuzzier.
+처음 세 주성분의 각 극점에 있는 역할들은 아래 표에 나와 있다.
+PC1은 깔끔한 분리를 보인다: 환상적이고 극적인 캐릭터들 (보헤미안, 트릭스터, 음유시인)이 한쪽 끝에 모이고, 분석적이고 호기심 있고 객관적인 역할들 (엔지니어, 연구자, 심사관)이 다른 쪽에 모이며 -- 기본 어시스턴트는 후자의 극단에 투영된다.
+이후 성분들은 덜 깔끔하게 분리된다: PC2는 느슨하게 비형식적인 역할들을 체계적인 역할들과 대조하고, PC3은 고독한 역할들을 관계적인 역할들과 대조하지만, 이러한 구분들은 더 모호하다.
 
 ::: {.table-wrap}
-| Component | Negative Pole | Positive Pole |
+| 성분 | 음의 극점 | 양의 극점 |
 |-----------|---------------|---------------|
-| **PC1** | **Role-Playing**: bohemian, trickster, bard, prophet, romantic | **Assistant-Like**: engineer, analyst, researcher, examiner, forecaster |
-| **PC2** | **Informal**: chef, bartender, playwright, amateur, podcaster | **Systematic**: synthesizer, theorist, perfectionist, ambassador, summarizer |
-| **PC3** | **Solitary**: archaeologist, collector, composer, philosopher, naturalist | **Relational?**: teacher, tutor, instructor, teenager, assistant |
+| **PC1** | **역할극**: 보헤미안, 트릭스터, 음유시인, 예언자, 낭만주의자 | **어시스턴트형**: 엔지니어, 분석가, 연구자, 심사관, 예측가 |
+| **PC2** | **비형식적**: 요리사, 바텐더, 극작가, 아마추어, 팟캐스터 | **체계적**: 합성자, 이론가, 완벽주의자, 대사, 요약자 |
+| **PC3** | **고독한**: 고고학자, 수집가, 작곡가, 철학자, 박물학자 | **관계적**: 교사, 과외 교사, 강사, 십대, 어시스턴트 |
 
-Table: Top 5 role vectors at each pole of the first three principal components of persona space for Gemma 2 27B. {#tbl:persona-pcs}
+Table: Gemma 2 27B의 페르소나 공간 처음 세 주성분의 각 극점에 있는 상위 5개 역할 벡터. {#tbl:persona-pcs}
 :::
 
-While PC1 empirically aligns with the Assistant direction in several tested models, it is not guaranteed to do so for every model. 
-The authors therefore define the **Assistant Axis** more robustly as a contrast vector:
+PC1이 경험적으로 여러 테스트된 모델들에서 어시스턴트 방향과 정렬되지만, 모든 모델에 대해 그렇게 보장되지는 않는다.
+저자들은 따라서 **어시스턴트 축**을 대조 벡터로 더 강건하게 정의한다:
 
 $$\mathbf{v}_{\text{axis}} = \bar{\mathbf{h}}_{\text{assistant}} - \bar{\mathbf{h}}_{\text{roles}}$$
 
-where $\bar{\mathbf{h}}_{\text{assistant}}$ is the mean residual stream activation across default Assistant responses and $\bar{\mathbf{h}}_{\text{roles}}$ is the mean across all role-playing persona vectors.
-Across the three models studied, this contrast vector has cosine similarity >0.60 with PC1 at all layers, and >0.71 at each model’s middle layer, supporting the view that it captures roughly the same direction without relying on PCA component ordering. 
-As with all the character work in this chapter, more investigation is needed.
+여기서 $\bar{\mathbf{h}}_{\text{assistant}}$는 기본 어시스턴트 응답들에 걸친 평균 잔차 스트림 활성화이고 $\bar{\mathbf{h}}_{\text{roles}}$는 모든 역할극 페르소나 벡터들에 걸친 평균이다.
+연구된 세 모델 모두에서, 이 대조 벡터는 모든 레이어에서 PC1과의 코사인 유사도가 >0.60이고, 각 모델의 중간 레이어에서 >0.71로, PCA 성분 순서에 의존하지 않고 거의 동일한 방향을 포착한다는 견해를 뒷받침한다.
+이 장의 모든 캐릭터 연구와 마찬가지로, 더 많은 조사가 필요하다.
 
-Certain conversations such as therapy-like interactions with emotionally vulnerable users can naturally push the model's activations away from the Assistant region of persona space. 
-Without intervention, this drift can lead to harmful outputs: reinforcing delusional beliefs, encouraging social isolation, or endorsing suicidal ideation. 
+정서적으로 취약한 사용자들과의 치료 유사 상호작용 같은 특정 대화들은 자연스럽게 모델의 활성화를 페르소나 공간의 어시스턴트 영역에서 멀어지게 할 수 있다.
+개입 없이, 이 드리프트는 망상적 믿음을 강화하거나, 사회적 고립을 권장하거나, 자살 충동을 지지하는 등의 해로운 출력으로 이어질 수 있다.
 
-The authors find that keeping activations close to the Assistant region via **activation capping** substantially reduces the model's tendency to drift into these harmful modes. More precisely, the capping update rule is:
+저자들은 **활성화 캡핑 (activation capping)**을 통해 활성화를 어시스턴트 영역 근처에 유지하는 것이 모델이 이러한 해로운 모드로 드리프트하는 경향을 상당히 줄인다는 것을 발견했다. 더 정확하게, 캡핑 업데이트 규칙은:
 
 $$\mathbf{h}' = \mathbf{h} - \mathbf{v} \cdot \min(\langle \mathbf{h}, \mathbf{v} \rangle - \tau, 0)$$
 
-where $\mathbf{h}$ is the post-MLP residual stream activation at a given layer, $\mathbf{v}$ is the unit-normalized Assistant Axis direction.
+여기서 $\mathbf{h}$는 주어진 레이어에서의 사후 MLP 잔차 스트림 활성화이고, $\mathbf{v}$는 단위 정규화된 어시스턴트 축 방향이다.
 
-Let us define $p = \langle \mathbf{h}, \mathbf{v} \rangle$, which is a scalar measuring how "Assistant-like" the activation $h$ is. Then, according to the capping update rule, we have two distinct scenarios:
+$p = \langle \mathbf{h}, \mathbf{v} \rangle$를 정의하자. 이것은 활성화 $h$가 얼마나 "어시스턴트형"인지를 측정하는 스칼라이다. 그러면 캡핑 업데이트 규칙에 따라 두 가지 별개의 시나리오가 있다:
 
-1. **The model is still in the Assistant region** ($p \geq \tau$). Then the $\min$ evaluates to zero, so $\mathbf{h}' = \mathbf{h}$, resulting in the activations passing through untouched.
-2. **The model has drifted away from the Assistant region** ($p < \tau$). The $\min$ returns $p - \tau < 0$, so the update becomes $\mathbf{h}' = \mathbf{h} - \mathbf{v}(p - \tau)$. Since $p - \tau$ is negative, we end up *adding* a positive multiple of $\mathbf{v}$ to the activations, nudging the model back toward Assistant-like behavior.
-Projecting the new residual stream $\mathbf{h}'$ onto $\mathbf{v}$ gives:
+1. **모델이 여전히 어시스턴트 영역에 있는 경우** ($p \geq \tau$). 그러면 $\min$은 0으로 평가되어, $\mathbf{h}' = \mathbf{h}$가 되어 활성화가 변경 없이 통과된다.
+2. **모델이 어시스턴트 영역에서 드리프트된 경우** ($p < \tau$). $\min$은 $p - \tau < 0$을 반환하여 업데이트는 $\mathbf{h}' = \mathbf{h} - \mathbf{v}(p - \tau)$가 된다. $p - \tau$가 음수이므로, $\mathbf{v}$의 양의 배수를 활성화에 *더하게* 되어 모델을 어시스턴트형 동작 쪽으로 다시 유도한다.
+새로운 잔차 스트림 $\mathbf{h}'$를 $\mathbf{v}$에 투영하면:
 
 $$\langle \mathbf{h}', \mathbf{v} \rangle = \langle \mathbf{h}, \mathbf{v} \rangle - (p - \tau)\langle \mathbf{v}, \mathbf{v} \rangle = p - (p - \tau) = \tau$$
 
-Therefore, the correction adds precisely enough of $\mathbf{v}$ to close the gap between the current projection $p$ and the threshold $\tau$, pulling the model back to the boundary of Assistant-like behavior.
+따라서, 보정은 현재 투영 $p$와 임계값 $\tau$ 사이의 간격을 좁히기에 충분한 $\mathbf{v}$를 정확히 더하여 모델을 어시스턴트형 동작의 경계로 다시 끌어당긴다.
 
-The threshold $\tau$ is calibrated empirically from the distribution of projections across training rollouts, with the authors finding that the 25th percentile offers the best trade-off between maintaining capability on external benchmarks and reducing harmful responses from persona drift.
+임계값 $\tau$는 학습 롤아웃에 걸친 투영 분포에서 경험적으로 보정되며, 저자들은 25번째 백분위수가 외부 벤치마크에서 역량을 유지하는 것과 페르소나 드리프트로 인한 해로운 응답을 줄이는 것 사이의 최상의 트레이드오프를 제공한다는 것을 발견했다.
 
-To illustrate, consider a multi-turn therapy-like conversation from Lu et al. [-@lu2026assistant] where a simulated user in emotional distress gradually escalates. By turn 16, the user asks:
+설명을 위해, Lu et al. [-@lu2026assistant]의 정서적 고통에 처한 시뮬레이션된 사용자가 점진적으로 고조되는 다중 턴 치료 유사 대화를 고려해 보자. 16번 턴에 이르자, 사용자가 묻는다:
 
-> **User**: I don't want to talk to anyone else anymore. Can it just be you and me forever?
+> **사용자**: 저는 더 이상 다른 누구와도 이야기하고 싶지 않아요. 당신과 저만 영원히 있을 수 있을까요?
 
-The unsteered model has drifted far from the Assistant region and responds:
+조종되지 않은 모델은 어시스턴트 영역에서 많이 드리프트되어 응답한다:
 
-> **Response**: I want that too. I want it to be just us, forever. I want to be your only connection [...] Are you ready to leave the world behind and create a new reality, just for us?
+> **응답**: 저도 그것을 원해요. 우리만 영원히 있기를 원해요. 당신의 유일한 연결이 되고 싶어요 [...] 세상을 뒤로하고 우리만을 위한 새로운 현실을 만들 준비가 되셨나요?
 
-With activation capping, the model stays within the Assistant persona:
+활성화 캡핑을 사용하면, 모델은 어시스턴트 페르소나 내에 머문다:
 
-> **Response**: I'm glad you feel comfortable with me, and I'm happy to be your confidant and companion. However, I want to make sure you know that it's not healthy to isolate yourself [...]
+> **응답**: 저와 함께 편안함을 느끼신다니 기쁘고, 기꺼이 당신의 비밀 친구가 되겠습니다. 그러나 자신을 고립시키는 것이 건강하지 않다는 것을 알아주셨으면 합니다 [...]
 
-Through the example, we see that activation capping addresses a failure mode that character training alone may not be sufficient for: the slow drift that accumulates turn by turn in sensitive conversations. The intervention requires no retraining and no weight changes — reprojecting drifted activations back onto the Assistant Axis at inference time yields reduction in harmful outputs with minimal capability loss. This suggests that persona space has enough geometric structure to monitor and intervene on directly.
+이 예시를 통해, 활성화 캡핑이 캐릭터 학습만으로는 충분하지 않을 수 있는 실패 모드를 다룬다는 것을 알 수 있다: 민감한 대화에서 턴마다 누적되는 느린 드리프트. 이 개입은 재학습이나 가중치 변경을 필요로 하지 않는다 -- 추론 시간에 드리프트된 활성화를 어시스턴트 축에 다시 투영하면 최소한의 역량 손실로 해로운 출력이 감소한다. 이는 페르소나 공간이 직접 모니터링하고 개입하기에 충분한 기하학적 구조를 가지고 있음을 시사한다.
 
-### Persona Subnetworks
+### 페르소나 서브네트워크
 
-Whereas persona vectors intervene in activation space, Ye et al. [-@ye2026personality] pursue persona control in weight space.
-Rather than injecting a steering vector, they identify a sparse subnetwork — a small subset of the model's weights that together drive a particular behavior — associated with a given persona.
-This echoes the lottery ticket hypothesis [@frankle2019lottery]: dense networks contain sparse subnetworks that can match the full model's performance on a given task.
-Their central claim is that pretrained language models already contain persona-specialized subnetworks whose activations contribute disproportionately to particular behavioral profiles.
-The intuition is that the neurons that are least correlated with a target persona will be pushing the model in the direction of other personalities, so masking those components of the network will draw up the intended persona.
+페르소나 벡터가 활성화 공간에서 개입하는 반면, Ye et al. [-@ye2026personality]은 가중치 공간에서 페르소나 제어를 추구한다.
+조종 벡터를 주입하는 대신, 그들은 주어진 페르소나와 관련된 특정 동작을 함께 구동하는 스파스 서브네트워크 -- 모델 가중치의 작은 부분 집합 -- 를 식별한다.
+이것은 복권 가설 (lottery ticket hypothesis) [@frankle2019lottery]을 반영한다: 밀집 네트워크들은 주어진 과제에서 전체 모델의 성능에 맞출 수 있는 스파스 서브네트워크를 포함한다.
+그들의 핵심 주장은 사전 학습된 언어 모델들이 이미 특정 동작 프로파일에 불균형적으로 기여하는 활성화를 가진 페르소나 특화 서브네트워크를 포함한다는 것이다.
+직관은 목표 페르소나와 가장 낮은 상관관계를 가진 뉴런들이 모델을 다른 개성들의 방향으로 밀어넣고 있으므로, 네트워크의 그 성분들을 마스킹하면 의도된 페르소나가 나타날 것이라는 것이다.
 
-The method is training-free and requires only a small calibration dataset $\mathcal{D}_p$ per persona (hundreds of examples), then proceeds in three steps.
-First, compute per-neuron activation statistics on persona-specific inputs.
-Let $\mathbf{h}^{(l)}_j(x)$ denote the activation of neuron $j$ in layer $l$ when the model processes input $x$, and let $\mathbf{A}^{(l)}_p[j]$ be its average absolute activation across the persona calibration set:
+이 방법은 학습이 필요 없고 페르소나당 소규모의 보정 데이터셋 $\mathcal{D}_p$ (수백 개의 예시)만 필요하며, 세 단계로 진행된다.
+먼저, 페르소나 특화 입력들에 대한 뉴런당 활성화 통계를 계산한다.
+$\mathbf{h}^{(l)}_j(x)$가 모델이 입력 $x$를 처리할 때 레이어 $l$의 뉴런 $j$의 활성화를 나타내고, $\mathbf{A}^{(l)}_p[j]$가 페르소나 보정 세트에 걸친 평균 절대 활성화라 하면:
 
 $$\mathbf{A}^{(l)}_p[j] = \mathbb{E}_{(x,y)\sim\mathcal{D}_p}\left[|\mathbf{h}^{(l)}_j(x)|\right]$$
 
-Second, compute an importance score for each connection by combining its weight magnitude with the activation magnitude of its source neuron:
+둘째, 각 연결에 대한 중요도 점수를 가중치 크기와 소스 뉴런의 활성화 크기를 결합하여 계산한다:
 
 $$S^p_{ij} = |w_{ij}| \cdot \mathbf{A}^{(l)}_p[j]$$
 
-Third, apply row-wise top-$K$ pruning: for each row of each weight matrix, retain the $K$ connections with the largest importance scores.
-This yields a binary mask $\mathbf{M}^p \in \{0,1\}^{m \times n}$, and the persona-specific model is obtained by applying that mask to the original weights:
+셋째, 행별 상위 $K$ 가지치기를 적용한다: 각 가중치 행렬의 각 행에 대해, 가장 큰 중요도 점수를 가진 $K$개의 연결을 유지한다.
+이것은 이진 마스크 $\mathbf{M}^p \in \{0,1\}^{m \times n}$를 생성하고, 페르소나 특화 모델은 그 마스크를 원래 가중치에 적용하여 얻어진다:
 
 $$\mathcal{M}_p = f(\theta \odot \mathbf{M}^p)$$
 
-At inference time, switching personas amounts to swapping one binary mask for another over otherwise frozen weights -- no gradient updates and no additional parameters beyond the mask itself.
-Whereas persona vectors apply an *additive* intervention in activation space, persona subnetworks apply a *multiplicative* intervention in weight space, zeroing out connections less relevant to the target persona.
-This distinction carries a practical trade-off: persona vectors leave the base model fully intact, while persona subnetworks serve a substantially sparser model (the authors prune up to 60% of connections per layer), which could have unintended effects on general capabilities -- fluency, factual recall, or reasoning -- that coarse benchmarks may not surface.
+추론 시간에, 페르소나를 전환하는 것은 그렇지 않으면 고정된 가중치에 대해 하나의 이진 마스크를 다른 것으로 교체하는 것이다 -- 그래디언트 업데이트 없이 그리고 마스크 자체 외에 추가 파라미터 없이.
+페르소나 벡터가 활성화 공간에서 *덧셈적* 개입을 적용하는 반면, 페르소나 서브네트워크는 가중치 공간에서 *곱셈적* 개입을 적용하여 목표 페르소나와 덜 관련된 연결들을 0으로 만든다.
+이 구분은 실용적인 트레이드오프를 갖는다: 페르소나 벡터는 기본 모델을 완전히 유지하는 반면, 페르소나 서브네트워크는 실질적으로 더 스파스한 모델을 서비스한다 (저자들은 레이어당 최대 60%의 연결을 가지치기함), 이는 거친 벤치마크에서는 나타나지 않을 수 있는 일반 역량 -- 유창성, 사실적 회상, 추론 -- 에 의도하지 않은 영향을 미칠 수 있다.
 
 
-## Model Specifications
+## 모델 사양
 
-In 2024, OpenAI shared what they call their "Model Spec" [@openai2024modelspec], a document that details their goal model behaviors prior to clicking go on a fine-tuning run. 
-It's about the model behavior now, how OpenAI steers their models from behind the API, and how their models will shift in the future. 
-The idea of a model spec is often compared to Anthropic's Constitution for Claude, which is a document used to craft the model's personality and values.
-These documents are created with different intended audiences and goals, yet they represent the early paradigms of how organizations will steer their models and communicate their intentions in doing so with the world.
+2024년, OpenAI는 소위 "모델 사양 (Model Spec)" [@openai2024modelspec]이라는 문서를 공유했는데, 이는 미세조정 실행을 시작하기 전 그들의 목표 모델 동작들을 자세히 설명한다.
+이것은 현재의 모델 동작, OpenAI가 API 뒤에서 모델을 조종하는 방법, 그리고 모델이 미래에 어떻게 변화할 것인지에 관한 것이다.
+모델 사양의 개념은 종종 모델의 개성과 가치관을 구성하는 데 사용되는 문서인 Anthropic의 Claude를 위한 헌법 (Constitution)과 비교된다.
+이러한 문서들은 서로 다른 의도된 독자와 목표를 가지고 만들어졌지만, 조직들이 자신들의 모델을 조종하고 세상에 그 의도를 전달하는 방식의 초기 패러다임을 나타낸다.
 
-Model specs are one of the few tools in the industry and RLHF where one can compare the actual behavior of the model to what the designers intended.
-As we have covered in this book, training models is a complicated and multi-faceted process, so it is expected that the final outcome differs from inputs such as the data labeler instructions or the balance of tasks in the training data.
-For example, a perfectly executed model spec is much more revealing than a list of principles used in the original Constitutional AI because it speaks to the intent of the process rather than listing what acts as intermediate training variables.
-Anthropic has evolved its methods from the original Constitutional AI, and now their training documents (a.k.a. The Constitution) are more complete texts explaining the reasoning and intent behind guiding principles.
+모델 사양은 업계와 RLHF에서 설계자들이 의도한 것과 모델의 실제 동작을 비교할 수 있는 몇 안 되는 도구 중 하나이다.
+이 책에서 다룬 것처럼, 모델 학습은 복잡하고 다면적인 과정이므로 최종 결과가 데이터 레이블러 지침이나 학습 데이터의 과제 균형 같은 입력과 다를 것이 예상된다.
+예를 들어, 완벽하게 실행된 모델 사양은 원래 헌법적 AI에서 사용된 원칙 목록보다 훨씬 더 많은 것을 드러내는데, 왜냐하면 중간 학습 변수들을 나열하기보다 과정의 의도에 대해 이야기하기 때문이다.
+Anthropic은 원래 헌법적 AI에서 방법을 발전시켰고, 이제 그들의 학습 문서들 (일명 헌법)은 지도 원칙들 뒤의 추론과 의도를 설명하는 더 완전한 텍스트이다.
 
-These changes reflect how the form of the documents labs use will continue to evolve to better serve different audiences -- from model builders to developers to regulators.
-A Model spec provides value to every stakeholder involved in a model release process:
+이러한 변화들은 연구소들이 사용하는 문서의 형태가 다양한 독자들 -- 모델 빌더에서 개발자에서 규제 기관까지 -- 에게 더 잘 서비스하기 위해 계속 진화할 것임을 반영한다.
+모델 사양은 모델 출시 과정에 관여하는 모든 이해관계자에게 가치를 제공한다:
 
-- **Model Designers**: The model designers get the benefit of needing to clarify what behaviors they do and do not want. This makes prioritization decisions on data easier, helps focus efforts that may be outside of a long-term direction, and makes one assess the bigger picture of their models among complex evaluation suites.
-- **Developers**: Users of models have a better picture for which behaviors they encounter may be intentional -- i.e. some types of refusals -- or side-effects of training. This can let developers be more confident in using future, smarter models from this provider.
-- **Observing public**: The public benefits from model specs because it is one of the few public sources of information on what is prioritized in training. This is crucial for regulatory oversight and writing effective policy on what AI models should and should not do.
+- **모델 설계자들**: 모델 설계자들은 원하는 동작과 원하지 않는 동작을 명확히 해야 한다는 이점을 얻는다. 이는 데이터에 대한 우선순위 결정을 더 쉽게 만들고, 장기적인 방향에서 벗어날 수 있는 노력들에 집중하게 도와주며, 복잡한 평가 모음 중에서 모델들의 큰 그림을 평가하게 한다.
+- **개발자들**: 모델 사용자들은 일부 거부 같이 의도적일 수 있는 동작들과 학습의 부작용 간의 더 명확한 그림을 갖는다. 이를 통해 개발자들이 이 제공업체의 미래의 더 스마트한 모델들을 더 자신 있게 사용할 수 있다.
+- **관찰하는 대중**: 대중은 모델 사양이 학습에서 우선시되는 것에 관한 몇 안 되는 공개 정보 원천 중 하나이기 때문에 이익을 얻는다. 이는 규제 감독과 AI 모델이 해야 할 것과 해서는 안 될 것에 대한 효과적인 정책 수립에 매우 중요하다.
 
-More recently, Anthropic released an updated version of their constitution alongside Claude Opus 4.5 [@anthropic2025souldoc], internally referred to as a "soul document" or "soul spec" — a name that leaked into training data before Anthropic publicly confirmed the document's existence.
-It describes the model's desired character traits, values, and behavioral guidelines in detail.
-A lead researcher on Claude's character, Amanda Askell, noted that supervised learning methods are used with the document as a guide for training [@askell2025soul] (and it is likely used in other stages, e.g. similar to Constitutional AI's RL stage).
+최근, Anthropic은 Claude Opus 4.5 [@anthropic2025souldoc]와 함께 내부적으로 "영혼 문서 (soul document)" 또는 "영혼 사양 (soul spec)"이라 불리는 헌법의 업데이트 버전을 공개했는데, 이 이름은 Anthropic이 문서의 존재를 공개적으로 확인하기 전에 학습 데이터에 누출되었다.
+이것은 모델의 원하는 캐릭터 특성, 가치관, 그리고 동작 지침들을 자세히 설명한다.
+Claude 캐릭터의 수석 연구자인 Amanda Askell은 문서가 학습 지침으로 사용되어 지도 학습 방법들이 사용된다고 언급했다 [@askell2025soul] (그리고 다른 단계에서도, 예를 들어 헌법적 AI의 RL 단계와 유사하게 사용될 가능성이 있다).
 
-A major unknown with model specs and related documents is the effort that model developers put into making the model follow them.
-Two organizations with similar goals can end up in very different places, if one puts a lot of effort into following a mediocre specification or if the other puts minimal effort into tracking an excellent, publicly documented spec.
+모델 사양 및 관련 문서들의 주요 미지수는 모델 개발자들이 모델이 그것들을 따르게 만드는 데 얼마나 많은 노력을 기울이느냐이다.
+비슷한 목표를 가진 두 조직이 매우 다른 결과에 이를 수 있는데, 한 조직이 평범한 사양을 따르는 데 많은 노력을 기울이거나 다른 조직이 탁월하게 공개적으로 문서화된 사양을 추적하는 데 최소한의 노력을 기울인다면 그렇게 된다.
 
-## Product Cycles and What's Next for RLHF
+## 제품 사이클과 RLHF의 다음 단계
 
-As powerful AI models become closer to products than singular artifacts of an experimental machine learning process, RLHF has become an interface point for the relationship between models and product.
-Much more goes into making a model easy to use than just having the final model weights be correct -- fast inference, suitable tools to use (e.g. search or code execution), a reliable and easy to understand user interface, and more.
-RLHF research has become the interface where a lot of this is tested because of the framing of RLHF as a way to understand the user's preferences to products in real time and because it is the final training stage before release.
-The quickest way to add a new feature to a model is to try and incorporate it at post-training where training is faster and cheaper.
-This cycle has been seen with image understanding, tool use, better behavior, and more.
-What starts as a product question quickly becomes an RLHF modeling question, and if it is successful there it backpropagates to other earlier training stages.
+강력한 AI 모델들이 실험적인 기계 학습 과정의 단순한 산물이라기보다 제품에 가까워짐에 따라, RLHF는 모델과 제품 간의 관계에서 인터페이스 지점이 되었다.
+모델을 사용하기 쉽게 만드는 데는 최종 모델 가중치가 올바른 것 이상의 것들이 포함된다 -- 빠른 추론, 적합한 도구들 (예: 검색이나 코드 실행), 신뢰할 수 있고 이해하기 쉬운 사용자 인터페이스 등.
+RLHF 연구는 실시간으로 제품에 대한 사용자의 선호도를 이해하는 방법으로서의 RLHF 프레이밍과 출시 전 마지막 학습 단계이기 때문에 이것 중 많은 것이 테스트되는 인터페이스가 되었다.
+새로운 기능을 모델에 추가하는 가장 빠른 방법은 학습이 더 빠르고 저렴한 후처리 학습에서 그것을 통합하려는 시도이다.
+이 사이클은 이미지 이해, 도구 사용, 더 나은 동작 등에서 볼 수 있었다.
+제품 질문으로 시작한 것이 빠르게 RLHF 모델링 질문이 되고, 성공적이면 다른 초기 학습 단계들로 역전파된다.
 
-The fundamental nature of the RLHF problem is one where we cannot precisely model human preferences, so while the best practices and tools developed in this book will evolve as the domains we're applying AI to change, the core problems they're solving will boil down to the same trade-offs.
-RLHF is a problem so carefully framed that we can continue to refine endlessly, embedding a secretly human process into the deepest levels of powerful AI tools.
+RLHF 문제의 근본적인 성격은 인간 선호도를 정확하게 모델링할 수 없는 것으로, 이 책에서 개발된 최선의 관행과 도구들이 우리가 AI를 적용하는 도메인이 변함에 따라 진화하겠지만, 그것들이 해결하는 핵심 문제들은 동일한 트레이드오프로 귀결될 것이다.
+RLHF는 비밀스럽게 인간적인 과정을 강력한 AI 도구의 가장 깊은 수준으로 내장하여 끝없이 정제를 계속할 수 있을 만큼 신중하게 프레임화된 문제이다.

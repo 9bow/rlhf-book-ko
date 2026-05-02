@@ -5,299 +5,299 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "Reinforcement Learning"
+prev-chapter: "강화학습"
 prev-url: "06-policy-gradients"
-page-title: Reasoning
-search-title: "Chapter 7: Reasoning"
-next-chapter: "Direct Alignment"
+page-title: 추론
+search-title: "7장: 추론"
+next-chapter: "직접 정렬"
 next-url: "08-direct-alignment"
 ---
 
-# Reasoning Training & Inference-Time Scaling
+# 추론 훈련 및 추론 시점 스케일링
 
-Reasoning models and inference-time scaling enabled a massive step in language model performance in the end of 2024, through 2025, and into the future.
-Inference-time scaling is the ability to improve model performance by using more computation during generation, such as producing longer reasoning chains or sampling multiple responses.
-Language models trained to think extensively before answering exploit this property remarkably well.
-These models, trained with a large amount of reinforcement learning with verifiable rewards (RLVR) [@lambert2024t], still utilize large amounts of RLHF.
-In this chapter we review the path that led the AI community to a transformed appreciation for RL's potential in language models, review the fundamentals of RLVR, highlight key works, and point to the future debates that will define the area in the next few years.
+추론 모델과 추론 시점 스케일링 (inference-time scaling)은 2024년 말부터 2025년을 거쳐 이후로도 계속해서 언어 모델 성능에 커다란 도약을 가능케 했다.
+추론 시점 스케일링이란 더 긴 추론 연쇄를 생성하거나 여러 응답을 샘플링하는 등 생성 단계에서 더 많은 연산을 사용함으로써 모델 성능을 향상시키는 능력을 말한다.
+응답하기 전에 충분히 사고하도록 훈련된 언어 모델은 이 특성을 놀라울 만큼 잘 활용한다.
+검증 가능한 보상을 활용한 강화학습 (RLVR) [@lambert2024t]으로 대규모 훈련된 이 모델들은 여전히 많은 양의 인간 피드백 기반 강화학습 (RLHF)을 활용한다.
+이 장에서는 AI 커뮤니티가 언어 모델에서 RL의 가능성을 새롭게 인식하게 된 경로를 살펴보고, RLVR의 기본 원리를 검토하며, 주요 연구들을 소개하고, 향후 몇 년간 이 분야를 정의할 논쟁들을 짚어본다.
 
-To start, at the 2016 edition of the Neural Information Processing Systems (NeurIPS) conference, Yann LeCun first introduced his now-famous cake metaphor for where learning happens in modern machine learning systems:
+먼저, 2016년 신경 정보 처리 시스템 학회 (NeurIPS) 에서 Yann LeCun은 현대 머신러닝 시스템에서 학습이 어디서 일어나는지를 설명하는 유명한 케이크 비유를 처음 소개했다:
 
-> If intelligence is a cake, the bulk of the cake is unsupervised learning, the icing on the cake is supervised learning, and the cherry on the cake is reinforcement learning (RL).
+> 만약 지능이 케이크라면, 케이크의 대부분은 비지도 학습이고, 케이크의 아이싱은 지도 학습이며, 케이크 위의 체리는 강화학습 (RL)이다.
 
-This analogy is now largely complete with modern language models and recent changes to the post-training stack.
-RLHF was the precursor to this, and RL for reasoning models, primarily on math, code, and science topics, was its confirmation.
-In this analogy: 
+이 비유는 현대 언어 모델과 최근의 후처리 학습 (post-training) 스택의 변화로 이제 거의 완성된 형태가 되었다.
+RLHF는 이 과정의 선구자였고, 주로 수학, 코드, 과학 분야에서의 추론 모델을 위한 RL이 그 확인이었다.
+이 비유에서:
 
-- Self-supervised learning on vast swaths of internet data makes up the majority of the cake (especially when viewed in compute spent in FLOPs), 
-- The beginning of post-training in supervised fine-tuning (SFT) for instructions tunes the model to a narrower distribution, and 
-- Finally "pure" reinforcement learning (RL) is the cherry on top. The scaled up reinforcement learning used to create the new "reasoning" or "thinking" models is this finishing piece (along with the help of RLHF, which isn't considered classical RL, as we'll explain).
+- 방대한 인터넷 데이터에 대한 자기지도 학습 (self-supervised learning)이 케이크의 대부분을 차지하고 (특히 FLOPs 단위의 연산량으로 보면),
+- 지시 조정을 위한 지도 미세조정 (SFT)으로 시작하는 후처리 학습이 모델을 좁은 분포로 조정하며,
+- 마지막으로 "순수한" 강화학습 (RL)이 케이크 위의 체리다. 새로운 "추론" 또는 "사고" 모델을 만들기 위해 사용되는 대규모 강화학습이 바로 이 마무리 단계다 (고전적 RL로 간주되지 않는 RLHF의 도움과 함께, 이에 대해서는 후술한다).
 
-This little bit of reasoning training emerged with **thinking models** that use a combination of the post-training techniques discussed in this book to align preferences along with RL training on verifiable domains to dramatically increase capabilities such as reasoning, coding, and mathematics problem solving.
+이 소량의 추론 훈련은 **사고 모델 (thinking models)** 을 탄생시켰는데, 이 모델들은 선호도를 정렬하기 위한 이 책에서 논의된 후처리 학습 기법들과 검증 가능한 도메인에 대한 RL 훈련을 결합하여 추론, 코딩, 수학 문제 풀기 등의 역량을 극적으로 향상시킨다.
 
-The training method for these models, Reinforcement Learning with Verifiable Rewards (RLVR) [@lambert2024t], proceeds very similarly to RLHF, but it makes the reward model optional in lieu of a scoring function that returns a positive reward when the answer is correct and 0 otherwise.
+이 모델들의 훈련 방법인 검증 가능한 보상을 활용한 강화학습 (RLVR) [@lambert2024t]은 RLHF와 매우 유사하게 진행되지만, 답이 맞을 때 양의 보상을 반환하고 그렇지 않으면 0을 반환하는 채점 함수 대신 보상 모델을 선택적으로 사용한다.
 
-For example, consider how different it is to score responses for RLHF versus RLVR.
-In RLHF, a reward model must evaluate subjective qualities:
+예를 들어, RLHF와 RLVR에서 응답에 점수를 매기는 방식이 얼마나 다른지 생각해보자.
+RLHF에서 보상 모델은 주관적인 특성들을 평가해야 한다:
 
-> **Prompt**: Explain the concept of opportunity cost in economics.
+> **프롬프트**: 경제학에서 기회비용의 개념을 설명하세요.
 >
-> **Response**: Opportunity cost is the value of the next best alternative you give up when making a decision. For example, if you spend an hour studying instead of working, the opportunity cost is the wages you could have earned...
+> **응답**: 기회비용은 어떤 결정을 내릴 때 포기하는 차선책의 가치입니다. 예를 들어, 일하는 대신 한 시간 공부하면, 기회비용은 벌 수 있었던 임금입니다...
 
-Scoring this response requires judging clarity, accuracy, completeness, and helpfulness -- all qualities that require learned preferences and lack a definitive correct answer.
+이 응답을 채점하려면 명확성, 정확성, 완전성, 유용성을 판단해야 하는데, 이 모든 특성들은 학습된 선호도를 필요로 하며 명확한 정답이 없다.
 
-In contrast, RLVR uses verification functions that return definitive scores.
-For mathematics:
+반면, RLVR은 명확한 점수를 반환하는 검증 함수를 사용한다.
+수학의 경우:
 
-> **Prompt**: What is the sum of all prime numbers less than 20?
+> **프롬프트**: 20보다 작은 모든 소수의 합은 무엇인가요?
 >
-> **Response**: The prime numbers less than 20 are 2, 3, 5, 7, 11, 13, 17, and 19.
-> Adding them: 2 + 3 = 5, then 5 + 5 = 10, then 10 + 7 = 17, then 17 + 11 = 28, then 28 + 13 = 41, then 41 + 17 = 58, and finally 58 + 19 = 77.
-> The answer is $\boxed{77}$.
+> **응답**: 20보다 작은 소수는 2, 3, 5, 7, 11, 13, 17, 19입니다.
+> 더하면: 2 + 3 = 5, 5 + 5 = 10, 10 + 7 = 17, 17 + 11 = 28, 28 + 13 = 41, 41 + 17 = 58, 마지막으로 58 + 19 = 77.
+> 답은 $\boxed{77}$입니다.
 >
-> **Verification**: `extracted_answer == 77` → Reward = 1
+> **검증**: `extracted_answer == 77` → 보상 = 1
 
-The `\boxed{}` notation is a convention adopted from mathematical typesetting that makes answer extraction straightforward -- a simple regular expression can pull the final answer from the response, regardless of how the model arrived at it.
-Note that other answer extraction methods exist, such as just using the phrase "The answer is: " as also shown above, special tokens like `<answer>`, or delimiters like `####`.
+`\boxed{}` 표기법은 수식 조판에서 채택된 관례로, 모델이 어떻게 답에 도달했든 간에 응답에서 최종 답을 쉽게 추출할 수 있게 해준다. 단순한 정규 표현식으로 답을 뽑아낼 수 있다.
+위에서도 보이듯이 "답은: "이라는 문구를 사용하거나, `<answer>` 같은 특수 토큰, 또는 `####` 같은 구분자 등 다른 답 추출 방법들도 있다.
 
-For code generation, verification often takes the form of unit tests:
+코드 생성의 경우, 검증은 종종 단위 테스트의 형태를 취한다:
 
-> **Prompt**: Write a Python function `fib(n)` that returns the nth Fibonacci number, where fib(0) = 0 and fib(1) = 1.
+> **프롬프트**: fib(0) = 0, fib(1) = 1인 n번째 피보나치 수를 반환하는 Python 함수 `fib(n)`을 작성하세요.
 >
-> **Response**:
+> **응답**:
 > def fib(n):
 >     if n < 2:
 >         return n
 >     return fib(n - 1) + fib(n - 2)
 >
-> **Verification (unit tests)**:
+> **검증 (단위 테스트)**:
 >
-> assert fib(0) == 0   # base case
-> assert fib(1) == 1   # base case
-> assert fib(10) == 55 # larger value
-> (All tests pass → Reward = 1)
+> assert fib(0) == 0   # 기저 사례
+> assert fib(1) == 1   # 기저 사례
+> assert fib(10) == 55 # 더 큰 값
+> (모든 테스트 통과 → 보상 = 1)
 
 
-Unit tests are the natural verification function for code: they execute the model's solution against known input-output pairs. 
-A common form of scoring is to perform the simple gating: If all assertions pass, the reward is 1; if any fail, the reward is 0. 
-Other setups use partial credit proportional to the amount of tests passed.
-For both these examples, no learned reward model is needed and most setups go without one (because the models are robust to over-optimization in these domains), but one can be used with a linear combination of rewards.
+단위 테스트는 코드의 자연스러운 검증 함수다: 알려진 입출력 쌍에 대해 모델의 솔루션을 실행한다.
+일반적인 채점 방식은 단순한 게이팅을 수행하는 것이다: 모든 어설션이 통과하면 보상은 1이고, 하나라도 실패하면 보상은 0이다.
+다른 설정에서는 통과한 테스트 비율에 비례하여 부분 점수를 부여한다.
+두 예시 모두에서 학습된 보상 모델은 필요하지 않으며 대부분의 설정에서 사용하지 않지만 (이 도메인에서 모델들이 과최적화에 강건하기 때문), 보상의 선형 결합으로 하나를 사용할 수도 있다.
 
-The ideas behind RLVR are not new to the RL literature, where the core idea of taking gradient updates based on whether the answer is correct is almost the textbook definition of reinforcement learning. 
-The innovations when applying this to language models are largely how to apply it while maintaining the strong, general capabilities of the model being fine-tuned. Within that, there are many related ideas in the language modeling literature where the model learns from feedback regarding the correctness of the answer.
+RLVR의 기본 아이디어는 RL 문헌에서 새로운 것이 아니며, 답이 맞는지 여부에 따라 그래디언트 업데이트를 수행한다는 핵심 아이디어는 거의 교과서적인 강화학습의 정의에 해당한다.
+이를 언어 모델에 적용할 때의 혁신은 주로 미세조정되는 모델의 강력하고 범용적인 역량을 유지하면서 어떻게 적용할 것인가에 있다. 그 안에는 모델이 답의 정확성에 관한 피드백으로부터 학습하는 언어 모델링 문헌의 여러 관련 아이디어들이 있다.
 
-Originally, in the work I was a part of that coined RL with Verifiable Rewards (RLVR) [@lambert2024t], the method was to be named RL with Ground Truth rewards (RLGT). 
-Yet RLVR is subtly different from learning solely from ground truth answers. 
-In domains like mathematics, a single ground truth answer is available to verify solutions, as we saw above. 
-In other domains, such as code generation or precise instruction following, answers can be verified with a checking function (e.g., a unit test), even when there are multiple correct solutions rather than just a single ground truth answer.
-The core to progress on RLVR is having a variety and depth of these verifiable problems, even if the exact solution isn't known a priori.
+원래, 내가 참여한 연구에서 RLVR (검증 가능한 보상을 활용한 RL)이라는 이름을 붙인 작업 [@lambert2024t]에서, 이 방법은 지상 진실 보상을 활용한 RL (RLGT)로 명명될 예정이었다.
+하지만 RLVR은 순전히 지상 진실 답변으로만 학습하는 것과 미묘하게 다르다.
+수학과 같은 도메인에서는 위에서 본 것처럼 솔루션을 검증할 수 있는 단일 지상 진실 답이 존재한다.
+코드 생성이나 정밀한 지시 따르기와 같은 다른 도메인에서는, 단일 지상 진실 답이 아니라 여러 정답이 있더라도 검사 함수(예: 단위 테스트)로 답을 검증할 수 있다.
+RLVR 발전의 핵심은 정확한 솔루션을 사전에 알지 못하더라도 이러한 검증 가능한 문제들의 다양성과 깊이를 갖추는 것이다.
 
-![RLVR in the form of an RL feedback loop. Instead of a reward model, a verification function is used.](images/rlvr-system.png){#fig:rlvr}
+![RLVR을 RL 피드백 루프 형태로 표현한 그림. 보상 모델 대신 검증 함수가 사용된다.](images/rlvr-system.png){#fig:rlvr}
 
-The first models to successfully deploy this type of training were OpenAI's o1 [@openai2024o1] and the open-weight model DeepSeek R1 [@guo2025deepseek]. 
-Soon after, the entire AI industry prioritized this training process and model style.
-The core change here is more a reallocation of the stages of training and the priority of different behaviors rather than this type of RL setup being entirely new.
-Reasoning models brought an era where scaling RL training is expected.
+이러한 유형의 훈련을 처음으로 성공적으로 배포한 모델은 OpenAI의 o1 [@openai2024o1]과 오픈 웨이트 모델인 DeepSeek R1 [@guo2025deepseek]이었다.
+이후 AI 업계 전체가 이 훈련 과정과 모델 스타일을 우선순위에 두게 되었다.
+여기서의 핵심 변화는 이 유형의 RL 설정이 완전히 새로운 것이라기보다, 훈련 단계의 재배분과 서로 다른 행동들의 우선순위 변화에 가깝다.
+추론 모델은 RL 훈련의 스케일링이 기대되는 시대를 열었다.
 
-As for the type of behavior these models accrue, consider the following example with DeepSeek V3 0325 versus their reasoning model, DeepSeek R1, on the query `Write me a short poem about a goldfish`. 
-DeepSeek V3 is very to the point:
+이 모델들이 갖추게 되는 행동 유형을 살펴보기 위해, `금붕어에 관한 짧은 시를 써줘`라는 쿼리에 대해 DeepSeek V3 0325와 추론 모델인 DeepSeek R1을 비교해보자.
+DeepSeek V3는 매우 직접적이다:
 
-> **Response**: Goldfish Dreams
+> **응답**: 금붕어의 꿈
 >
-> In a bowl of glass so clear and round,
-> A tiny goldfish swims without a sound.
-> With scales that gleam like sunlight's kiss,
-> He drifts along in watery bliss.
-> 
-> A flick of fin, a flash so bright,
-> Chasing bubbles in the light.
-> Does he dream of oceans wide?
-> Or is his little world enough---his pride?
+> 맑고 둥근 유리 그릇 속에,
+> 작은 금붕어가 소리 없이 헤엄친다.
+> 햇빛의 키스처럼 빛나는 비늘로,
+> 물속의 행복 속에 떠다닌다.
+>
+> 지느러미를 팔랑이고, 빛처럼 번쩍이며,
+> 빛 속의 거품을 쫓아다닌다.
+> 넓은 바다를 꿈꾸는가?
+> 아니면 작은 세계로 충분한가---그것이 그의 자부심?
 
-Meanwhile, DeepSeek R1's experience is different.
-It first generates numerous thinking tokens to craft a response before responding to the user.
-The answer appears as:
+한편, DeepSeek R1의 경험은 다르다.
+먼저 사용자에게 응답하기 전에 응답을 작성하기 위한 수많은 사고 토큰을 생성한다.
+응답은 다음과 같이 나타난다:
 
-> **Response**: `<thinking>` Okay, the user wants a short poem about a goldfish. Let me start by brainstorming some goldfish-related imagery. Goldfish are often in bowls, right? So maybe start with the setting. Words like "gilded bowl" or "crystal globe" could work.
-> 
-> Next, think about the movement of the goldfish. They swim smoothly, so words like "dart", "glide", or "swirl" come to mind. Maybe describe their fins as "silken" to emphasize delicacy.
-> 
-> Then, consider the environment around the goldfish. Sunlight through water creates shimmering effects. Words like "sunbeams dance" or "ripples spin" might capture that. Including elements like castles or pebbles adds a playful touch.
-> 
-> Themes? Maybe the contrast between the goldfish's small world and its perception of freedom. The bowl as a universe, tiny but complete. Ending with a sense of mystery or silent observation could give depth. Need to keep it concise, maybe four stanzas with a rhyme scheme. Let me check the rhythm and flow. Avoid clichés but keep it accessible. Alright, let's piece it together. `</thinking>` 
-> 
-> Gilded Dreams in Liquid Glass
-> 
-> A gilded bowl, a crystal globe,
-> Where tiny tides in silence flow---
-> A flash of orange, a whispered robe,
-> You dart through sunlit indigo.
-> 
-> Your world is small, yet boundless too---
-> Each pebble, castle, weed unfurled.
-> The surface bends the sky to blue,
-> And ripples spin your liquid world.
-> 
-> You glide through myths we'll never know,
-> A silent monarch, veiled in mist.
-> Do dreams drift where the bubbles go?
-> Or memories in amethyst?
-> 
-> We watch you trace your endless sphere---
-> A universe within a tear.
+> **응답**: `<thinking>` 좋아, 사용자가 금붕어에 관한 짧은 시를 원하네. 금붕어와 관련된 이미지들을 브레인스토밍해보자. 금붕어는 종종 어항에 있지, 그렇지? 그러니 배경으로 시작하면 어떨까. "황금빛 그릇"이나 "수정 지구"같은 단어들이 괜찮을 것 같다.
+>
+> 다음으로, 금붕어의 움직임을 생각해보자. 금붕어는 부드럽게 헤엄치니까, "쏜살같이", "미끄러지다", "소용돌이치다" 같은 단어가 떠오른다. "비단 같은" 지느러미로 섬세함을 강조할 수도 있겠다.
+>
+> 그런 다음, 금붕어 주변 환경을 생각해보자. 물속의 햇빛은 반짝이는 효과를 만든다. "햇빛이 춤추다"나 "물결이 돌다" 같은 표현이 그 느낌을 잡을 수 있을 것 같다. 성이나 자갈 같은 요소를 포함하면 장난스러운 느낌을 더할 수 있다.
+>
+> 주제는? 금붕어의 작은 세계와 자유에 대한 인식 사이의 대비가 좋을 것 같다. 그릇을 하나의 우주로, 작지만 완전한 것으로. 신비감이나 조용한 관찰로 끝내면 깊이가 생길 것 같다. 간결하게 유지해야 하니, 아마 운율 체계가 있는 네 연 정도. 리듬과 흐름을 확인해보자. 진부한 표현은 피하되 접근하기 쉽게. 자, 조합해보자. `</thinking>`
+>
+> 액체 유리 속의 황금빛 꿈
+>
+> 황금빛 그릇, 수정 지구,
+> 작은 파도가 고요히 흐르는 곳---
+> 주황빛 섬광, 속삭이는 예복,
+> 햇살 인디고 속을 너는 가로지른다.
+>
+> 너의 세계는 작지만, 끝없기도 하다---
+> 각각의 자갈, 성, 펼쳐진 잡초.
+> 수면이 하늘을 파랗게 굽히고,
+> 물결이 너의 액체 세계를 돌린다.
+>
+> 우리가 결코 알 수 없는 신화를 헤치며,
+> 안개에 가려진 조용한 군주.
+> 거품이 가는 곳에 꿈이 떠다니는가?
+> 아니면 자수정 속의 기억들?
+>
+> 우리는 너의 끝없는 구를 바라본다---
+> 눈물 속의 하나의 우주.
 
-The tokens in the `<thinking>` tags are the model's reasoning.
-For more complex problems the reasoning stage can take thousands of tokens before producing an answer.
-So, long-context language models were a prerequisite to advanced reasoning behavior, but that is not the focus of this chapter.
+`<thinking>` 태그 안의 토큰이 모델의 추론이다.
+더 복잡한 문제의 경우 추론 단계는 답을 생성하기 전에 수천 개의 토큰을 사용할 수 있다.
+따라서 고급 추론 행동의 전제조건은 장문 맥락 언어 모델이었지만, 그것이 이 장의 초점은 아니다.
 
-The core intuition for *how this training works* is that for a given model, we repeat the following cycle:
+*이 훈련이 어떻게 작동하는지*에 대한 핵심 직관은 주어진 모델에 대해 다음 사이클을 반복한다는 것이다:
 
-1. Sample multiple answers to multiple questions,
-2. Take gradient steps towards the answers that are correct, and
-3. Repeat, revisiting the same data. 
+1. 여러 질문에 대해 여러 답을 샘플링하고,
+2. 정답인 답변들 방향으로 그래디언트 스텝을 취하며,
+3. 같은 데이터를 재방문하며 반복한다.
 
-Remarkably, this extremely simple approach (when done with a careful distribution of data and stable training infrastructure) helps the models learn by revisiting the same questions again and again.
-Even more remarkable is that the improvements on these training questions generalize to questions and (some) domains the models have never seen!
+놀랍게도, 이 극도로 단순한 접근법은 (신중한 데이터 분포와 안정적인 훈련 인프라와 함께 수행될 때) 같은 질문들을 반복해서 재방문함으로써 모델이 학습하도록 돕는다.
+더욱 놀라운 것은 이 훈련 질문들에서의 개선이 모델이 한 번도 본 적 없는 질문들과 (일부) 도메인으로 일반화된다는 것이다!
 
-This simple approach allows the models to lightly search over behavior space and the RL algorithm increases the likelihood of behaviors that are correlated with correct answers.
+이 단순한 접근법은 모델들이 행동 공간을 가볍게 탐색할 수 있게 하고, RL 알고리즘은 정답과 상관관계가 있는 행동들의 가능성을 높인다.
 
-## The Origins of New Reasoning Models
+## 새로운 추론 모델의 기원
 
-Here we detail the high-level trends that led to the explosion of reasoning models in 2025. 
+여기서는 2025년 추론 모델의 폭발적 성장으로 이어진 고수준 트렌드를 자세히 설명한다.
 
-### Why Does RL Work Now?
+### 왜 지금 RL이 작동하는가?
 
-Despite many, many takes that "RL doesn't work yet" [@irpan2018deep] or papers detailing deep reproducibility issues with RL [@henderson2018deep], the field overcame it to find high-impact applications.
-Some are covered in this book, such as ChatGPT's RLHF and DeepSeek R1's RLVR, but many others exist, including improving chip design [@mirhoseini2020chip], mastering video gameplay [@schrittwieser2020mastering], self-driving [@cusumano2025robust], and more.
-The takeoff of RL-focused training on language models indicates progress on many fundamental issues for the research area, including:
+"RL은 아직 작동하지 않는다" [@irpan2018deep]는 수많은 주장들이나 RL의 심각한 재현성 문제를 상세히 기술한 논문들 [@henderson2018deep]에도 불구하고, 이 분야는 이를 극복하여 높은 영향력을 가진 응용을 찾아냈다.
+그 중 일부는 이 책에서 다루고 있는데, ChatGPT의 RLHF와 DeepSeek R1의 RLVR이 그것이며, 칩 설계 개선 [@mirhoseini2020chip], 비디오 게임 마스터하기 [@schrittwieser2020mastering], 자율주행 [@cusumano2025robust] 등 많은 다른 것들도 있다.
+언어 모델에 대한 RL 중심 훈련의 도약은 이 연구 분야의 여러 근본적인 문제들에서의 진전을 나타내는데, 다음과 같은 것들을 포함한다:
 
-- **Stability of RL can be solved**: For its entire existence, the limiting factor on RL's adoption has been stability. This manifests in two ways. First, the learning itself can be fickle and not always work. Second, the training itself is known to be more brittle than standard language model training and more prone to loss spikes, crashes, etc. Countless new model releases are using this style of RL training with verifiable rewards on top of a pretrained base model and substantial academic uptake has occurred. The technical barriers to entry on RL are at an all time low.
+- **RL의 안정성은 해결될 수 있다**: RL의 존재 내내, 채택을 제한하는 요인은 안정성이었다. 이는 두 가지 방식으로 나타난다. 첫째, 학습 자체가 까다롭고 항상 작동하지 않을 수 있다. 둘째, 훈련 자체가 표준 언어 모델 훈련보다 더 취약하고 손실 급증, 충돌 등에 더 취약한 것으로 알려져 있다. 수많은 새 모델 출시들이 사전 학습된 기반 모델 위에 검증 가능한 보상을 활용한 이 스타일의 RL 훈련을 사용하고 있으며, 상당한 학술적 채택이 이루어졌다. RL 진입에 대한 기술적 장벽은 역대 최저 수준이다.
 
-- **Open-source versions already "exist"**: Many tools already exist for training language models with RLVR and related techniques. 
-Examples include TRL [@vonwerra2022trl], Open Instruct [@lambert2024t], veRL [@sheng2024hybridflow], and OpenRLHF [@hu2024openrlhf], where many of these are building on optimizations from earlier in the arc of RLHF and post-training. The accessibility of tooling is enabling a large and accelerating body of research.
+- **오픈소스 버전이 이미 "존재한다"**: 언어 모델을 RLVR 및 관련 기법으로 훈련하기 위한 많은 도구들이 이미 존재한다.
+예로는 TRL [@vonwerra2022trl], Open Instruct [@lambert2024t], veRL [@sheng2024hybridflow], OpenRLHF [@hu2024openrlhf]가 있으며, 이 중 많은 것들이 RLHF와 후처리 학습의 이전 발전에서의 최적화를 기반으로 구축되고 있다. 도구 접근성이 크고 가속화되는 연구 체계를 가능하게 하고 있다.
 
-Multiple resources point to RL training for reasoning only being viable with leading models coming out from about 2024 onwards, indicating that a certain level of underlying capability was needed in the models before reasoning training was possible.
+여러 자료들은 추론을 위한 RL 훈련이 약 2024년부터 나오는 선도적인 모델들에서만 실현 가능하다는 것을 지적하며, 추론 훈련이 가능하기 전에 모델의 특정 수준의 기본 역량이 필요했음을 나타낸다.
 
-### RL Training vs. Inference-time Scaling
+### RL 훈련 대 추론 시점 스케일링
 
-Training with reinforcement learning to elicit reasoning behaviors and performance on verifiable domains is closely linked to the ideas of inference-time scaling.
-Inference-time scaling, also called test-time scaling, is the general class of methods that use more computational power at inference in order to perform better at downstream tasks.
-Methods for inference-time scaling were studied before the release of DeepSeek R1 and OpenAI's o1, which both massively popularized investment in RL training specifically.
-Examples include value-guided sampling [@liu2023don] or repeated random sampling with answer extraction [@brown2024large].
-Beyond this, inference-time scaling can be used to improve more methods of AI training beyond chain-of-thought reasoning to solve problems, such as with reward models that consider the options deeply [@ankner2024critique] [@liu2025inference].
+추론 행동을 유발하고 검증 가능한 도메인에서 성능을 향상시키기 위한 강화학습 훈련은 추론 시점 스케일링의 아이디어와 밀접하게 연결되어 있다.
+테스트 시점 스케일링 (test-time scaling)이라고도 불리는 추론 시점 스케일링은 다운스트림 작업에서 더 나은 성능을 위해 추론 시 더 많은 연산 능력을 사용하는 방법들의 일반적 범주다.
+추론 시점 스케일링 방법들은 RL 훈련에 대한 투자를 대규모로 대중화한 DeepSeek R1과 OpenAI의 o1 출시 이전에도 연구되었다.
+예로는 가치 유도 샘플링 [@liu2023don]이나 답 추출을 이용한 반복 무작위 샘플링 [@brown2024large]이 있다.
+그 외에도, 추론 시점 스케일링은 사고의 연쇄 (CoT) 추론을 통한 문제 해결을 넘어 옵션을 심층적으로 고려하는 보상 모델 [@ankner2024critique] [@liu2025inference]과 같은 AI 훈련의 더 많은 방법들을 개선하는 데 사용될 수 있다.
 
-RL training is a short path to inference-time scaling laws being used, but in the long-term we will have more methods for eliciting the inference-time tradeoffs we need for best performance.
-Training models heavily with RL often enables them to generate more tokens per response in a way that is strongly correlated with improved, downstream performance (though, while this sequence length increase is the default, research also exists explicitly on improving performance *without* relying on this inference-time scaling). 
-This is a substantial shift from the length-bias seen in early RLHF systems [@singhal2023long], where the human preference training had a side effect of increasing the response average length for marginal gains on preference rankings.
+RL 훈련은 추론 시점 스케일링 법칙을 사용하기 위한 짧은 경로지만, 장기적으로는 최상의 성능을 위한 추론 시점 트레이드오프를 이끌어내는 더 많은 방법들이 있을 것이다.
+RL로 모델을 많이 훈련하면 종종 개선된 다운스트림 성능과 강하게 상관관계가 있는 방식으로 응답당 더 많은 토큰을 생성할 수 있게 된다 (이 시퀀스 길이 증가가 기본값이지만, 이 추론 시점 스케일링에 의존하지 않고 성능을 향상시키는 것에 대한 연구도 명시적으로 존재한다).
+이는 초기 RLHF 시스템에서 보인 길이 편향 [@singhal2023long]에서 상당한 전환인데, 인간 선호도 훈련이 선호도 순위에서의 미미한 이득을 위해 응답 평균 길이를 증가시키는 부작용을 가졌었다.
 
-Other than the core RL trained models there are many methods being explored to continue to push the limits of reasoning and inference-time compute.
-These are largely out of the scope of this book due to their rapidly evolving nature, but they include distilling reasoning behavior from a larger RL trained model to a smaller model via instruction tuning [@muennighoff2025s1], composing more inference calls [@chen2024more], and more.
-What is important here is the correlation between downstream performance and an increase in the number of tokens generated -- otherwise it is just wasted energy.
-
-
-### The Future (Beyond Reasoning) of RLVR
-
-In many domains, these new flavors of RLVR are much more aligned with the goals of developers by being focused on performance rather than behavior. 
-Standard fine-tuning APIs generally use a parameter-efficient fine-tuning method such as LoRA (Low-Rank Adaptation, a parameter-efficient method that trains only small added matrices rather than all model weights, also referred to as parameter-efficient fine-tuning, PEFT) with supervised fine-tuning on instructions. 
-Developers pass in prompts and completions and the model is tuned to match that by updating model parameters to match the completions, which increases the prevalence of features from your data in the model's generations.
-
-RLVR is focused on matching answers. 
-Given queries and correct answers, RLVR helps the model learn to produce the correct answers. 
-While standard instruction tuning is done with 1 or 2 epochs of loss updates over the data, RLVR gets its name by doing hundreds or thousands of epochs over the same few data points to give the model time to learn new behaviors. 
-This can be viewed as reinforcing positive behaviors that would work sparingly in the base model version into robust behaviors after RLVR.
-
-**The scope of RL training for language models continues to grow**: The biggest takeaway from o1 and R1 on a fundamental scientific level was that we have even more ways to train language models to potentially valuable behaviors. 
-The more open doors that are available to researchers and engineers, the more optimism we should have about AI's general trajectory. 
+핵심 RL 훈련 모델들 외에도 추론과 추론 시점 연산의 한계를 계속 밀어붙이기 위해 탐구되고 있는 많은 방법들이 있다.
+이것들은 빠르게 진화하는 특성으로 인해 이 책의 범위를 크게 벗어나지만, 더 큰 RL 훈련 모델로부터 지시 조정을 통해 작은 모델로 추론 행동을 증류하거나 [@muennighoff2025s1], 더 많은 추론 호출을 구성하거나 [@chen2024more], 그 외의 것들을 포함한다.
+여기서 중요한 것은 다운스트림 성능과 생성된 토큰 수 증가 사이의 상관관계다---그렇지 않으면 단순한 에너지 낭비일 뿐이다.
 
 
-## Understanding Reasoning Training Methods
+### RLVR의 미래 (추론 너머)
 
-The investment in reasoning has instigated a major evolution in the art of how models are trained to follow human instructions.
-These recipes still use the common pieces discussed in earlier chapters (as discussed in Chapter 3 with the overview of DeepSeek R1's recipe), including instruction fine-tuning, reinforcement learning from human feedback, and reinforcement learning with verifiable rewards (RLVR). 
-The core change is using far more RLVR and applying the other training techniques in different orders -- traditionally for a reasoning model the core training step is either a large-scale RL run or a large-scale instruction tuning run on *outputs* of another model that had undergone a substantial portion of RLVR training (referred to as distillation).
+많은 도메인에서, 이러한 새로운 형태의 RLVR은 행동보다 성능에 집중함으로써 개발자들의 목표와 훨씬 더 잘 맞는다.
+표준 미세조정 API는 일반적으로 LoRA (Low-Rank Adaptation, 모든 모델 가중치 대신 소규모의 추가된 행렬만 훈련하는 파라미터 효율적 방법으로, 파라미터 효율적 미세조정, PEFT라고도 함)와 같은 파라미터 효율적 미세조정 방법을 지시 사항에 대한 지도 미세조정과 함께 사용한다.
+개발자들은 프롬프트와 완성을 전달하고, 모델은 그 완성들을 매칭하도록 조정되는데, 이는 모델 파라미터를 업데이트하여 데이터의 특성들이 모델 생성에서 더 많이 나타나도록 한다.
 
-### Reasoning Research Pre OpenAI's o1 or DeepSeek R1
+RLVR은 답 매칭에 집중한다.
+쿼리와 정답이 주어지면, RLVR은 모델이 정답을 생성하도록 학습하는 데 도움을 준다.
+표준 지시 조정이 데이터에 대한 1~2 에폭의 손실 업데이트로 수행되는 반면, RLVR은 같은 소수의 데이터 포인트에 대해 수백 혹은 수천 에폭을 수행함으로써 모델이 새로운 행동을 학습할 시간을 갖도록 한다.
+이는 기반 모델 버전에서 드물게 작동할 긍정적 행동들을 RLVR 이후 강건한 행동으로 강화하는 것으로 볼 수 있다.
 
-Before the takeoff of reasoning models, a substantial effort was made to understand how to train language models to be better at verifiable domains.
-The main difference between these works below is that their methodologies did not scale up to the same factor as those used in DeepSeek R1 and subsequent models, or they resulted in models that made sacrifices in overall performance in exchange for higher mathematics or coding abilities.
-The underlying ideas and motivations are included to paint a broader picture for how reasoning models emerged within the landscape.
+**언어 모델을 위한 RL 훈련의 범위는 계속 확장된다**: o1과 R1에서 근본적인 과학적 수준에서의 가장 중요한 교훈은 언어 모델을 잠재적으로 가치 있는 행동들로 훈련할 수 있는 더 많은 방법들이 있다는 것이다.
+연구자들과 엔지니어들에게 열린 더 많은 문이 있을수록, AI의 일반적인 궤적에 대해 더 낙관적이어야 한다.
 
-Some of the earliest efforts to train language models on verifiable domains include the self-taught reasoner (STaR) line of work [@zelikman2022star] [@Zelikman2024QuietSTaRLM] and TRICE [@hoffman2023training], which both used ground-truth reward signals to encourage chain-of-thought reasoning in models throughout 2022 and 2023. 
-STaR effectively approximates the policy gradient algorithm, but in practice filters samples differently and uses a cross-entropy measure instead of a log-probability, and Quiet-STaR expands on this with very related ideas of recent reasoning models by having the model generate tokens before trying to answer the verifiable question (which helps with training performance).
-TRICE [@hoffman2023training] also improves reasoning by generating traces and then optimizing with a custom Markov chain Monte Carlo inspired expectation maximization algorithm. 
-VinePPO [@VinePPO] followed these and used a setup that shifted closer to modern reasoning models. 
-VinePPO uses a PPO-based algorithm with binary rewards for math question correctness, training on GSM8K and MATH.
-Other work before OpenAI's o1 and DeepSeek R1 used code execution as a feedback signal for training [@gehring2024rlefgroundingcodellms], [@xu2024dpo] or verification for theorem proving (called Reinforcement Learning from Verifier Feedback, RLVF, here) [@amit2024models]. 
-Tülu 3 expanded on these methods by using a simple PPO trainer to reward completions with correct answers -- most importantly while maintaining the model's overall performance on a broad suite of evaluations.
-The binary rewards of Tülu 3 and modern reasoning training techniques can be contrasted with the iterative approach of STaR or the log-likelihood rewards of Quiet-STaR.
 
-### Early Reasoning Models
+## 추론 훈련 방법 이해하기
 
-A summary of the foundational reasoning research reports, some of which are accompanied by open data and model weights, following DeepSeek R1 is shown in @tbl:reasoning_list.
+추론에 대한 투자는 모델들이 인간의 지시를 따르도록 훈련하는 예술의 주요한 진화를 촉발했다.
+이 레시피들은 여전히 이전 장들에서 논의된 공통 요소들을 사용한다 (DeepSeek R1의 레시피 개요와 함께 3장에서 논의된 바와 같이), 여기에는 지시 미세조정, 인간 피드백 기반 강화학습, 검증 가능한 보상을 활용한 강화학습 (RLVR)이 포함된다.
+핵심 변화는 훨씬 더 많은 RLVR을 사용하고 다른 훈련 기법들을 다른 순서로 적용하는 것이다---전통적으로 추론 모델에서 핵심 훈련 단계는 대규모 RL 실행이거나, 상당한 RLVR 훈련을 거친 다른 모델의 *출력*에 대한 대규모 지시 조정 실행이다 (증류라고 함).
+
+### OpenAI의 o1 또는 DeepSeek R1 이전의 추론 연구
+
+추론 모델의 도약 이전에, 언어 모델이 검증 가능한 도메인에서 더 잘 할 수 있도록 훈련하는 방법을 이해하기 위한 상당한 노력이 있었다.
+아래에 소개된 연구들과의 주요 차이점은 그 방법론들이 DeepSeek R1과 후속 모델들에서 사용된 것과 동일한 요인으로 확장되지 않았거나, 전반적인 성능을 희생하는 대가로 수학이나 코딩 능력이 더 높은 모델을 만들었다는 것이다.
+기저의 아이디어와 동기는 추론 모델이 그 환경 속에서 어떻게 등장했는지 더 넓은 그림을 그리기 위해 포함되었다.
+
+검증 가능한 도메인에서 언어 모델을 훈련하는 가장 초기의 노력 중 일부에는 자기 교육 추론자 (STaR) 연구 라인 [@zelikman2022star] [@Zelikman2024QuietSTaRLM]과 TRICE [@hoffman2023training]가 있는데, 이들은 모두 2022년과 2023년 내내 모델들의 사고의 연쇄 (CoT) 추론을 장려하기 위해 지상 진실 보상 신호를 사용했다.
+STaR은 효과적으로 정책 그래디언트 알고리즘을 근사하지만, 실제로는 샘플을 다르게 필터링하고 로그 확률 대신 교차 엔트로피 측정을 사용한다. Quiet-STaR은 모델이 검증 가능한 질문에 답하기 전에 토큰을 생성하도록 하는 (훈련 성능에 도움이 됨) 최근 추론 모델의 매우 관련된 아이디어로 이를 확장한다.
+TRICE [@hoffman2023training]는 또한 흔적을 생성한 다음 맞춤형 마르코프 연쇄 몬테카를로 영감의 기댓값 최대화 알고리즘으로 최적화함으로써 추론을 개선한다.
+VinePPO [@VinePPO]는 이들을 따라 현대 추론 모델에 더 가까운 설정을 사용했다.
+VinePPO는 GSM8K와 MATH에서 훈련하면서 수학 질문 정확성에 대한 이진 보상과 함께 PPO 기반 알고리즘을 사용한다.
+OpenAI의 o1과 DeepSeek R1 이전의 다른 연구들은 훈련을 위한 피드백 신호로 코드 실행을 사용했거나 [@gehring2024rlefgroundingcodellms], [@xu2024dpo], 정리 증명을 위한 검증 (여기서는 검증자 피드백을 활용한 강화학습, RLVF라고 함) [@amit2024models]을 사용했다.
+Tülu 3는 정답이 있는 완성에 보상을 주기 위해 단순한 PPO 트레이너를 사용함으로써 이 방법들을 확장했다---가장 중요하게는 광범위한 평가 집합에서 모델의 전반적인 성능을 유지하면서.
+Tülu 3와 현대 추론 훈련 기법의 이진 보상은 STaR의 반복적 접근법이나 Quiet-STaR의 로그 우도 보상과 대비될 수 있다.
+
+### 초기 추론 모델들
+
+DeepSeek R1에 이어 일부는 공개 데이터 및 모델 가중치와 함께 제공되는 기초적인 추론 연구 보고서들의 요약이 @tbl:reasoning_list에 나와 있다.
 
 ::: {.table-wrap}
-| Date        | Name                        | TLDR                                                                  | Open weights | Open data |
+| 날짜        | 이름                        | 요약                                                                  | 공개 가중치 | 공개 데이터 |
 |-------------|----------------------------|-----------------------------------------------------------------------|--------------|-----------|
-| 2025-01-22  | DeepSeek R1 [@guo2025deepseek]             | RL-based upgrade to DeepSeek, big gains on math & code reasoning      |  Yes      | No   |
-| 2025-01-22  | Kimi 1.5 [@team2025kimi]                  | Scales PPO/GRPO on Chinese/English data; strong AIME maths            | No           | No        |
-| 2025-03-31  | Open-Reasoner-Zero [@hu2025openreasonerzero]   | Fully open replication of base model RL      |  Yes      |  Yes   |
-| 2025-04-10  | Seed-Thinking 1.5 [@seed2025seed]         | ByteDance RL pipeline with dynamic CoT gating                         | Yes     | No   |
-| 2025-04-30  | Phi-4 Reasoning [@abdin2025phi4]          | 14B model; careful SFT→RL; excels at STEM reasoning                   | Yes      | No        |
-| 2025-05-02  | Llama-Nemotron [@bercovich2025llamanemotron]   | Multi-size "reasoning-toggle" models                 |  Yes      |  Yes   |
-| 2025-05-12  | INTELLECT-2 [@primeintellectteam2025intellect2reasoningmodeltrained] | First, publicly documented globally-decentralized RL training run                    |  Yes      |  Yes   |
-| 2025-05-12  | Xiaomi MiMo [@xia2025mimo]                | End-to-end reasoning pipeline from pre- to post-training              | Yes          | No       |
-| 2025-05-14  | Qwen 3 [@yang2025qwen3]                   | Similar to R1 recipe applied to new models                    |  Yes      | No   |
-| 2025-05-21  | Hunyuan-TurboS [@liu2025hunyuan]          | Mamba-Transformer MoE, adaptive long/short CoT                        | No           | No        |
-| 2025-05-28  | Skywork OR-1 [@he2025skyworkor1]          | RL recipe avoiding entropy collapse; beats DeepSeek on AIME           |  Yes      |  Yes   |
-| 2025-06-04  | Xiaomi MiMo VL [@coreteam2025mimovltechnicalreport]                | Adapting reasoning pipeline end-to-end to include multi-modal tasks              | Yes          | No       |
-| 2025-06-04  | OpenThoughts [@guha2025openthoughts]      | Public 1.2M-example instruction dataset distilled from QwQ-32B                    |  Yes      |  Yes   |
-| 2025-06-10  | Magistral [@mistral2025magistral]         | Pure RL on Mistral 3; multilingual CoT; small model open-sourced      |  Yes| No        |
-| 2025-06-16 | MiniMax-M1 [@minimax2025minimax_m1] | Open-weight 456B MoE hybrid/Lightning Attention reasoning model; 1M context; RL w/CISPO; releases 40K/80K thinking-budget checkpoints | Yes | No |
-| 2025-07-10 | Kimi K2 [@kimiteam2025kimik2]                            | 1T MoE (32B active) with MuonClip (QK-clip) for stability; 15.5T token pretrain without loss spikes; multi-stage post-train with agentic data synthesis + joint RL; releases base + post-trained checkpoints.                               | Yes          | No         |
-| 2025-07-28 | GLM-4.5 [@zeng2025glm45] | Open-weight 355B-A32B MoE "ARC" model with thinking/non-thinking modes; 23T-token multi-stage training + post-train w/ expert iteration and RL; releases GLM-4.5 + GLM-4.5-Air (MIT). | Yes | No |
-| 2025-08-20 | Nemotron Nano 2 [@nvidia2025nemotronnano2]               | Hybrid Mamba-Transformer for long "thinking traces"; FP8 pretraining at 20T tokens then compression/distillation; explicitly releases multiple checkpoints plus "majority" of pre/post-training datasets.                                       | Yes          | Yes (most) |
-| 2025-09-09 | K2-Think [@llm3602025k2think]                            | Parameter-efficient math reasoning system: a 32B open-weights model with test-time scaling recipe; positioned as fully open incl. training data/code (per release materials).                                                                       | Yes          | Yes        |
-| 2025-09-23 | LongCat-Flash-Thinking [@mlcteam2025longcat]             | 560B MoE reasoning model; report is explicit about a staged recipe from long-CoT cold start to large-scale RL; open-source release.                                                                                                             | Yes          | No         |
-| 2025-10-21 | Ring-1T [@ringteam2025everystepevolves]                  | Trillion-scale "thinking model" with RL scaling focus; report frames bottlenecks/solutions for scaling RL at 1T and releases an open model.                                                                                                             | Yes          | No         |
-| 2025-11-20 | OLMo 3 Think [@teamolmo2025olmo3]         | Fully open "model flow" release: reports the entire lifecycle (stages, checkpoints, and data points) and positions OLMo 3 Think 32B as a flagship open thinking model.                                        | Yes          | Yes        |
-| 2025-12-02 | DeepSeek V3.2 [@deepseekai2025v32]                       | Open-weight MoE frontier push with a report that foregrounds attention efficiency changes, RL framework upgrades, and data synthesis for agentic/reasoning performance.                                                                             | Yes          | No         |
-| 2025-12-05 | K2-V2 [@liu2025k2] | 70B dense "360-open" model trained from scratch; with 3-effort SFT-only post-training for controllable thinking. | Yes | Yes |
-| 2025-12-15 | Nemotron 3 Nano [@nvidia2025nemotron3nano]               | 30B-A3B MoE hybrid Mamba-Transformer; pretrain on 25T tokens and includes SFT + large-scale RL; explicitly states it ships weights + recipe/code + most training data.                                                                      | Yes          | Yes (most) |
-| 2025-12-16 | MiMo-V2-Flash [@mimo2025flash] | 309B MoE (15B active) optimized for speed: hybrid SWA/GA attention (5:1, 128-token window) + lightweight MTP; FP8 pretrain on 27T tokens; post-train with MOPD + large-scale agentic RL for reasoning/coding. | Yes | No |
-Table: A summary of the notable reasoning model technical reports in 2025, the first year of substantial inference-time scaling with RLHF. {#tbl:reasoning_list}
+| 2025-01-22  | DeepSeek R1 [@guo2025deepseek]             | DeepSeek의 RL 기반 업그레이드, 수학 및 코드 추론에서 큰 향상      |  예      | 아니오   |
+| 2025-01-22  | Kimi 1.5 [@team2025kimi]                  | 중국어/영어 데이터에서 PPO/GRPO 확장; 강력한 AIME 수학            | 아니오           | 아니오        |
+| 2025-03-31  | Open-Reasoner-Zero [@hu2025openreasonerzero]   | 기반 모델 RL의 완전 공개 복제      |  예      |  예   |
+| 2025-04-10  | Seed-Thinking 1.5 [@seed2025seed]         | 동적 CoT 게이팅을 가진 ByteDance RL 파이프라인                         | 예     | 아니오   |
+| 2025-04-30  | Phi-4 Reasoning [@abdin2025phi4]          | 14B 모델; 신중한 SFT→RL; STEM 추론 우수                   | 예      | 아니오        |
+| 2025-05-02  | Llama-Nemotron [@bercovich2025llamanemotron]   | 다중 크기 "추론 전환" 모델                 |  예      |  예   |
+| 2025-05-12  | INTELLECT-2 [@primeintellectteam2025intellect2reasoningmodeltrained] | 최초의 공개 문서화된 전 세계적으로 분산된 RL 훈련 실행                    |  예      |  예   |
+| 2025-05-12  | Xiaomi MiMo [@xia2025mimo]                | 사전 학습에서 후처리 학습까지의 엔드투엔드 추론 파이프라인              | 예          | 아니오       |
+| 2025-05-14  | Qwen 3 [@yang2025qwen3]                   | 새로운 모델에 적용된 R1 레시피와 유사                    |  예      | 아니오   |
+| 2025-05-21  | Hunyuan-TurboS [@liu2025hunyuan]          | Mamba-Transformer MoE, 적응형 장/단 CoT                        | 아니오           | 아니오        |
+| 2025-05-28  | Skywork OR-1 [@he2025skyworkor1]          | 엔트로피 붕괴를 피하는 RL 레시피; AIME에서 DeepSeek 능가           |  예      |  예   |
+| 2025-06-04  | Xiaomi MiMo VL [@coreteam2025mimovltechnicalreport]                | 멀티모달 작업을 포함하기 위한 엔드투엔드 추론 파이프라인 적응              | 예          | 아니오       |
+| 2025-06-04  | OpenThoughts [@guha2025openthoughts]      | QwQ-32B에서 증류된 공개 120만 예시 지시 데이터셋                    |  예      |  예   |
+| 2025-06-10  | Magistral [@mistral2025magistral]         | Mistral 3에 대한 순수 RL; 다국어 CoT; 소형 모델 오픈소스화      |  예| 아니오        |
+| 2025-06-16 | MiniMax-M1 [@minimax2025minimax_m1] | 오픈 웨이트 456B MoE 하이브리드/Lightning Attention 추론 모델; 1M 컨텍스트; CISPO를 이용한 RL; 40K/80K 사고 예산 체크포인트 출시 | 예 | 아니오 |
+| 2025-07-10 | Kimi K2 [@kimiteam2025kimik2]                            | 안정성을 위한 MuonClip (QK-clip)을 갖춘 1T MoE (32B 활성); 손실 급증 없는 15.5T 토큰 사전 학습; 에이전트 데이터 합성 + 공동 RL을 통한 다단계 후처리 학습; 기반 + 후처리 학습 체크포인트 출시.                               | 예          | 아니오         |
+| 2025-07-28 | GLM-4.5 [@zeng2025glm45] | 사고/비사고 모드를 가진 오픈 웨이트 355B-A32B MoE "ARC" 모델; 전문가 반복 및 RL을 이용한 23T 토큰 다단계 훈련 + 후처리 학습; GLM-4.5 + GLM-4.5-Air (MIT) 출시. | 예 | 아니오 |
+| 2025-08-20 | Nemotron Nano 2 [@nvidia2025nemotronnano2]               | 긴 "사고 흔적"을 위한 하이브리드 Mamba-Transformer; 20T 토큰에서 FP8 사전 학습 후 압축/증류; 여러 체크포인트와 사전/후처리 학습 데이터셋의 "대부분"을 명시적으로 출시.                                       | 예          | 예 (대부분) |
+| 2025-09-09 | K2-Think [@llm3602025k2think]                            | 파라미터 효율적 수학 추론 시스템: 테스트 시점 스케일링 레시피를 가진 32B 오픈 웨이트 모델; 훈련 데이터/코드를 포함한 완전 공개로 포지셔닝 (출시 자료 기준).                                                                       | 예          | 예        |
+| 2025-09-23 | LongCat-Flash-Thinking [@mlcteam2025longcat]             | 560B MoE 추론 모델; 보고서는 긴 CoT 콜드 스타트에서 대규모 RL까지의 단계별 레시피를 명시적으로 설명; 오픈소스 출시.                                                                                                             | 예          | 아니오         |
+| 2025-10-21 | Ring-1T [@ringteam2025everystepevolves]                  | RL 스케일링에 초점을 맞춘 조 단위 "사고 모델"; 보고서는 1T에서 RL 스케일링의 병목/해결책을 프레임으로 제시하고 오픈 모델을 출시.                                                                                                             | 예          | 아니오         |
+| 2025-11-20 | OLMo 3 Think [@teamolmo2025olmo3]         | 완전 공개 "모델 플로우" 출시: 전체 생애주기(단계, 체크포인트, 데이터 포인트)를 보고하고 OLMo 3 Think 32B를 플래그십 공개 사고 모델로 포지셔닝.                                        | 예          | 예        |
+| 2025-12-02 | DeepSeek V3.2 [@deepseekai2025v32]                       | 주의 효율성 변경, RL 프레임워크 업그레이드, 에이전트/추론 성능을 위한 데이터 합성을 전면에 내세운 보고서를 가진 오픈 웨이트 MoE 프론티어 추진.                                                                             | 예          | 아니오         |
+| 2025-12-05 | K2-V2 [@liu2025k2] | 제어 가능한 사고를 위한 3-노력 SFT 전용 후처리 학습을 가진 처음부터 훈련된 70B 밀집 "360-공개" 모델. | 예 | 예 |
+| 2025-12-15 | Nemotron 3 Nano [@nvidia2025nemotron3nano]               | 30B-A3B MoE 하이브리드 Mamba-Transformer; 25T 토큰에서 사전 학습 및 SFT + 대규모 RL 포함; 가중치 + 레시피/코드 + 대부분의 훈련 데이터를 명시적으로 제공.                                                                      | 예          | 예 (대부분) |
+| 2025-12-16 | MiMo-V2-Flash [@mimo2025flash] | 속도에 최적화된 309B MoE (15B 활성): 하이브리드 SWA/GA 어텐션 (5:1, 128-토큰 윈도우) + 경량 MTP; 27T 토큰에서 FP8 사전 학습; 추론/코딩을 위한 MOPD + 대규모 에이전트 RL을 이용한 후처리 학습. | 예 | 아니오 |
+표: RLHF를 통한 상당한 추론 시점 스케일링의 첫 해인 2025년의 주목할 만한 추론 모델 기술 보고서 요약. {#tbl:reasoning_list}
 :::
 
 
-### Common Practices in Training Reasoning Models
+### 추론 모델 훈련의 일반적 관행
 
-In this section we detail common methods used to sequence training stages and modify data to maximize performance when training a reasoning model. 
+이 섹션에서는 추론 모델을 훈련할 때 성능을 극대화하기 위해 훈련 단계를 순서화하고 데이터를 수정하는 데 사용되는 일반적인 방법들을 자세히 설명한다.
 
-Note that these papers could have used a listed technique and not mentioned it while their peers do, so these examples are a subset of known implementations and should be used as reference, but not a final proclamation on what is an optimal recipe.
+이 논문들이 나열된 기법을 사용했음에도 언급하지 않았을 수 있고, 반면 동료들은 언급했을 수 있음을 주의하라. 따라서 이 예시들은 알려진 구현의 일부이며 최적 레시피에 대한 최종 선언이 아닌 참고로 활용해야 한다.
 
-- **Offline difficulty filtering**: A core intuition of RLVR is that models can only learn from examples where there is a gradient. If the starting model for RLVR can solve a problem either 100% of the time or 0% of the time, there will be no gradient between different completions to the prompt (i.e., all strategies appear the same to the policy gradient algorithm). Many models have used difficulty filtering before starting a large-scale RL to restrict the training problems to those that the starting point model solves only 20-80% of the time. This data is collected by sampling N, e.g. 16, completions to each prompt in the training set and verifying which percentage are correct. Forms of this were used by Seed-Thinking 1.5, Open Reasoner Zero, Phi 4, INTELLECT-2, MiMo RL, Skywork OR-1, and others.
-- **Per-batch online filtering** (or difficulty curriculums throughout training): To complement the offline filtering to find the right problems to train on, another major question is: what order should the problems be presented to the model during learning? In order to address this, many models use online filtering of questions in the batch, prebuilt curriculums/data schedulers, saving harder problems for later in training, or other ideas to improve long-term stability. Related ideas are used by Kimi 1.5, Magistral, Llama-Nemotron, INTELLECT-2, MiMo-RL, Hunyuan-TurboS, and others.
-- **Remove KL penalty**: As the length of RL runs (in any metric, total GPU hours, FLOPS, or RL steps) increased for reasoning models relative to RLHF training, and the reward function became less prone to over-optimization, many models removed the KL penalty constraining the RL-learned policy to be similar to the base model of training. This allows the model to further explore during its training. This was used by RAGEN [@wang2025ragenunderstandingselfevolutionllm], Magistral, OpenReasonerZero, Skywork OR-1, and others.
-- **Relaxed policy-gradient clipping**: New variations of the algorithm GRPO, such as DAPO [@yu2025dapo], proposed modifications to the two sided clipping objective used in GRPO (or PPO) in order to enable better exploration. Clipping has also been shown to cause potentially spurious learning signals when rewards are imperfect [@shao2025spurious]. This two-sided clipping with different ranges per gradient direction is used by RAGEN, Magistral, INTELLECT-2, and others.
-- **Off-policy data (or fully asynchronous updates)**: As the length of completions needed to solve tasks with RL increases dramatically with harder problems (particularly in the *variance* of the response length, where there are often outliers with extremely long lengths), compute in RL runs can sit idle. To solve this, training is moving to asynchronous updates or changing how problems are arranged into batches to improve overall throughput. Partial-to-full asynchronous (off-policy) data is used by Seed-Thinking 1.5, INTELLECT-2, and others. 
-- **Additional format rewards**: In order to make the reasoning process predictable, many models add minor rewards to make sure the model follows the correct format of e.g. `<think>...</think>` before an answer. This is used by DeepSeek R1, OpenReasonerZero, Magistral, Skywork OR-1, and others.
-- **Language consistency rewards**: Similar to format rewards, some multilingual reasoning models use language consistency rewards to prioritize models that do not change languages while reasoning (for a better and more predictable user experience). These include DeepSeek R1, Magistral, and others.
-- **Length penalties**: Many models use different forms of length penalties during RL training to either stabilize the learning process over time or to mitigate overthinking on hard problems. Some examples include Kimi 1.5 progressively extending the target length to combat overthinking (while training accuracy is high across difficulty curriculum) or INTELLECT-2 running a small length penalty throughout. Progressively extending the training sequence length mitigates overthinking by forcing the model to first reason effectively in a domain with a more limited thinking budget, and then transitioning to longer training where the model can use those behaviors efficiently on more complex problems. Others use overlong filtering and other related implementations to improve throughput.
-- **Loss normalization**: There has been some discussion (see the chapter on policy gradients or [@liu2025understanding]) around potential length or difficulty biases introduced by the per-group normalization terms of the original GRPO algorithm. As such, some models, such as Magistral or MiMo, chose to normalize either losses or advantages at the batch level instead of the group level.
-- **Parallel test-time compute scaling**: Combining answers from multiple parallel, independently-sampled rollouts can lead to substantial improvements over using the answer from a single rollout. The most naive form of parallel test-time compute scaling, as done in DeepSeek-R1, Phi-4, and others, involves using the answer returned by a majority of rollouts as the final answer. A more advanced technique is to use a scoring model trained to select the best answer out of the answers from the parallel rollouts. This technique has yet to be adopted by open reasoning model recipes (as of June 2025) but was mentioned in the Claude 4 announcement [@anthropic2025claude4] and used in DeepSeek-GRM [@liu2025inference].
+- **오프라인 난이도 필터링**: RLVR의 핵심 직관은 모델이 그래디언트가 있는 예시에서만 학습할 수 있다는 것이다. RLVR의 시작 모델이 어떤 문제를 100% 또는 0%의 확률로 풀 수 있다면, 해당 프롬프트에 대한 서로 다른 완성들 사이에 그래디언트가 없을 것이다 (즉, 모든 전략이 정책 그래디언트 알고리즘에게는 동일하게 보인다). 많은 모델들이 대규모 RL 시작 전에 시작점 모델이 20~80%의 확률로만 풀 수 있는 문제들로 훈련 데이터를 제한하기 위한 난이도 필터링을 사용했다. 이 데이터는 훈련 세트의 각 프롬프트에 N개(예: 16개)의 완성을 샘플링하고 어느 비율이 정확한지 검증하여 수집된다. 이런 형태는 Seed-Thinking 1.5, Open Reasoner Zero, Phi 4, INTELLECT-2, MiMo RL, Skywork OR-1 등에서 사용되었다.
+- **배치별 온라인 필터링** (또는 훈련 전반에 걸친 난이도 커리큘럼): 훈련할 올바른 문제를 찾기 위한 오프라인 필터링을 보완하기 위해, 또 다른 주요 질문은: 학습 중에 문제를 어떤 순서로 모델에게 제시해야 하는가? 이를 해결하기 위해 많은 모델들이 배치의 질문에 대한 온라인 필터링, 미리 구성된 커리큘럼/데이터 스케줄러, 훈련 후반부를 위한 더 어려운 문제 저장, 또는 장기 안정성 향상을 위한 다른 아이디어들을 사용한다. 관련 아이디어들은 Kimi 1.5, Magistral, Llama-Nemotron, INTELLECT-2, MiMo-RL, Hunyuan-TurboS 등에서 사용된다.
+- **KL 패널티 제거**: 추론 모델의 RL 실행 길이가 (어떤 지표로든, 총 GPU 시간, FLOPS, 또는 RL 스텝) RLHF 훈련 대비 증가하고 보상 함수가 과최적화에 덜 취약해짐에 따라, 많은 모델들이 RL로 학습된 정책을 훈련 기반 모델과 유사하게 제약하는 KL 패널티를 제거했다. 이를 통해 모델이 훈련 중 더 많이 탐색할 수 있게 된다. 이는 RAGEN [@wang2025ragenunderstandingselfevolutionllm], Magistral, OpenReasonerZero, Skywork OR-1 등에서 사용되었다.
+- **완화된 정책 그래디언트 클리핑**: DAPO [@yu2025dapo]와 같은 GRPO 알고리즘의 새로운 변형들은 더 나은 탐색을 가능하게 하기 위해 GRPO (또는 PPO)에서 사용되는 양방향 클리핑 목적 함수를 수정할 것을 제안했다. 클리핑은 또한 보상이 불완전할 때 잠재적으로 잘못된 학습 신호를 유발할 수 있음이 나타났다 [@shao2025spurious]. 그래디언트 방향별 다른 범위를 가진 이 양방향 클리핑은 RAGEN, Magistral, INTELLECT-2 등에서 사용된다.
+- **오프-정책 데이터 (또는 완전 비동기 업데이트)**: RL로 작업을 해결하는 데 필요한 완성 길이가 더 어려운 문제들로 극적으로 증가함에 따라 (특히 응답 길이의 *분산*에서, 종종 매우 긴 길이의 이상값들이 있다), RL 실행에서 연산이 유휴 상태가 될 수 있다. 이를 해결하기 위해, 훈련은 비동기 업데이트로 이동하거나 전체 처리량을 개선하기 위해 문제들이 배치에 배치되는 방식을 변경하고 있다. 부분~전체 비동기 (오프-정책) 데이터는 Seed-Thinking 1.5, INTELLECT-2 등에서 사용된다.
+- **추가 형식 보상**: 추론 과정을 예측 가능하게 만들기 위해, 많은 모델들이 모델이 예를 들어 답변 전에 `<think>...</think>`와 같은 올바른 형식을 따르도록 하는 소규모 보상을 추가한다. 이는 DeepSeek R1, OpenReasonerZero, Magistral, Skywork OR-1 등에서 사용된다.
+- **언어 일관성 보상**: 형식 보상과 유사하게, 일부 다국어 추론 모델들은 추론 중에 언어를 바꾸지 않는 모델에 우선순위를 두기 위해 언어 일관성 보상을 사용한다 (더 나은 예측 가능한 사용자 경험을 위해). 여기에는 DeepSeek R1, Magistral 등이 있다.
+- **길이 패널티**: 많은 모델들은 시간이 지남에 따라 학습 과정을 안정화하거나 어려운 문제에서의 과사고 (overthinking)를 완화하기 위해 RL 훈련 중 다양한 형태의 길이 패널티를 사용한다. 몇 가지 예로는 Kimi 1.5가 과사고를 방지하기 위해 대상 길이를 점진적으로 확장하거나 (훈련 정확도가 난이도 커리큘럼에 걸쳐 높은 동안) INTELLECT-2가 전체적으로 소규모 길이 패널티를 실행하는 것이 있다. 훈련 시퀀스 길이를 점진적으로 확장하면 모델이 먼저 더 제한된 사고 예산으로 도메인에서 효과적으로 추론한 다음, 더 복잡한 문제에서 그 행동들을 효율적으로 사용할 수 있는 더 긴 훈련으로 전환하도록 강제함으로써 과사고를 완화한다. 다른 것들은 처리량을 개선하기 위해 과길이 필터링 및 다른 관련 구현들을 사용한다.
+- **손실 정규화**: 원래 GRPO 알고리즘의 그룹별 정규화 항에 의해 도입될 수 있는 잠재적인 길이 또는 난이도 편향에 대한 논의가 있었다 (정책 그래디언트 장 참조 또는 [@liu2025understanding]). 따라서 Magistral이나 MiMo와 같은 일부 모델들은 그룹 수준 대신 배치 수준에서 손실 또는 이점 함수를 정규화하기로 선택했다.
+- **병렬 테스트 시점 연산 스케일링**: 여러 병렬 독립 샘플링 롤아웃의 답들을 결합하면 단일 롤아웃의 답을 사용하는 것보다 상당한 개선을 이끌 수 있다. DeepSeek-R1, Phi-4 등에서 수행된 것처럼 병렬 테스트 시점 연산 스케일링의 가장 단순한 형태는 롤아웃의 다수가 반환한 답을 최종 답으로 사용하는 것이다. 더 발전된 기법은 병렬 롤아웃의 답들 중 최선의 답을 선택하도록 훈련된 채점 모델을 사용하는 것이다. 이 기법은 (2025년 6월 기준) 공개 추론 모델 레시피에는 아직 채택되지 않았지만 Claude 4 발표 [@anthropic2025claude4]에서 언급되었고 DeepSeek-GRM [@liu2025inference]에서 사용되었다.
 
-In complement to the common techniques, there are also many common findings on how reasoning training can create useful models without sacrificing ancillary capabilities:
+일반적인 기법들에 더불어, 추론 훈련이 부수적인 역량을 희생하지 않고 유용한 모델을 만들 수 있는 방법에 대한 많은 일반적인 발견들도 있다:
 
-- **Text-only reasoning boosts multimodal performance**: Magistral, MiMo-VL, and others find that training a multimodal model and then performing text-only reasoning training after this multimodal training can *improve* multimodal performance in the final model.
-- **Toggleable reasoning with system prompt** (or length control): Llama-Nemotron, Nemotron Nano, Qwen 3, SmolLM 3, and others use specific system prompts (possibly in combination with length-controlled RL training [@aggarwal2025l1]) to enable a toggleable on/off thinking length for the user. Other open models, such as OpenAI's GPT-OSS and LLM360's K2-V2 [@liu2025k2] adopt a low-medium-high reasoning effort set in the system prompt, but training methods for this type of behavior are not as well documented.
+- **텍스트 전용 추론이 멀티모달 성능을 향상시킨다**: Magistral, MiMo-VL 등은 멀티모달 모델을 훈련한 다음 이 멀티모달 훈련 후에 텍스트 전용 추론 훈련을 수행하면 최종 모델의 멀티모달 성능을 *향상*시킬 수 있다는 것을 발견했다.
+- **시스템 프롬프트로 추론 전환 가능** (또는 길이 제어): Llama-Nemotron, Nemotron Nano, Qwen 3, SmolLM 3 등은 특정 시스템 프롬프트를 사용하여 (가능하면 길이 제어 RL 훈련 [@aggarwal2025l1]과 함께) 사용자를 위한 사고 길이를 켜고 끌 수 있도록 한다. OpenAI의 GPT-OSS와 LLM360의 K2-V2 [@liu2025k2]와 같은 다른 공개 모델들은 시스템 프롬프트에서 낮음-중간-높음 추론 노력 설정을 채택하지만, 이 유형의 행동을 위한 훈련 방법은 잘 문서화되어 있지 않다.
 
-## Looking Ahead
+## 앞으로
 
-The reasoning model landscape is evolving faster than any area of AI research in recent memory, and some of the common practices listed here will inevitably be superseded by new techniques.
+추론 모델 환경은 최근 기억 속에서 AI 연구의 어떤 분야보다도 빠르게 진화하고 있으며, 여기에 나열된 일반적인 관행들 중 일부는 불가피하게 새로운 기법들로 대체될 것이다.
 
-Several efforts are underway to systematically understand what makes reasoning training work.
-OLMo 3 Think [@teamolmo2025olmo3] represents the most comprehensive open documentation of a reasoning model's full training lifecycle, providing checkpoints and data at each stage for the research community to study, and concluding with a nearly 4 week long training run on 220 GPUs.
-Similarly, work on understanding the scaling properties of RL for reasoning [@khatri2025art] is beginning to formalize relationships between compute, data, and performance that were previously only intuited by practitioners.
+추론 훈련이 작동하는 이유를 체계적으로 이해하기 위한 여러 노력이 진행 중이다.
+OLMo 3 Think [@teamolmo2025olmo3]는 추론 모델의 전체 훈련 생애주기에 대한 가장 포괄적인 공개 문서를 나타내며, 연구 커뮤니티가 연구할 수 있도록 각 단계의 체크포인트와 데이터를 제공하고, 220개의 GPU에서 거의 4주의 훈련 실행으로 마무리된다.
+마찬가지로, 추론을 위한 RL의 스케일링 특성 이해 연구 [@khatri2025art]는 이전에는 실무자들에게만 직관적이었던 연산, 데이터, 성능 간의 관계를 공식화하기 시작하고 있다.
 
-What remains clear is that reinforcement learning has graduated from the "cherry on top" in the cake metaphor to a load-bearing component of frontier model training.
-The minor techniques in this chapter around the idea of RLVR -- difficulty filtering, format rewards, and the rest -- are not the final answers, but they represent the field's current best understanding of how to elicit reasoning from language models.
-The next generation of methods will likely look different, but they will build on the foundations established here.
+분명한 것은 강화학습이 케이크 비유에서의 "케이크 위의 체리"에서 프론티어 모델 훈련의 부하를 지는 구성 요소로 격상되었다는 것이다.
+RLVR 아이디어 주변의 이 장의 소소한 기법들---난이도 필터링, 형식 보상 등---은 최종 답이 아니지만, 언어 모델에서 추론을 이끌어내는 방법에 대한 현 분야의 최선의 이해를 나타낸다.
+다음 세대의 방법들은 아마도 다르게 보이겠지만, 여기서 확립된 기반 위에 구축될 것이다.

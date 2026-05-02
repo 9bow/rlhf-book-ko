@@ -5,88 +5,88 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "Key Related Works"
+prev-chapter: "주요 관련 연구"
 prev-url: "02-related-works"
-page-title: Training Overview
-search-title: "Chapter 3: Training Overview"
-next-chapter: "Instruction Tuning"
+page-title: 학습 개요
+search-title: "3장: 학습 개요"
+next-chapter: "지시 조정"
 next-url: "04-instruction-tuning"
 lectures:
   - video: "https://www.youtube.com/watch?v=o6l6tJQgUg4&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=2"
-    label: "Lecture 1: Overview (Chapters 1–3)"
+    label: "강의 1: 개요 (1–3장)"
 ---
 
-# Training Overview
+# 학습 개요
 
-In this chapter we provide a cursory overview of RLHF training, before getting into the specifics later in the book.
-RLHF, while optimizing a simple loss function, involves training multiple, different AI models in sequence and then linking them together in a complex, online optimization.
+이 장에서는 책의 후반부에서 구체적인 내용을 다루기 전에 RLHF 학습에 대한 간략한 개요를 제공합니다.
+RLHF는 단순한 손실 함수 (loss function)를 최적화하면서도, 여러 개의 서로 다른 AI 모델을 순서대로 학습시킨 후 복잡한 온라인 최적화로 연결하는 과정을 포함합니다.
 
-Here, we introduce the core objective of RLHF, which is optimizing a proxy reward for human preferences with a distance-based regularizer (along with showing how it relates to classical RL problems).
-Then we showcase canonical recipes which use RLHF to create leading models to show how RLHF fits in with the rest of post-training methods.
-These example recipes will serve as references for later in the book, where we describe different optimization choices you have when doing RLHF, and we will point back to how different key models used different steps in training.
+여기서는 인간 선호도에 대한 프록시 보상을 거리 기반 정규화 (regularization)와 함께 최적화하는 RLHF의 핵심 목표를 소개하고 (고전적인 RL 문제와 어떻게 관련되는지도 함께 설명합니다).
+그런 다음 선도적인 모델을 만드는 데 RLHF가 활용되는 표준적인 레시피들을 제시하여, 나머지 후처리 학습 방법들과 RLHF가 어떻게 맞물리는지 보여줍니다.
+이 예시 레시피들은 책의 후반부에서 참고 자료로 활용될 것이며, RLHF를 수행할 때 선택할 수 있는 다양한 최적화 옵션들을 설명하면서 각 핵심 모델이 어떤 학습 단계를 사용했는지 다시 살펴볼 것입니다.
 
-## Problem Formulation
+## 문제 공식화
 
-The optimization of reinforcement learning from human feedback (RLHF) builds on top of the standard RL setup.
-In RL, an agent takes actions $a_t$ sampled from a policy $\pi(a_t\mid s_t)$ given the state of the environment $s_t$ to maximize reward $r(s_t,a_t)$ [@sutton2018reinforcement].
-A policy is a function that maps each state to a probability distribution over actions.
-The early policies that evolved into modern literature on RLHF were in what is called deep reinforcement learning -- when a neural network is used to learn said function.
-Traditionally, the environment evolves according to transition (dynamics) $p(s_{t+1}\mid s_t, a_t)$ with an initial state distribution $\rho_0(s_0)$.
-Together, the policy and dynamics induce a trajectory distribution.
-A trajectory's overall probability is the product of the initial state probability, every action choice the policy makes, and every state transition the environment produces:
+인간 피드백 기반 강화학습 (RLHF)의 최적화는 표준 RL 설정 위에 구축됩니다.
+RL에서 에이전트는 환경 상태 $s_t$가 주어졌을 때 정책 (policy) $\pi(a_t\mid s_t)$에서 샘플링된 행동 $a_t$를 취하여 보상 (reward) $r(s_t,a_t)$를 최대화합니다 [@sutton2018reinforcement].
+정책은 각 상태를 행동에 대한 확률 분포로 매핑하는 함수입니다.
+현대 RLHF 문헌으로 발전한 초기 정책들은 심층 강화학습에 해당하는데 -- 신경망을 사용하여 해당 함수를 학습할 때입니다.
+전통적으로 환경은 초기 상태 분포 $\rho_0(s_0)$와 함께 전이 (동역학) $p(s_{t+1}\mid s_t, a_t)$에 따라 발전합니다.
+정책과 동역학이 함께 궤적 (trajectory) 분포를 만들어냅니다.
+궤적의 전체 확률은 초기 상태 확률, 정책이 내리는 모든 행동 선택, 그리고 환경이 만들어내는 모든 상태 전이의 곱입니다:
 
 $$p_{\pi}(\tau)=\rho_0(s_0)\prod_{t=0}^{T-1}\pi(a_t\mid s_t)\,p(s_{t+1}\mid s_t,a_t).$$ {#eq:rl_dynam}
 
-Across a finite episode with horizon $T$, the goal of an RL agent is to solve the following optimization, where $\gamma$ is a discount factor from 0 to 1 that balances the desirability of near-term versus future rewards:
+수평선 $T$를 가진 유한 에피소드에서 RL 에이전트의 목표는 다음 최적화를 푸는 것인데, 여기서 $\gamma$는 근단기 보상과 미래 보상의 바람직함을 균형 잡는 0에서 1 사이의 할인 계수 (discount factor)입니다:
 
 $$\max_\pi \; \mathbb{E}_{\tau \sim p_{\pi}} \left[ \sum_{t=0}^{T-1} \gamma^t r(s_t, a_t) \right],$$ {#eq:rl_opt}
 
-The expected return for a given policy is often denoted $J(\pi)$, with the optimal value written $J^* = \max_\pi J(\pi)$.
+주어진 정책의 기대 보상은 종종 $J(\pi)$로 표기되며, 최적값은 $J^* = \max_\pi J(\pi)$로 씁니다.
 
-For continuing tasks, one often takes $T\to\infty$ and relies on discounting ($\gamma<1$) to keep the objective well-defined.
-Multiple methods for optimizing this expression are discussed in Chapter 6.
+계속되는 태스크의 경우, 종종 $T\to\infty$로 설정하고 할인($\gamma<1$)에 의존하여 목적 함수를 잘 정의되게 유지합니다.
+이 식을 최적화하는 여러 방법들이 6장에서 논의됩니다.
 
-![Standard RL loop](images/rl.png){#fig:rl width=320px .center}
+![표준 RL 루프](images/rl.png){#fig:rl width=320px .center}
 
-A standard illustration of the RL loop is shown in @fig:rl (compare this to the RLHF loop in @fig:rlhf).
+표준 RL 루프의 그림이 @fig:rl에 나와 있습니다 (이를 @fig:rlhf의 RLHF 루프와 비교하세요).
 
-### A Simple Example: The Thermostat {#example-rl-thermostat}
+### 간단한 예시: 온도 조절기 {#example-rl-thermostat}
 
-To build a basic intuition for what RL does, consider a thermostat trying to keep a room at a target temperature of 70$^\circ$F.
-In RL, the agent starts with no knowledge of the task and must discover a good policy through trial and error.
-The thermostat example has the following components (see @fig:thermostat-equation for how each maps to the trajectory distribution in @eq:rl_dynam):
+RL이 무엇을 하는지에 대한 기본적인 직관을 쌓기 위해, 방 온도를 목표 온도인 화씨 70도로 유지하려는 온도 조절기를 생각해 봅시다.
+RL에서 에이전트는 태스크에 대한 사전 지식 없이 시작하여 시행착오를 통해 좋은 정책을 발견해야 합니다.
+온도 조절기 예시는 다음과 같은 구성 요소를 가지고 있습니다 (각각이 @eq:rl_dynam의 궤적 분포에 어떻게 매핑되는지는 @fig:thermostat-equation 참조):
 
-- **State ($s_t$)**: the current room temperature, e.g. 65$^\circ$F.
-- **Action ($a_t$)**: turn the heater on or off.
-- **Reward ($r$)**: +1 when the temperature is within 2$^\circ$ of the target, 0 otherwise.
-- **Policy ($\pi$)**: the rule that decides whether to turn the heater on or off given the current temperature. One policy the thermostat might learn, which may not be optimal depending on the exact transition dynamics of the environment:
+- **상태 ($s_t$)**: 현재 방 온도, 예를 들어 화씨 65도.
+- **행동 ($a_t$)**: 히터를 켜거나 끄기.
+- **보상 ($r$)**: 온도가 목표에서 2도 이내일 때 +1, 그렇지 않으면 0.
+- **정책 ($\pi$)**: 현재 온도를 기반으로 히터를 켜거나 끌지 결정하는 규칙. 온도 조절기가 학습할 수 있는 한 가지 정책으로, 환경의 정확한 전이 동역학에 따라 최적이 아닐 수도 있습니다:
 
 $$\pi(a_t = \text{on} \mid s_t) = \begin{cases} 1 & \text{if } s_t < 70^{\circ}\text{F} \\ 0 & \text{otherwise} \end{cases}$$ {#eq:thermostat_policy}
 
-- **Transition**: the room warms when the heater is on and cools when it is off. The agent influences these dynamics through its actions, but the underlying physics -- how fast the room heats or cools -- are outside its control.
+- **전이**: 히터가 켜져 있으면 방이 따뜻해지고 꺼져 있으면 식습니다. 에이전트는 행동을 통해 이 동역학에 영향을 미치지만, 방이 얼마나 빨리 따뜻해지거나 식는지와 같은 기본 물리 법칙은 에이전트의 통제 밖에 있습니다.
 
-![Each term in the trajectory distribution (@eq:rl_dynam) mapped to the thermostat RL example.](images/thermostat_equation.png){#fig:thermostat-equation .center}
+![@eq:rl_dynam의 궤적 분포의 각 항을 온도 조절기 RL 예시에 매핑.](images/thermostat_equation.png){#fig:thermostat-equation .center}
 
-Initially, the thermostat's policy is essentially random -- it flips the heater on and off with no regard for the current temperature, and the room swings wildly.
-Over many episodes of trial and error, the agent discovers that turning the heater on when the room is cold and off when it is warm leads to more reward, and gradually converges on a sensible policy.
-This is the core RL loop: observe a state, choose an action, receive a reward, and update the policy to get more reward over time.
+처음에 온도 조절기의 정책은 본질적으로 무작위입니다 -- 현재 온도를 전혀 고려하지 않고 히터를 켜고 끄며, 방 온도가 급격히 변동합니다.
+많은 시행착오 에피소드를 거치면서, 에이전트는 방이 차가울 때 히터를 켜고 따뜻할 때 끄는 것이 더 많은 보상으로 이어진다는 것을 발견하고, 점차 합리적인 정책으로 수렴합니다.
+이것이 핵심 RL 루프입니다: 상태를 관찰하고, 행동을 선택하고, 보상을 받고, 시간이 지남에 따라 더 많은 보상을 얻기 위해 정책을 업데이트합니다.
 
-### Example RL Task: CartPole
+### RL 태스크 예시: CartPole
 
-For a richer example with continuous dynamics, consider the classic *CartPole* (inverted pendulum) control task, which appears in many RL textbooks, courses, and even research papers.
-Where the thermostat had a single state variable and a binary action, CartPole involves four continuous state variables and physics-based transitions -- making it a standard benchmark for RL algorithms.
+연속적인 동역학이 있는 더 풍부한 예시를 위해, 많은 RL 교과서, 강좌, 심지어 연구 논문에도 등장하는 고전적인 *CartPole* (역진자) 제어 태스크를 생각해 봅시다.
+온도 조절기가 단일 상태 변수와 이진 행동을 가졌던 반면, CartPole은 네 개의 연속적인 상태 변수와 물리 기반 전이를 포함하여 RL 알고리즘을 위한 표준 벤치마크가 됩니다.
 
-![CartPole environment showing state variables ($x$, $\dot{x}$, $\theta$, $\dot{\theta}$) and actions ($\pm F$).](images/cartpole.png){#fig:cartpole width=400px .center}
+![상태 변수 ($x$, $\dot{x}$, $\theta$, $\dot{\theta}$)와 행동 ($\pm F$)을 보여주는 CartPole 환경.](images/cartpole.png){#fig:cartpole width=400px .center}
 
-- **State ($s_t$)**: the cart position/velocity and pole angle/angular velocity,
+- **상태 ($s_t$)**: 카트 위치/속도 및 막대 각도/각속도,
 
   $$s_t = (x_t,\,\dot{x}_t,\,\theta_t,\,\dot{\theta}_t).$$ {#eq:cartpole_state}
 
-- **Action ($a_t$)**: apply a left/right horizontal force to the cart, e.g. $a_t \in \{-F, +F\}$.
+- **행동 ($a_t$)**: 카트에 좌/우 수평 힘을 가하기, 예를 들어 $a_t \in \{-F, +F\}$.
 
-- **Reward ($r$)**: a simple reward is $r_t = 1$ each step the pole remains balanced and the cart stays on the track (e.g. $|x_t| \le 2.4$ and $|\theta_t| \le 12^\circ$), and the episode terminates when either bound is violated.
+- **보상 ($r$)**: 간단한 보상은 막대가 균형을 유지하고 카트가 트랙에 있는 매 스텝마다 $r_t = 1$ (예: $|x_t| \le 2.4$ 및 $|\theta_t| \le 12^\circ$)이며, 어느 한계를 초과하면 에피소드가 종료됩니다.
 
-- **Dynamics / transition ($p(s_{t+1}\mid s_t,a_t)$)**: in many environments the dynamics are deterministic (so $p$ is a point mass) and can be written as $s_{t+1} = f(s_t,a_t)$ via Euler integration with step size $\Delta t$. A standard simplified CartPole update uses constants cart mass $m_c$, pole mass $m_p$, pole half-length $l$, and gravity $g$ ($\alpha$ is a mass-normalized intermediate with acceleration units):
+- **동역학 / 전이 ($p(s_{t+1}\mid s_t,a_t)$)**: 많은 환경에서 동역학은 결정론적이며 (따라서 $p$는 점 질량), 스텝 크기 $\Delta t$의 오일러 적분을 통해 $s_{t+1} = f(s_t,a_t)$로 쓸 수 있습니다. 표준 단순화된 CartPole 업데이트는 카트 질량 $m_c$, 막대 질량 $m_p$, 막대 반길이 $l$, 중력 $g$ 상수를 사용합니다 ($\alpha$는 가속도 단위를 가진 질량 정규화된 중간값):
 
   $$\alpha = \frac{a_t + m_p l\,\dot{\theta}_t^2\sin\theta_t}{m_c + m_p}$$ {#eq:cartpole_temp}
 
@@ -97,131 +97,131 @@ Where the thermostat had a single state variable and a binary action, CartPole i
   $$x_{t+1}=x_t+\Delta t\,\dot{x}_t,\quad \dot{x}_{t+1}=\dot{x}_t+\Delta t\,\ddot{x}_t,$$ {#eq:cartpole_pos_update}
   $$\theta_{t+1}=\theta_t+\Delta t\,\dot{\theta}_t,\quad \dot{\theta}_{t+1}=\dot{\theta}_t+\Delta t\,\ddot{\theta}_t.$$ {#eq:cartpole_angle_update}
 
-This is a concrete instance of the general setup above: the policy chooses $a_t$, the transition function advances the state, and the reward is accumulated over the episode.
+이것은 위의 일반적인 설정의 구체적인 인스턴스입니다: 정책이 $a_t$를 선택하고, 전이 함수가 상태를 전진시키며, 에피소드에 걸쳐 보상이 누적됩니다.
 
-### Manipulating the Standard RL Setup
+### 표준 RL 설정 조작하기
 
-The RL formulation for RLHF is seen as a less open-ended problem, where a few key pieces of RL are set to specific definitions in order to accommodate language models.
-There are multiple core changes from the standard RL setup to that of RLHF:
-Table @tbl:rl-vs-rlhf summarizes these differences between standard RL and the RLHF setup used for language models.
+RLHF를 위한 RL 공식화는 덜 개방적인 문제로 보여지며, 언어 모델을 수용하기 위해 RL의 몇 가지 핵심 요소가 특정 정의로 설정됩니다.
+표준 RL 설정에서 RLHF로의 핵심 변경 사항이 여러 가지 있습니다:
+@tbl:rl-vs-rlhf는 표준 RL과 언어 모델을 위한 RLHF 설정 사이의 주요 차이점을 요약합니다.
 
-1. **Switching from a reward function to a reward model.** In RLHF, a learned model of human preferences, $r_\theta(s_t, a_t)$ (or any other classification model) is used instead of an environmental reward function. This gives the designer a substantial increase in the flexibility of the approach and control over the final results, but at the cost of implementation complexity. In standard RL, the reward is seen as a static piece of the environment that cannot be changed or manipulated by the person designing the learning agent.
-2. **No state transitions exist.** In RLHF, the initial states for the domain are prompts sampled from a training dataset and the "action" is the completion to said prompt (in the standard RLHF setup, the prompt is fixed and the model's completion does not define the next prompt). The combination of one prompt and one completion constitutes a complete episode or rollout, which would be many repeated state-action, state-action chains in classical RL problems.
-3. **Response-level rewards and no discounting.** RLHF attribution of reward is done for an entire sequence of actions, composed of multiple generated tokens, rather than in a fine-grained manner (this single-step structure is sometimes called a bandit problem in the RL literature). To help the RL algorithms for RLHF see every token as part of the same action, implementations usually use a discount factor of $\gamma = 1$ (no discounting), unlike standard RL where $\gamma < 1$ balances short-term and long-term reward across many sequential decisions.
+1. **보상 함수에서 보상 모델로의 전환.** RLHF에서는 환경 보상 함수 대신 인간 선호도의 학습된 모델인 $r_\theta(s_t, a_t)$ (또는 다른 분류 모델)를 사용합니다. 이는 설계자에게 접근 방식의 유연성과 최종 결과에 대한 제어를 상당히 증가시키지만, 구현 복잡성이라는 비용이 따릅니다. 표준 RL에서 보상은 학습 에이전트를 설계하는 사람이 변경하거나 조작할 수 없는 환경의 정적인 부분으로 간주됩니다.
+2. **상태 전이가 존재하지 않음.** RLHF에서 도메인의 초기 상태는 학습 데이터셋에서 샘플링된 프롬프트이며, "행동"은 해당 프롬프트에 대한 완성 (completion)입니다 (표준 RLHF 설정에서 프롬프트는 고정되어 있으며 모델의 완성이 다음 프롬프트를 정의하지 않습니다). 하나의 프롬프트와 하나의 완성의 조합이 완전한 에피소드 또는 롤아웃을 구성하며, 이는 고전적인 RL 문제에서 여러 번 반복되는 상태-행동, 상태-행동 체인에 해당합니다.
+3. **응답 수준 보상 및 할인 없음.** RLHF의 보상 귀속은 세밀한 방식이 아닌 여러 생성된 토큰으로 구성된 전체 행동 시퀀스에 대해 이루어집니다 (이 단일 스텝 구조는 RL 문헌에서 때때로 밴딧 (bandit) 문제라고 불립니다). RLHF를 위한 RL 알고리즘이 모든 토큰을 동일한 행동의 일부로 볼 수 있도록, 구현은 일반적으로 할인 계수 $\gamma = 1$ (할인 없음)을 사용합니다. 이는 많은 순차적 결정에 걸쳐 단기 및 장기 보상을 균형 잡는 표준 RL의 $\gamma < 1$과 다릅니다.
 
 ::: {.table-wrap}
-| Aspect | Standard RL | RLHF (language models) |
+| 측면 | 표준 RL | RLHF (언어 모델) |
 |---|---|---|
-| Policy | Learned from scratch (random init) | Fine-tuned from a pretrained language model |
-| Reward signal | Environment reward function $r(s_t,a_t)$ | Learned reward / preference model $r_\theta(x,y)$ (prompt $x$, completion $y$) |
-| State transition | Yes: dynamics $p(s_{t+1}\mid s_t,a_t)$ | Typically no: prompts $x$ sampled from a dataset; the completion does not define the next prompt |
-| Action | Single environment action $a_t$ | A completion $y$ (a sequence of tokens) sampled from $\pi_\theta(\cdot\mid x)$ |
-| Reward granularity | Often per-step / fine-grained | Usually response-level (bandit-style) over the full completion, usually no discounting ($\gamma = 1$) |
-| Horizon | Multi-step episode ($T>1$) | Often single-step ($T=1$), though multi-turn can be modeled as longer-horizon |
-Table: Key differences between standard RL and RLHF for language models. {#tbl:rl-vs-rlhf}
+| 정책 | 처음부터 학습 (무작위 초기화) | 사전 학습된 언어 모델에서 미세조정 |
+| 보상 신호 | 환경 보상 함수 $r(s_t,a_t)$ | 학습된 보상/선호도 모델 $r_\theta(x,y)$ (프롬프트 $x$, 완성 $y$) |
+| 상태 전이 | 존재: 동역학 $p(s_{t+1}\mid s_t,a_t)$ | 일반적으로 없음: 프롬프트 $x$는 데이터셋에서 샘플링; 완성이 다음 프롬프트를 정의하지 않음 |
+| 행동 | 단일 환경 행동 $a_t$ | $\pi_\theta(\cdot\mid x)$에서 샘플링된 완성 $y$ (토큰 시퀀스) |
+| 보상 세분성 | 종종 스텝별 / 세밀함 | 보통 전체 완성에 대한 응답 수준 (밴딧 스타일), 보통 할인 없음 ($\gamma = 1$) |
+| 수평선 | 다단계 에피소드 ($T>1$) | 종종 단일 스텝 ($T=1$), 다중 턴은 더 긴 수평선으로 모델링 가능 |
+Table: 표준 RL과 언어 모델을 위한 RLHF의 주요 차이점. {#tbl:rl-vs-rlhf}
 :::
 
-Given the single-turn nature of the problem, the optimization can be re-written without the time horizon and discount factor (and with an explicit reward model):
+문제의 단일 턴 특성을 감안하여, 최적화는 시간 수평선과 할인 계수 없이 (그리고 명시적인 보상 모델과 함께) 다시 쓸 수 있습니다:
 $$\max_\pi \; \mathbb{E}_{\tau \sim \pi} \left[r_\theta(s_t, a_t) \right].$$ {#eq:rl_opt_int}
 
-In many ways, the result is that while RLHF is heavily inspired by RL optimizers and problem formulations, the actual implementation is very distinct from traditional RL.
+여러 면에서, 결과는 RLHF가 RL 최적화 도구와 문제 공식화에서 크게 영감을 받았지만, 실제 구현은 전통적인 RL과 매우 다릅니다.
 
-![Standard RLHF loop](images/rlhf.png){#fig:rlhf}
+![표준 RLHF 루프](images/rlhf.png){#fig:rlhf}
 
-### Fine-tuning and Regularization
+### 미세조정과 정규화
 
-In traditional RL problems, the agent must learn from a randomly initialized policy, but with RLHF, we start from a strong pretrained base model with many initial capabilities.
-This strong prior for RLHF induces a need to prevent the optimization from drifting too far from the initial policy.
-In order to succeed in a fine-tuning regime, RLHF techniques employ multiple types of regularization to control the optimization.
-The goal is to allow the reward maximization to still occur without the model succumbing to over-optimization, as discussed in Chapter 14.
-The most common change to the optimization function is to add a KL divergence penalty on the distance between the current RLHF policy and the starting point of the optimization. The $\beta$ hyperparameter set when training the model controls the strength of this constraint -- a larger $\beta$ keeps the model closer to its starting point, while a smaller $\beta$ gives the optimizer more freedom to chase reward:
+전통적인 RL 문제에서 에이전트는 무작위로 초기화된 정책에서부터 학습해야 하지만, RLHF에서는 많은 초기 능력을 갖춘 강력한 사전 학습된 기본 모델에서 시작합니다.
+RLHF를 위한 이 강력한 사전 조건은 최적화가 초기 정책에서 너무 멀리 벗어나는 것을 방지해야 할 필요성을 만들어냅니다.
+미세조정 체제에서 성공하기 위해, RLHF 기법들은 최적화를 제어하기 위해 여러 유형의 정규화를 사용합니다.
+목표는 14장에서 논의된 과최적화 (over-optimization)에 모델이 굴복하지 않으면서 보상 최대화가 여전히 이루어질 수 있게 하는 것입니다.
+최적화 함수에 대한 가장 일반적인 변경은 현재 RLHF 정책과 최적화의 시작점 사이의 거리에 대한 KL 발산 (KL divergence) 패널티를 추가하는 것입니다. 모델 학습 시 설정하는 하이퍼파라미터 $\beta$는 이 제약의 강도를 제어합니다 -- 큰 $\beta$는 모델을 시작점에 더 가깝게 유지하고, 작은 $\beta$는 최적화 도구에 보상을 추구할 더 많은 자유를 줍니다:
 
 $$\max_\pi \; \mathbb{E}_{\tau \sim \pi} \left[r_\theta(s_t, a_t)\right] - \beta  \mathcal{D}_{\text{KL}}(\pi(\cdot|s_t) \| \pi_{\text{ref}}(\cdot|s_t)).$$ {#eq:rlhf_opt_eq}
 
-Within this formulation, a lot of study into RLHF training goes into understanding how to spend a certain "KL budget" as measured by a distance from the initial model.
-For more details, see Chapter 15 on Regularization.
+이 공식화 내에서, RLHF 학습에 대한 많은 연구가 초기 모델로부터의 거리로 측정되는 특정 "KL 예산"을 어떻게 사용할지 이해하는 데 집중됩니다.
+자세한 내용은 정규화에 대한 15장을 참조하세요.
 
 
-### Optimization Tools
+### 최적화 도구
 
-In this book, we detail many popular techniques for solving this optimization problem.
-The popular tools of post-training include:
+이 책에서는 이 최적화 문제를 해결하기 위한 많은 인기 있는 기법들을 자세히 설명합니다.
+후처리 학습의 인기 있는 도구들은 다음과 같습니다:
 
-- **Reward modeling** (Chapter 5): Where a model is trained to capture the signal from collected preference data and can then output a scalar reward indicating the quality of future text.
-- **Instruction fine-tuning** (Chapter 4): A prerequisite to RLHF where models are taught the question-answer format used in the majority of language modeling interactions today by imitating preselected examples.
-- **Rejection sampling** (Chapter 9): The most basic RLHF technique where candidate completions for instruction fine-tuning are filtered by a reward model imitating human preferences.
-- **Policy gradients** (Chapter 6): The reinforcement learning algorithms used in the seminal examples of RLHF to update parameters of a language model with respect to the signal from a reward model.
-- **Direct alignment algorithms** (Chapter 8): Algorithms that directly optimize a policy from pairwise preference data, rather than learning an intermediate reward model to then optimize later.
+- **보상 모델링** (5장): 수집된 선호도 데이터에서 신호를 포착하도록 모델을 학습시켜 미래 텍스트의 품질을 나타내는 스칼라 보상을 출력할 수 있게 합니다.
+- **지시 미세조정** (4장): RLHF의 선행 조건으로, 사전에 선택된 예시들을 모방함으로써 오늘날 대부분의 언어 모델 상호작용에서 사용되는 질의응답 형식을 모델에 가르칩니다.
+- **거부 샘플링 (rejection sampling)** (9장): 인간 선호도를 모방하는 보상 모델로 지시 미세조정을 위한 후보 완성들을 필터링하는 가장 기본적인 RLHF 기법입니다.
+- **정책 그래디언트 (policy gradients)** (6장): 보상 모델의 신호에 대해 언어 모델의 매개변수를 업데이트하기 위해 RLHF의 기초 예시에서 사용된 강화학습 알고리즘.
+- **직접 정렬 알고리즘** (8장): 나중에 최적화할 중간 보상 모델을 학습하는 것이 아니라, 쌍별 선호도 데이터에서 직접 정책을 최적화하는 알고리즘.
 
-Modern RLHF-trained models always utilize instruction fine-tuning followed by a mixture of the other optimization options.
+현대 RLHF 학습 모델들은 항상 지시 미세조정을 먼저 활용하고, 이후 나머지 최적화 옵션들의 조합을 사용합니다.
 
-## Subtle Advantages of RL in Post-Training Language Models
+## 후처리 학습 언어 모델에서 RL의 미묘한 장점
 
-In the following chapters, we cover many optimization tools for post-training.
-Plenty of them, such as rejection sampling (Chapter 9) and direct alignment algorithms like DPO (Chapter 8) are far simpler than getting RL working. 
-Still, despite the simplicity of alternatives, RL-based methods continue to win out.
-Some trends, such as the inference-time scaling with reinforcement learning from verifiable rewards (RLVR) are obvious, but RL has turned out to be a well-suited optimization tool for language models.
-Implementing RL requires a far larger investment infrastructure relative to instruction tuning or DPO-like algorithms, but to risk being overly colloquial -- the gradient updates it provides "generally help the model a lot." 
-This is hard to quantify, but comes in a few recurring forms:
+다음 장들에서, 우리는 후처리 학습을 위한 많은 최적화 도구들을 다룹니다.
+그 중 많은 것들, 예를 들어 거부 샘플링 (9장)과 DPO와 같은 직접 정렬 알고리즘 (8장)은 RL이 작동하도록 하는 것보다 훨씬 더 단순합니다.
+그럼에도 불구하고, 대안의 단순성에도 불구하고 RL 기반 방법들이 계속 우세합니다.
+검증 가능한 보상을 활용한 강화학습 (RLVR)을 통한 추론 시간 스케일링과 같은 일부 추세는 명확하지만, RL은 언어 모델에 잘 맞는 최적화 도구로 밝혀졌습니다.
+RL을 구현하려면 지시 조정이나 DPO 유사 알고리즘에 비해 훨씬 더 큰 인프라 투자가 필요하지만, 지나치게 구어적으로 표현하자면 -- 그것이 제공하는 그래디언트 (gradient) 업데이트는 "일반적으로 모델에 많은 도움이 됩니다."
+이것을 정량화하기는 어렵지만, 몇 가지 반복적인 형태로 나타납니다:
 
-- RL stages can "fix" rough edges on the model, making them easier to chat with or more robust (this could come by training them to have numerical stability with inference tools like vLLM). The exact reason for this is not well-known in the literature, but its truth is reflected in the only growing presence of RL today.
-- RL can be done surgically — the model does a good job learning where the prompt distribution lies, and RL tends to not "squash" the general capabilities of the model. A good example of this is Tülu 3 being trained with RL only on math prompts, while maintaining capabilities across a broad task suite [@lambert2024t].
+- RL 단계는 모델의 거친 모서리를 "수정"하여 대화하기 더 쉽거나 더 견고하게 만들 수 있습니다 (예를 들어 vLLM과 같은 추론 도구에서 수치적 안정성을 갖도록 학습시키는 것으로). 이것의 정확한 이유는 문헌에서 잘 알려지지 않았지만, 그 진실성은 오늘날 RL의 점점 커지는 존재감에서 반영됩니다.
+- RL은 외과적으로 수행될 수 있습니다 -- 모델은 프롬프트 분포가 어디에 있는지 학습을 잘하며, RL은 모델의 일반적인 능력을 "짓누르는" 경향이 없습니다. 좋은 예는 수학 프롬프트에 대해서만 RL로 학습된 Tülu 3가 광범위한 태스크 스위트 전반에 걸쳐 능력을 유지하는 것입니다 [@lambert2024t].
 
-Overall, RL losses on language models are robust, scalable, effective, and flexible, which opened large new fields of experimentation. 
-The original method that started us down this path was RLHF work.
+전반적으로, 언어 모델에 대한 RL 손실은 견고하고, 확장 가능하며, 효과적이고, 유연하여 대규모 새로운 실험 분야를 열었습니다.
+이 길을 시작하게 한 원래 방법이 RLHF 연구였습니다.
 
-## Canonical Training Recipes
+## 표준적인 학습 레시피
 
-Over time various models have been identified as canonical recipes for RLHF specifically or post-training generally.
-These recipes reflect data practices and model abilities at the time.
-As the recipes age, training models with the same characteristics becomes easier and requires less data.
-There is a general trend of post-training involving more optimization steps with more training algorithms across more diverse training datasets and evaluations.
+시간이 지남에 따라 다양한 모델들이 RLHF 또는 후처리 학습 일반의 표준적인 레시피로 식별되었습니다.
+이러한 레시피들은 당시의 데이터 관행과 모델 능력을 반영합니다.
+레시피가 오래될수록, 동일한 특성을 가진 모델을 학습시키는 것이 더 쉬워지고 데이터가 덜 필요합니다.
+후처리 학습이 더 다양한 학습 데이터셋과 평가에 걸쳐 더 많은 학습 알고리즘으로 더 많은 최적화 단계를 포함하는 방향으로 일반적인 추세가 있습니다.
 
 ### InstructGPT
 
-Around the time ChatGPT first came out, the widely accepted ("canonical") method for post-training an LM had three major steps, with RLHF being the central piece [@lambert2022illustrating] [@ouyang2022training] [@bai2022training].
-The three steps taken on top of a "base" language model (the next-token prediction model trained on large-scale web text) are summarized below in @fig:rlhf-basic-repeat:
+ChatGPT가 처음 나왔을 때 주변에서, 언어 모델을 후처리 학습하기 위해 널리 받아들여진 ("표준적인") 방법은 RLHF를 중심 요소로 하는 세 가지 주요 단계를 가지고 있었습니다 [@lambert2022illustrating] [@ouyang2022training] [@bai2022training].
+"기본" 언어 모델 (대규모 웹 텍스트에서 학습된 차세대 토큰 예측 모델) 위에서 수행되는 세 단계는 아래 @fig:rlhf-basic-repeat에 요약되어 있습니다:
 
-1. **Instruction tuning on ~10K examples**: This teaches the model to follow the question-answer format and teaches some basic skills from primarily human-written data.
-2. **Training a reward model on ~100K pairwise prompts** (paper used 33K prompts): This model is trained from the instruction-tuned checkpoint and captures the diverse values one wishes to model in their final training. The reward model is the optimization target for RLHF.
-3. **Training the instruction-tuned model with RLHF on a separate ~100K prompts** (paper used exactly 31K, undocumented if or to what extent prompts are re-used from other stages): The model is optimized against the reward model with a likely separate set of prompts, where it generates responses before receiving ratings.
+1. **약 10K 예시에 대한 지시 조정**: 이것은 모델이 질의응답 형식을 따르도록 가르치고 주로 인간이 작성한 데이터에서 기본 기술을 가르칩니다.
+2. **약 100K 쌍별 프롬프트에 대한 보상 모델 학습** (논문에서는 33K 프롬프트 사용): 이 모델은 지시 조정된 체크포인트 (checkpoint)에서 학습되며 최종 학습에서 모델링하기를 원하는 다양한 가치들을 포착합니다. 보상 모델은 RLHF의 최적화 목표입니다.
+3. **별도의 약 100K 프롬프트에 대한 RLHF로 지시 조정된 모델 학습** (논문에서는 정확히 31K 사용, 다른 단계에서 프롬프트가 재사용되는지 여부와 정도는 문서화되지 않음): 모델은 응답을 생성한 후 평가를 받는 별도의 프롬프트 세트로 보상 모델에 대해 최적화됩니다.
 
-Once RLHF was done, the model was ready to be deployed to users. This recipe is the foundation of modern RLHF, but recipes have evolved substantially to include more stages and more data.
+RLHF가 완료되면 모델은 사용자에게 배포될 준비가 됩니다. 이 레시피는 현대 RLHF의 기반이지만, 레시피는 더 많은 단계와 더 많은 데이터를 포함하도록 상당히 발전했습니다.
 
-![A rendition of the early, three stage RLHF process with SFT, a reward model, and then optimization.](images/rlhf-basic.png){#fig:rlhf-basic-repeat}
+![지도 미세조정 (SFT), 보상 모델, 그리고 최적화로 구성된 초기 3단계 RLHF 과정의 렌더링.](images/rlhf-basic.png){#fig:rlhf-basic-repeat}
 
 ### Tülu 3
 
-Modern versions of post-training involve many, many more model versions and training stages (i.e. well more than the 5 RLHF steps documented for Llama 2 [@touvron2023llama]). 
-An example is shown below in @fig:rlhf-complex where the model undergoes numerous training iterations before convergence.
+현대 버전의 후처리 학습은 훨씬 더 많은 모델 버전과 학습 단계를 포함합니다 (즉, Llama 2에 문서화된 5개의 RLHF 단계보다 훨씬 많습니다 [@touvron2023llama]).
+예시는 아래 @fig:rlhf-complex에 나와 있으며, 수렴 전에 모델이 수많은 학습 반복을 거칩니다.
 
-![A rendition of modern post-training with many rounds.](images/rlhf-complex.png){#fig:rlhf-complex}
+![많은 라운드를 가진 현대 후처리 학습의 렌더링.](images/rlhf-complex.png){#fig:rlhf-complex}
 
-The most complex models trained in this era and onwards have not released full details of their training process.
-Leading models such as ChatGPT or Claude circa 2025 involve many, iterative rounds of training.
-This can even include techniques that train specialized models and then merge the weights together to get a final model capable on many subtasks [@li2022branch] (e.g. Cohere's Command A [@cohere2025command]).
+이 시대 이후의 가장 복잡한 모델들은 학습 과정의 전체 세부 사항을 공개하지 않았습니다.
+2025년경 ChatGPT나 Claude와 같은 선도적인 모델들은 많은 반복적인 학습 라운드를 포함합니다.
+여기에는 특화된 모델을 학습시킨 다음 가중치를 합쳐 많은 서브태스크에서 능력 있는 최종 모델을 얻는 기법도 포함될 수 있습니다 [@li2022branch] (예: Cohere의 Command A [@cohere2025command]).
 
-![A summary of the Tülu 3 recipe with target skills and multi-step training recipe. Lambert et al. 2024, License CC-BY.](images/tulu3.png){#fig:tulu-3}
+![목표 기술과 다단계 학습 레시피를 보여주는 Tülu 3 레시피 요약. Lambert et al. 2024, 라이선스 CC-BY.](images/tulu3.png){#fig:tulu-3}
 
-A fully open example of this multi-stage approach to post-training where RLHF plays a major role is Tülu 3.
-The Tülu 3 recipe consists of three stages:
+RLHF가 중요한 역할을 하는 다단계 후처리 학습 접근 방식의 완전히 공개된 예시가 Tülu 3입니다.
+Tülu 3 레시피는 세 단계로 구성됩니다:
 
-1. **Instruction tuning on ~1M examples**: This primarily synthetic dataset, drawn from a mix of frontier models such as GPT-4o and Llama 3.1 405B, teaches the model general instruction following and serves as the foundation for capabilities such as mathematics and coding.
-2. **On-policy preference data on ~1M preference pairs**: This stage substantially boosts the chattiness (e.g. Arena, formerly ChatBotArena, or AlpacaEval 2) of the model while also improving skills mentioned above in the instruction tuning stage.
-3. **Reinforcement Learning with Verifiable Rewards on ~10K prompts**: This stage is a small-scale reinforcement learning run to boost core skills such as mathematics while maintaining overall performance (and is now seen as a precursor to modern reasoning models such as DeepSeek R1).
+1. **약 1M 예시에 대한 지시 조정**: 주로 GPT-4o와 Llama 3.1 405B와 같은 프론티어 모델의 조합에서 가져온 이 합성 데이터셋은 모델에 일반적인 지시 따르기를 가르치고 수학 및 코딩과 같은 능력의 기반 역할을 합니다.
+2. **약 1M 선호도 쌍에 대한 온-정책 선호도 데이터**: 이 단계는 위의 지시 조정 단계에서 언급된 기술을 향상시키면서 모델의 대화성 (예: Arena, 이전에는 ChatBotArena, 또는 AlpacaEval 2)을 상당히 향상시킵니다.
+3. **약 10K 프롬프트에 대한 검증 가능한 보상을 활용한 강화학습 (RLVR)**: 이 단계는 전반적인 성능을 유지하면서 수학과 같은 핵심 기술을 향상시키기 위한 소규모 강화학습 실행입니다 (현재는 DeepSeek R1과 같은 현대 추론 모델의 선구자로 여겨집니다).
 
-The recipe has been successfully applied to Llama 3.1 [@lambert2024t], OLMo 2 [@olmo20242], and SmolLM models [@alrashed2024smoltulu].
+이 레시피는 Llama 3.1 [@lambert2024t], OLMo 2 [@olmo20242], 그리고 SmolLM 모델들 [@alrashed2024smoltulu]에 성공적으로 적용되었습니다.
 
 ### DeepSeek R1
 
-With the rise of reasoning language models, such as OpenAI's o1, the best practices in post-training evolved again to re-order and redistribute compute across training stages.
-The clearest documentation of a reasoning model post-training recipe is DeepSeek R1 [@guo2025deepseek], which has been mirrored by Alibaba's larger Qwen 3 models (i.e. only the 32B and 225B MoE models) [@yang2025qwen3] or Xiaomi's MiMo 7B [@xia2025mimo].
-The DeepSeek recipe follows:
+OpenAI의 o1과 같은 추론 언어 모델의 부상으로, 후처리 학습의 모범 사례는 학습 단계 전반에 걸쳐 컴퓨팅을 재배치하고 재분배하도록 다시 진화했습니다.
+추론 모델 후처리 학습 레시피에 대한 가장 명확한 문서화는 DeepSeek R1 [@guo2025deepseek]이며, 이는 Alibaba의 더 큰 Qwen 3 모델들 (즉, 32B 및 225B MoE 모델만) [@yang2025qwen3] 또는 Xiaomi의 MiMo 7B [@xia2025mimo]에도 반영되었습니다.
+DeepSeek 레시피는 다음과 같습니다:
 
-1. **"Cold-start" of 100K+ on-policy reasoning samples**: This data is sampled from an earlier RL checkpoint, R1-Zero, and heavily filtered to instill a specific reasoning process on DeepSeek-V3-Base. DeepSeek uses the term cold-start to describe how RL is learned from little supervised data.
-2. **Large-scale reinforcement learning training**: This stage repeatedly covers reasoning problems with the model, running RLVR "until convergence" on a variety of benchmarks.
-3. **Rejection sampling and SFT**: Near convergence, they apply rejection sampling to the RL checkpoint to build an SFT dataset of ~800K samples, then fine-tune the model on a filtered mix of roughly 3/4 reasoning problems and 1/4 general queries to produce a general-purpose model.
-4. **Mixed reinforcement learning training** on reasoning problems (verifiable rewards) with general preference tuning reward models to polish the model.
+1. **100K+ 온-정책 추론 샘플의 "콜드 스타트"**: 이 데이터는 이전 RL 체크포인트인 R1-Zero에서 샘플링되고 많이 필터링되어 DeepSeek-V3-Base에 특정 추론 과정을 심어줍니다. DeepSeek은 적은 지도 데이터에서 RL이 학습되는 방식을 설명하기 위해 콜드 스타트라는 용어를 사용합니다.
+2. **대규모 강화학습 학습**: 이 단계는 다양한 벤치마크에서 "수렴할 때까지" RLVR을 실행하면서 추론 문제를 반복적으로 다룹니다.
+3. **거부 샘플링과 지도 미세조정 (SFT)**: 수렴 근처에서, 그들은 RL 체크포인트에 거부 샘플링을 적용하여 약 800K 샘플의 SFT 데이터셋을 구축하고, 일반 목적 모델을 만들기 위해 약 3/4 추론 문제와 1/4 일반 쿼리의 필터링된 조합으로 모델을 미세조정합니다.
+4. **혼합 강화학습 학습**: 추론 문제 (검증 가능한 보상)와 일반 선호도 조정 보상 모델을 결합하여 모델을 마무리합니다.
 
-As above, there are evolutions of the recipe, particularly with steps 3 and 4 to finalize the model before exposing it to users.
-Many models start with tailored instruction datasets with chain-of-thought sequences that are heavily filtered and polished from existing models, providing a fast step to strong behaviors with SFT alone before moving onto RL [@seed2025seed].
+위에서처럼, 사용자에게 노출되기 전에 모델을 최종화하기 위해 특히 3단계와 4단계에서 레시피의 발전이 있습니다.
+많은 모델들이 기존 모델에서 많이 필터링되고 다듬어진 사고의 연쇄 (CoT) 시퀀스를 포함하는 맞춤형 지시 데이터셋으로 시작하여, RL로 넘어가기 전에 SFT만으로도 강력한 동작을 빠르게 달성합니다 [@seed2025seed].

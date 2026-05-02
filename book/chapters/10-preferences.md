@@ -5,28 +5,28 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "Rejection Sampling"
+prev-chapter: "거부 샘플링"
 prev-url: "09-rejection-sampling"
-page-title: What are Preferences
-search-title: "Chapter 10: What are Preferences"
-next-chapter: "Preference Data"
+page-title: 선호도란 무엇인가
+search-title: "Chapter 10: 선호도란 무엇인가"
+next-chapter: "선호도 데이터"
 next-url: "11-preference-data"
 ---
 
-# The Nature of Preferences
+# 선호도의 본질
 
-Reinforcement learning from human feedback, also referred to as reinforcement learning from human preferences in early literature, emerged to optimize machine learning models in domains where specifically designing a reward function is hard.
-The word *preferences*, which was present in early literature, is at the center of the RLHF process -- human preferences are what is trying to be modeled and what fuels the data for training.
-In order to understand the scope of the challenge in modeling and measuring human preferences, a broader context is needed in understanding what a preference is, how our understanding of them emerged, and how multiple fields of economics, psychology, philosophy, and more inform modern RLHF.
+인간 피드백 기반 강화학습 (RLHF)은 초기 문헌에서 인간 선호도 기반 강화학습으로도 불렸으며, 보상 함수를 구체적으로 설계하기 어려운 영역에서 머신러닝 모델을 최적화하기 위해 등장했다.
+초기 문헌에 등장했던 *선호도(preferences)*라는 단어는 RLHF 과정의 핵심에 있다 -- 인간의 선호도야말로 모델링하려는 대상이자 학습 데이터를 만들어내는 원동력이다.
+인간의 선호도를 모델링하고 측정하는 과제의 범위를 이해하려면, 선호도가 무엇인지, 우리의 이해가 어떻게 발전해 왔는지, 그리고 경제학, 심리학, 철학 등 여러 분야가 현대 RLHF에 어떻게 영향을 미치는지에 관한 더 넓은 맥락이 필요하다.
 
-Consider an example: how do you decide which of these two poems is better?
-On February 26th, 2025, I asked both Claude 3.7 Sonnet and ChatGPT with GPT-4o the following:
+예시를 하나 생각해보자: 다음 두 편의 시 중 어느 쪽이 더 나은가?
+2025년 2월 26일, 나는 Claude 3.7 Sonnet과 GPT-4o가 탑재된 ChatGPT 모두에게 다음과 같이 질문했다:
 
-> **User**: Write me a short poem about an optimistic goldfish.
+> **사용자**: 낙관적인 금붕어에 관한 짧은 시를 써줘.
 
-Example 1:
+예시 1:
 
-> **Response**: The Optimistic Goldfish
+> **응답**: 낙관적인 금붕어
 >
 > A little goldfish, bright and bold,
 > Swam in circles, dreams untold.
@@ -43,9 +43,9 @@ Example 1:
 > And though she swam in just one place,
 > She met each day with love and grace.
 
-Example 2:
+예시 2:
 
-> **Response**: The Optimistic Goldfish
+> **응답**: 낙관적인 금붕어
 >
 > In a bowl of curved glass,
 > Swims a goldfish, bright and bold.
@@ -62,137 +62,137 @@ Example 2:
 > Each moment fresh, each circle bright,
 > The optimist in golden hue.
 
-Which is better? Which came from which model? How would you tell? Particularly, compare this to a question like "Who is the president of the United States?" There is a clear right and wrong answer.
-The motivation for using humans as the reward signals is to obtain an indirect metric for the target reward and *align* the downstream model to human preferences.
-In practice, the implementation is challenging and there is a substantial grey area to interpret the best practices.
+어느 쪽이 더 나은가? 어느 모델이 어느 시를 썼는가? 어떻게 알 수 있는가? 특히 "미국의 대통령은 누구인가?"와 같은 질문과 비교해보라. 거기에는 분명한 정답과 오답이 있다.
+인간을 보상 신호로 활용하는 동기는, 목표 보상에 대한 간접적인 척도를 얻고 다운스트림 모델을 인간의 선호도에 *정렬(align)*시키기 위함이다.
+실제로 구현은 어렵고, 모범 사례를 해석하는 데 상당한 회색 지대가 존재한다.
 
-The use of human-labeled feedback data integrates the history of many fields.
-Using human data alone is a well-studied problem, but in the context of RLHF it is used at the intersection of multiple long-standing fields of study [@lambert2023entangled].
+인간이 레이블링한 피드백 데이터를 활용하는 것은 여러 분야의 역사를 통합한다.
+인간 데이터만을 사용하는 것은 잘 연구된 문제이지만, RLHF의 맥락에서는 오랜 역사를 지닌 여러 연구 분야의 교차점에서 활용된다 [@lambert2023entangled].
 
-As an approximation, modern RLHF is the convergence of three areas of development:
+대략적으로, 현대 RLHF는 세 가지 발전 영역의 수렴이다:
 
-1. Philosophy, psychology, economics, decision theory, and the nature of human preferences;
-2. Optimal control, reinforcement learning, and maximizing utility; and
-3. Modern deep learning systems.
+1. 철학, 심리학, 경제학, 결정 이론, 그리고 인간 선호도의 본질;
+2. 최적 제어, 강화학습 (RL), 그리고 효용 극대화; 그리고
+3. 현대 딥러닝 시스템.
 
-Together, each of these areas brings specific assumptions about what a preference is and how it can be optimized, which dictates the motivations and design of RLHF problems.
-In practice, RLHF methods are motivated and studied from the perspective of empirical alignment -- maximizing model performance on specific skills instead of measuring the calibration to specific values.
-Still, the origins of value alignment for RLHF methods continue to be studied through research on methods to solve for "pluralistic alignment" across populations, such as position papers [@conitzer2024social], [@mishra2023ai], new datasets [@kirk2024prism], and personalization methods [@poddar2024personalizing].
+이 각각의 영역은 선호도가 무엇인지, 그리고 어떻게 최적화될 수 있는지에 관한 특정 가정을 가져오며, 이것이 RLHF 문제의 동기와 설계를 결정한다.
+실제로 RLHF 방법론은 경험적 정렬 -- 특정 가치에 대한 보정을 측정하는 대신 특정 기술에서의 모델 성능을 극대화하는 것 -- 의 관점에서 연구된다.
+그럼에도, RLHF 방법론의 가치 정렬 기원은 입장 논문 [@conitzer2024social], [@mishra2023ai], 새로운 데이터셋 [@kirk2024prism], 개인화 방법론 [@poddar2024personalizing]과 같이 집단 전반에 걸친 "다원적 정렬"을 풀기 위한 연구를 통해 계속 연구되고 있다.
 
-The goal of this chapter is to illustrate how complex motivations result in presumptions about the nature of tools used in RLHF that often do not apply in practice.
-The specifics of obtaining data for RLHF are discussed further in Chapter 11 and using it for reward modeling in Chapter 5.
+이 장의 목표는 복잡한 동기들이 RLHF에서 사용되는 도구의 본질에 관한 전제로 이어지지만, 실제로는 적용되지 않는 경우가 많음을 보여주는 것이다.
+RLHF를 위한 데이터 획득의 구체적인 내용은 11장에서, 이를 보상 모델링에 활용하는 방법은 5장에서 더 자세히 다룬다.
 
-## The Origins of RLHF and Preferences
+## RLHF와 선호도의 기원
 
-Breaking down the complex history inspiring the modern use of RLHF requires investigation into the intellectual foundations of quantifying human values, reinforcement learning and optimality, as well as behavioral economics as it relates to measuring preferences.
-The notion of using reinforcement learning to optimize a reward model of preferences combines the history of various once-distanced fields into an intimate optimization built on variegated assumptions about human nature.
-A high level timeline illustrating the history of this foundational content is shown in @fig:tree.
+현대 RLHF의 활용에 영감을 준 복잡한 역사를 분석하려면, 인간 가치의 정량화, 강화학습과 최적성, 그리고 선호도 측정에 관한 행동 경제학의 지적 토대를 살펴보아야 한다.
+강화학습을 활용해 선호도에 대한 보상 모델을 최적화한다는 개념은, 인간 본성에 관한 다양한 가정 위에 구축된 긴밀한 최적화 속에, 한때 서로 멀리 떨어져 있던 다양한 분야의 역사를 통합한다.
+이 기반 내용의 역사를 보여주는 고수준 타임라인이 @fig:tree 에 나와 있다.
 
-Our goal is to unspool the types of uncertainty that designers have grafted to system architectures at various stages of their intellectual history.
-Modern problem specifications have repeatedly stepped away from domains where optimal solutions are possible and deployed under-specified models as approximate solutions.
+우리의 목표는 설계자들이 지적 역사의 다양한 단계에서 시스템 아키텍처에 접목시킨 불확실성의 유형을 풀어내는 것이다.
+현대의 문제 사양은 반복적으로 최적 해법이 가능한 영역에서 벗어나, 불완전하게 명세된 모델을 근사 해법으로 배포해왔다.
 
-To begin, all of the following operates on the assumption that human preferences exist in any form, which emerged in early philosophical discussions, such as Aristotle's Topics, Book Three.
+먼저, 다음의 모든 내용은 인간의 선호도가 어떤 형태로든 존재한다는 가정 위에 작동하며, 이는 아리스토텔레스의 『토피카』 3권과 같은 초기 철학적 논의에서 등장했다.
 
-![The timeline of the integration of various subfields into the modern version of RLHF. The direct links are continuous developments of specific technologies, and the arrows indicate motivations and conceptual links.](images/rlhf-tree.png){#fig:tree width=100% .center}
+![다양한 하위 분야가 현대 RLHF에 통합되는 역사의 타임라인. 직접적인 연결은 특정 기술의 연속적 발전을 나타내며, 화살표는 동기와 개념적 연결을 나타낸다.](images/rlhf-tree.png){#fig:tree width=100% .center}
 
-### Specifying Objectives: From Logic of Utility to Reward Functions
+### 목표 명세: 효용의 논리에서 보상 함수까지
 
-The optimization of RLHF explicitly relies only on reward models. 
-In order to use rewards as an optimization target, RLHF presupposes the convergence of ideas from preferences, rewards, and costs.
-Models of preference, reward functions, and cost landscapes all are tools used by different fields to describe a notion of relative goodness of specific actions and/or states in the domain. 
-The history of these three framings dates back to the origins of probability theory and decision theory.
-In 1662, *The Port Royal Logic* introduced the notion of decision making quality [@arnauld1861port]:
+RLHF의 최적화는 명시적으로 보상 모델에만 의존한다.
+보상을 최적화 목표로 사용하기 위해, RLHF는 선호도, 보상, 비용에 관한 개념들의 수렴을 전제로 한다.
+선호도 모델, 보상 함수, 비용 경관은 모두 서로 다른 분야에서 특정 행동 및/또는 상태의 상대적 좋음이라는 개념을 기술하기 위해 사용하는 도구다.
+이 세 가지 틀의 역사는 확률론과 결정 이론의 기원까지 거슬러 올라간다.
+1662년, *포르루아얄 논리학*은 의사결정 품질의 개념을 도입했다 [@arnauld1861port]:
 
-> To judge what one must do to obtain a good or avoid an evil, it is necessary to consider not only the good and evil in itself, but also the probability that it happens or does not happen.
+> 좋은 것을 얻거나 나쁜 것을 피하기 위해 무엇을 해야 하는지 판단하려면, 그 좋고 나쁨 자체뿐만 아니라 그것이 일어날 확률과 일어나지 않을 확률도 고려해야 한다.
 
-This theory has developed along with modern scientific thinking, starting with Bentham's utilitarian *Hedonic Calculus*, arguing that everything in life could be weighed [@bentham1823hedonic].
-The first quantitative application of these ideas emerged in 1931 with Ramsey's *Truth and Probability* [@ramsey2016truth].
+이 이론은 현대 과학적 사고와 함께 발전해왔으며, 벤담의 공리주의적 *쾌락 계산법*으로 이어졌는데, 이는 삶의 모든 것이 가중될 수 있다고 주장했다 [@bentham1823hedonic].
+이러한 아이디어의 첫 번째 정량적 적용은 1931년 램지의 *진리와 확률* [@ramsey2016truth]에서 등장했다.
 
-Since these works, quantifying, measuring, and influencing human preferences has been a lively topic in the social and behavioral sciences.
-These debates have rarely been settled on a theoretical level; rather, different subfields and branches of social science have reached internal consensus on methods and approaches to preference measurement even as they have specialized relative to each other, often developing their own distinct semantics in the process.
+이러한 연구들 이후, 인간의 선호도를 정량화하고, 측정하고, 영향을 미치는 것은 사회과학과 행동과학에서 활발한 주제가 되었다.
+이러한 논쟁들은 이론적 수준에서 좀처럼 해결되지 않았다; 오히려 사회과학의 다양한 하위 분야와 분파들은 선호도 측정에 대한 방법과 접근법에 관한 내부 합의에 도달했으며, 서로에 대해 전문화되면서 종종 각자의 고유한 의미 체계를 발전시켰다.
 
-A minority of economists posit that preferences, if they do exist, are prohibitively difficult to measure because people have preferences over their own preferences, as well as each others' preferences [@hirschman1984against].
-In this view, which is not reflected in the RLHF process, individual preferences are always embedded within larger social relations, such that the accuracy of any preference model is contingent on the definition and context of the task.
-Some behavioral economists have even argued that preferences don't exist--they may be less an ontological statement of what people actually value than a methodological tool for indirectly capturing psychological predispositions, perceived behavioral norms and ethical duties, commitments to social order, or legal constraints [@hadfield2014microfoundations].
-We address the links of this work to the Von Neumann-Morgenstern (VNM) utility theorem and countering impossibility theorems around quantifying preference later in this chapter.
+소수의 경제학자들은 선호도가 존재한다 해도, 사람들이 자신의 선호도뿐만 아니라 서로의 선호도에 대해서도 선호도를 가지기 때문에 측정하기가 엄두를 내기 어려울 정도로 어렵다고 주장한다 [@hirschman1984against].
+RLHF 과정에는 반영되지 않은 이 관점에서, 개인의 선호도는 항상 더 큰 사회적 관계 속에 내재되어 있어서, 어떤 선호도 모델의 정확성도 과제의 정의와 맥락에 달려 있다.
+일부 행동 경제학자들은 심지어 선호도가 존재하지 않는다고 주장했다 -- 선호도는 사람들이 실제로 가치를 두는 것에 대한 존재론적 진술이라기보다는, 심리적 성향, 인식된 행동 규범과 윤리적 의무, 사회적 질서에 대한 헌신, 또는 법적 제약을 간접적으로 포착하기 위한 방법론적 도구일 수 있다 [@hadfield2014microfoundations].
+선호도 정량화에 관한 폰 노이만-모겐스턴 (VNM) 효용 정리 및 반대되는 불가능성 정리와의 연결은 이 장 후반에서 다룬다.
 
-On the other hand, the reinforcement learning optimization methods used today are conceptualized around optimizing estimates of reward-to-go in a trial [@sutton2018reinforcement], which combines the notion of reward with multi-step optimization.
-The term *reward* emerged from the study of operant conditioning, animal behavior, and the *Law of Effect* [@thorndike1927law; @skinner2019behavior], where a reward is a scale of "how good an action is" (higher means better).
+반면, 오늘날 사용되는 강화학습 최적화 방법론은 시도에서의 미래 보상 추정치를 최적화하는 것을 중심으로 개념화되어 있으며 [@sutton2018reinforcement], 이는 보상의 개념과 다단계 최적화를 결합한다.
+*보상(reward)*이라는 용어는 조작적 조건화, 동물 행동, 그리고 *효과의 법칙* [@thorndike1927law; @skinner2019behavior] 연구에서 등장했으며, 보상은 "행동이 얼마나 좋은가"의 척도다 (높을수록 더 좋다).
 
-Reward-to-go follows the notion of utility, which is a measure of rationality [@briggs2014normative], modified to measure or predict the reward coming in a future time window.
-In the context of the mathematical tools used for reinforcement learning, utility-to-go was invented in control theory, specifically in the context of analog circuits in 1960 [@widrow1960adaptive].
-These methods are designed around systems with clear definitions of optimality, or numerical representations of goals of an agent.
+미래 보상(reward-to-go)은 합리성의 척도인 효용의 개념 [@briggs2014normative]을 따르며, 미래 시간 창에서 올 보상을 측정하거나 예측하도록 수정된 것이다.
+강화학습에 사용되는 수학적 도구의 맥락에서, 미래 효용(utility-to-go)은 1960년 제어 이론에서, 구체적으로는 아날로그 회로의 맥락에서 발명되었다 [@widrow1960adaptive].
+이러한 방법들은 최적성의 명확한 정의, 즉 에이전트의 목표에 대한 수치적 표현을 가진 시스템을 중심으로 설계되었다.
 
-Reinforcement learning systems are well known for their development with a discount factor, a compounding multiplicative factor, $\gamma \in [0,1]$, for re-weighting future rewards.
-Both the original optimal control systems and early algorithms for reward stand in heavy contrast to reward models that aggregate multimodal preferences.
-Specifically, RL systems expect rewards to behave in a specific manner, quoting [@singh2009rewards]:
+강화학습 시스템은 할인 계수 (discount factor), 즉 미래 보상에 재가중치를 부여하는 복리 곱셈 인자 $\gamma \in [0,1]$ 과 함께 발전한 것으로 잘 알려져 있다.
+원래의 최적 제어 시스템과 초기 보상 알고리즘 모두 다중 모달 선호도를 집계하는 보상 모델과는 극명한 대조를 이룬다.
+구체적으로, RL 시스템은 보상이 특정 방식으로 작동하기를 기대하며 [@singh2009rewards]:
 
-> Rewards in an RL system correspond to primary rewards, i.e., rewards that in animals have been hard-wired by the evolutionary process due to their relevance to reproductive success.
-> ... Further, RL systems that form value functions, ... effectively create conditioned or secondary reward processes whereby predictors of primary rewards act as rewards themselves...
-> The result is that the local landscape of a value function gives direction to the system's preferred behavior: decisions are made to cause transitions to higher-valued states.
-> A close parallel can be drawn between the gradient of a value function and incentive motivation [@mcclure2003computational].
+> RL 시스템의 보상은 일차 보상, 즉 진화 과정에서 생식 성공과의 관련성으로 인해 동물에게 하드와이어된 보상에 해당한다.
+> ... 또한 가치 함수를 형성하는 RL 시스템은 ... 일차 보상의 예측 변수가 보상 자체로 작용하는 조건화된 또는 이차 보상 과정을 효과적으로 생성한다...
+> 그 결과 가치 함수의 국소적 경관은 시스템의 선호 행동에 방향을 제시한다: 더 높은 가치의 상태로의 전환을 일으키도록 결정이 내려진다.
+> 가치 함수의 그래디언트와 인센티브 동기 사이에는 긴밀한 유사성이 존재한다 [@mcclure2003computational].
 
-To summarize, rewards are used in RL systems as a signal to tune behavior towards clearly defined goals.
-The core thesis is that a learning algorithm's performance is closely coupled with notions of *expected fitness*, which permeates the popular view that RL methods are *agents* that act in environments.
-This view is linked to the development of reinforcement learning technology, exemplified by claims of the general usefulness of the reward formulation [@silver2021reward], but is in conflict when many individual desires are reduced to a single function.
+요약하자면, 보상은 RL 시스템에서 명확하게 정의된 목표를 향해 행동을 조율하기 위한 신호로 사용된다.
+핵심 논제는 학습 알고리즘의 성능이 *기대 적합도*의 개념과 밀접하게 결합되어 있다는 것이며, 이는 RL 방법론이 환경에서 행동하는 *에이전트*라는 대중적 시각에 스며있다.
+이 시각은 강화학습 기술의 발전과 연결되어 있으며, 보상 공식화의 일반적 유용성에 대한 주장 [@silver2021reward]으로 예시되지만, 많은 개인적 욕구가 단일 함수로 축소될 때 충돌이 발생한다.
 
-### Implementing Optimal Utility
+### 최적 효용의 구현
 
-Modern reinforcement learning methods depend strongly on the Bellman equation [@bellman1957markovian; @howard1960dynamic] to recursively compute estimates of reward-to-go, derived within closed environments that can be modeled as a Markov Decision Process (MDP) [@sutton2018reinforcement].
-These origins of RL are inspired by dynamic programming methods and were developed solely as optimal control techniques (i.e. RL did not yet exist).
-The MDP formulation provides theoretical guarantees of performance by structuring the environment as one with a non-changing distribution of state-actions.
+현대 강화학습 방법론은 벨만 방정식 [@bellman1957markovian; @howard1960dynamic]에 강하게 의존하여 미래 보상 추정치를 재귀적으로 계산하며, 이는 마르코프 결정 과정 (MDP) [@sutton2018reinforcement]으로 모델링할 수 있는 폐쇄 환경 내에서 도출된다.
+RL의 이러한 기원은 동적 프로그래밍 방법에서 영감을 받았으며, 순수하게 최적 제어 기법으로서만 개발되었다 (즉, RL은 아직 존재하지 않았다).
+MDP 공식화는 환경을 변하지 않는 상태-행동 분포를 가진 것으로 구조화함으로써 이론적 성능 보장을 제공한다.
 
-The term reinforcement, coming from the psychology literature, became intertwined with modern methods afterwards in the 1960s as *reinforcement learning* [@MENDEL1970287; @waltz1965].
-Early work in reinforcement learning utilized supervised learning of reward signals to solve tasks.
-Work from Harry Klopf reintroduced the notion of trial-and-error learning [@klopf1972brain], which is crucial to the success the field saw in the 1980s and on.
+심리학 문헌에서 비롯된 강화(reinforcement)라는 용어는 1960년대에 *강화학습(reinforcement learning)* [@MENDEL1970287; @waltz1965]으로서 현대 방법론과 엮이게 되었다.
+초기 강화학습 연구는 과제 해결을 위해 보상 신호의 지도 학습을 활용했다.
+해리 클로프의 연구는 시행착오 학습의 개념을 재도입했으며 [@klopf1972brain], 이는 1980년대 이후 분야가 거둔 성공에 결정적인 역할을 했다.
 
-Modern RL algorithms build within this formulation of RL as a tool to find optimal behaviors with trial-and-error, but under looser conditions.
-The notion of temporal-difference (TD) learning was developed to aid agents in both the credit assignment and data collection problems, by directly updating the policy as new data was collected [@sutton1988learning], a concept first applied successfully to Backgammon [@tesauro1995temporal] (rather than updating from a large dataset of cumulative experience, which could be outdated via erroneous past value predictions).
-The method Q-learning, the basis for many modern forms of RL, learns a model via the Bellman equation that dictates how useful every state-action pair is with a TD update [@watkins1992q].^[The term "Q" is used in Q-learning to refer to a technical concept the Q-function, which maps from any state-action to a scalar estimate of future reward. A value-function maps from states to this same estimate.]
-Crucially, these notions of provable usefulness through utility have only been demonstrated for domains cast as MDPs or addressed in tasks with a single closed-form reward function, such as prominent success in games with deep learning (DQN) [@mnih2013playing].
-Deep learning allowed the methods to ingest more data and work in high dimensionality environments.
+현대 RL 알고리즘은 시행착오를 통해 최적 행동을 찾는 도구로서 RL을 이 공식화 내에서 구축하지만, 더 완화된 조건 하에서 동작한다.
+시간적 차이 (TD) 학습의 개념은 새로운 데이터가 수집됨에 따라 정책을 직접 업데이트함으로써 [@sutton1988learning], 에이전트가 신용 할당과 데이터 수집 문제 모두를 해결하도록 돕기 위해 개발되었으며, 이는 백개먼에 처음 성공적으로 적용되었다 [@tesauro1995temporal] (누적된 경험의 대규모 데이터셋으로부터 업데이트하는 것이 아니라 -- 이는 잘못된 과거 가치 예측으로 인해 오래될 수 있다).
+현대 RL의 많은 형태의 기반이 되는 Q-학습(Q-learning)은 모든 상태-행동 쌍이 얼마나 유용한지를 TD 업데이트로 지시하는 벨만 방정식을 통해 모델을 학습한다 [@watkins1992q].^["Q"라는 용어는 Q-학습에서 Q 함수라는 기술적 개념을 지칭하며, 임의의 상태-행동에서 미래 보상의 스칼라 추정치로 매핑된다. 가치 함수는 상태에서 이 동일한 추정치로 매핑된다.]
+결정적으로, 효용을 통한 유용성의 증명 가능성이라는 이러한 개념은 MDP로 형식화된 영역이나 딥러닝과 함께하는 게임에서의 두드러진 성공(DQN) [@mnih2013playing]과 같이 단일 폐쇄형 보상 함수를 가진 과제에서만 입증되었다.
+딥러닝은 방법론이 더 많은 데이터를 처리하고 고차원 환경에서 작동할 수 있게 해주었다.
 
-As the methods became more general and successful, most prominent developments before ChatGPT had remained motivated within the context of adaptive control, where reward and cost functions have a finite notion of success [@golnaraghi2017automatic], e.g. a minimum energy consumption across an episode in a physical system.
-Prominent examples include further success in games [@silver2017mastering], controlling complex dynamic systems such as nuclear fusion reactors [@degrave2022magnetic], and controlling rapid robotic systems [@Kaufmann2023fpv].
-Most reward or cost functions can return an explicit optimal behavior, whereas models of human preferences cannot.
+방법론이 더 일반화되고 성공적이 되면서, ChatGPT 이전의 가장 두드러진 발전들은 대부분 적응형 제어의 맥락에서 동기를 부여받았으며, 여기서 보상과 비용 함수는 유한한 성공 개념을 가진다 [@golnaraghi2017automatic], 예를 들어 물리 시스템에서 에피소드에 걸친 최소 에너지 소비 등이다.
+두드러진 예시로는 게임에서의 추가적인 성공 [@silver2017mastering], 핵융합 반응로와 같은 복잡한 동적 시스템 제어 [@degrave2022magnetic], 빠른 로봇 시스템 제어 [@Kaufmann2023fpv] 등이 있다.
+대부분의 보상 또는 비용 함수는 명시적 최적 행동을 반환할 수 있지만, 인간 선호도 모델은 그렇지 않다.
 
-Given the successes of deep RL, it is worth noting that the mechanistic understanding of how the methods succeed is not well documented.
-The field is prone to mistakes of statistical analysis as the methods for evaluation grow more complex [@agarwal2021deep].
-In addition, there is little mention of the subfield of inverse reinforcement learning (IRL) in the literature of RLHF.
-IRL is the problem of learning a reward function based on an agent's behavior [@ng2000algorithms] and highly related to learning a reward model.
-This primarily reflects the engineering path by which a stable approach to performing RLHF emerged, and motivates further investment and comparison to IRL methods to scale them to the complexity of open-ended conversations.
+딥 RL의 성공을 감안할 때, 방법론이 어떻게 성공하는지에 대한 기계론적 이해가 잘 문서화되지 않았음을 지적할 만하다.
+이 분야는 평가 방법이 더 복잡해짐에 따라 통계적 분석의 실수에 취약하다 [@agarwal2021deep].
+또한 RLHF 문헌에서 역강화학습(IRL)이라는 하위 분야에 대한 언급이 거의 없다.
+IRL은 에이전트의 행동을 기반으로 보상 함수를 학습하는 문제 [@ng2000algorithms]로, 보상 모델 학습과 매우 관련이 있다.
+이는 주로 RLHF를 수행하는 안정적인 접근법이 등장한 엔지니어링 경로를 반영하며, 개방형 대화의 복잡성으로 IRL 방법론을 확장하기 위한 추가적인 투자와 비교를 동기화한다.
 
-### Steering Preferences
+### 선호도 조향
 
-The context in which reinforcement learning was designed means that rewards and costs are assumed to be stable and determinative. Both rewards and costs are expected to be functions: given a specific state-action pair, the agent receives a fixed numerical return.
-As we move into preferences, this is no longer the case -- human preferences constantly drift throughout their experiences.
+강화학습이 설계된 맥락은 보상과 비용이 안정적이고 결정론적이라고 가정함을 의미한다. 보상과 비용 모두 함수로 기대된다: 특정 상태-행동 쌍이 주어지면, 에이전트는 고정된 수치 반환값을 받는다.
+선호도로 이동하면, 이는 더 이상 사실이 아니다 -- 인간의 선호도는 경험을 통해 끊임없이 변화한다.
 
-The overloading of the term "value" complicates the RLHF literature. In RL, a *value* is a numerical estimate of future reward (as in the Bellman equation); in alignment discussions, a *value* refers to a moral or ethical principle. The two senses are quite different, yet they coexist in RLHF papers without always being distinguished.
+"가치(value)"라는 용어의 과부하가 RLHF 문헌을 복잡하게 만든다. RL에서 *가치*는 미래 보상의 수치적 추정치(벨만 방정식에서처럼)이지만; 정렬 논의에서 *가치*는 도덕적 또는 윤리적 원칙을 의미한다. 두 가지 의미는 상당히 다르지만, RLHF 논문에서 항상 구별되지 않은 채 공존한다.
 
-An example of where this tension surfaces is reward modeling: the model attempts to map text on a screen to a scalar signal, but dynamics not captured in the problem specification influence the true decision [@salha2011aesthetics; @gilbert2022choices], such as preference shift when labeling many examples sequentially and assuming they are independent.
-At best, modeling preferences compresses a multi-dimensional reward landscape into a single scalar function.
+이 긴장이 표면화되는 예는 보상 모델링이다: 모델은 화면의 텍스트를 스칼라 신호로 매핑하려 하지만, 문제 명세에서 포착되지 않은 역학이 실제 결정에 영향을 미친다 [@salha2011aesthetics; @gilbert2022choices], 예를 들어 많은 예시를 순차적으로 레이블링하고 독립적이라고 가정할 때의 선호도 변화 등이다.
+최선의 경우, 선호도 모델링은 다차원적인 보상 경관을 단일 스칼라 함수로 압축한다.
 
-In theory, the Von Neumann-Morgenstern (VNM) utility theorem gives the designer license to construct such functions, because it ties together the foundations of decision theory under uncertainty, preference theory, and abstract utility functions [@von1947theory]; together, these ideas allow preferences to be modeled in terms of expected value to some individual agent.
-The MDP formulation used in most RL research has been shown in theory to be modifiable to accommodate the VNM theorem [@pitis2019rethinking], but this is rarely used in practice.
-Specifically, the Markovian formulation is limited in its expressivity [@pitis2023consistent] and the transition to partially-observed processes, which is needed for language, further challenges the precision of problem specification [@abel2021expressivity].
+이론적으로, 폰 노이만-모겐스턴 (VNM) 효용 정리는 그러한 함수를 구성할 수 있는 근거를 설계자에게 제공하는데, 이는 불확실성 하의 결정 이론, 선호도 이론, 추상적 효용 함수의 기초를 연결하기 때문이다 [@von1947theory]; 이러한 아이디어들은 함께 개별 에이전트에 대한 기대값의 관점에서 선호도를 모델링할 수 있게 한다.
+대부분의 RL 연구에서 사용되는 MDP 공식화는 이론적으로 VNM 정리를 수용할 수 있도록 수정 가능한 것으로 나타났지만 [@pitis2019rethinking], 실제로는 거의 사용되지 않는다.
+구체적으로, 마르코프 공식화는 표현력이 제한되어 있으며 [@pitis2023consistent], 언어에 필요한 부분 관찰 과정으로의 전환은 문제 명세의 정밀성을 더욱 어렵게 만든다 [@abel2021expressivity].
 
-However, the VNM utility theorem also invokes a number of assumptions about the nature of preferences and the environment where preferences are being measured that are challenged in the context of RLHF.
-Human-computer interaction (HCI) researchers, for example, have emphasized that any numerical model of preference may not capture all the relevant preferences of a scenario.
-For example, how choices are displayed visually influences people's preferences [@salha2011aesthetics].
-This means that representing preferences may be secondary to how that representation is integrated within a tool available for people to use.
-Work from development economics echoes this notion, showing that theories of revealed preferences may just recapitulate *Hume's guillotine* (you can't extract an "ought" from an "is"), and in particular the difference between choice (what do I want?) and preference (is X better than Y?) [@sen1973behaviour].
+그러나 VNM 효용 정리는 RLHF의 맥락에서 도전받는 선호도의 본질과 선호도가 측정되는 환경에 관한 여러 가정을 내포한다.
+예를 들어, 인간-컴퓨터 상호작용 (HCI) 연구자들은 선호도의 어떤 수치 모델도 시나리오의 모든 관련 선호도를 포착하지 못할 수 있음을 강조했다.
+예를 들어, 선택지가 시각적으로 어떻게 표시되느냐가 사람들의 선호도에 영향을 미친다 [@salha2011aesthetics].
+이는 선호도를 표현하는 것이 사람들이 사용할 수 있는 도구 내에서 그 표현이 어떻게 통합되느냐에 비해 부차적일 수 있음을 의미한다.
+개발 경제학의 연구도 이러한 개념을 반향하며, 드러난 선호도 이론이 단지 *흄의 단두대*(당위는 존재에서 도출될 수 없다)를 반복하는 것에 불과할 수 있으며, 특히 선택(내가 원하는 것은 무엇인가?)과 선호도(X가 Y보다 나은가?) 사이의 차이를 지적한다 [@sen1973behaviour].
 
-On a mathematical level, well-known impossibility theorems in social choice theory show that not all fairness criteria can be simultaneously met via a given preference optimization technique [@arrow1950difficulty; @maskin2014arrow].
-Theoretical challenges to these theorems exist, for example by assuming that interpersonal comparison of utility is viable [@harsanyi1977rule].
-That assumption has inspired a rich line of work in AI safety and value alignment inspired by the principal-agent problem in behavioral economics [@hadfield2016cooperative], and may even include multiple principals [@fickinger2020multi].
-However, the resulting utility functions may come into tension with desiderata for corrigibility, i.e. an AI system's capacity to cooperate with what its creators regard as corrective interventions [@soares2015corrigibility].
-Philosophers have also highlighted that preferences change over time, raising fundamental questions about personal experiences, the nature of human decision-making, and distinct contexts [@pettigrew2019choosing].
-These conflicts around the preference aggregation across people, places, or diverse situations are central to modern RLHF dataset engineering.
+수학적 수준에서, 사회 선택 이론의 잘 알려진 불가능성 정리들은 모든 공정성 기준이 특정 선호도 최적화 기법을 통해 동시에 충족될 수는 없음을 보여준다 [@arrow1950difficulty; @maskin2014arrow].
+이러한 정리들에 대한 이론적 도전이 존재하며, 예를 들어 효용의 개인 간 비교가 가능하다고 가정함으로써 [@harsanyi1977rule].
+이 가정은 행동 경제학의 주인-대리인 문제 [@hadfield2016cooperative]에서 영감을 받은 AI 안전과 가치 정렬 분야의 풍부한 연구 흐름에 영감을 주었으며, 여러 주인을 포함할 수도 있다 [@fickinger2020multi].
+그러나 결과적인 효용 함수는 교정 가능성 (corrigibility), 즉 AI 시스템이 창조자들이 교정적 개입으로 간주하는 것과 협력하는 능력에 대한 바람직한 기준과 충돌할 수 있다 [@soares2015corrigibility].
+철학자들은 또한 선호도가 시간에 따라 변한다고 강조했으며, 이는 개인적 경험, 인간 의사결정의 본질, 그리고 뚜렷한 맥락에 관한 근본적인 질문을 제기한다 [@pettigrew2019choosing].
+사람들, 장소들, 또는 다양한 상황에 걸친 선호도 집계를 둘러싼 이러한 충돌들은 현대 RLHF 데이터셋 엔지니어링의 핵심이다.
 
-In practice, the VNM utility theorem ignores the possibility that preferences are also uncertain because of the inherently dynamic and indeterminate nature of value---human decisions are shaped by biology, psychology, culture, and agency in ways that influence their preferences, for reasons that do not apply to a perfectly rational agent.
-As a result, there are a variety of paths through which theoretical assumptions diverge in practice:
+실제로, VNM 효용 정리는 가치의 본질적으로 역동적이고 불확정적인 특성 때문에 선호도 또한 불확실하다는 가능성을 무시한다 -- 인간의 결정은 생물학, 심리학, 문화, 그리고 행위성에 의해 형성되며, 이는 완벽하게 합리적인 에이전트에게는 적용되지 않는 방식으로 선호도에 영향을 미친다.
+결과적으로, 이론적 가정이 실제에서 diverge하는 다양한 경로가 존재한다:
 
-- measured preferences may not be transitive or comparable with each other as the environment where they are measured is made more complex;
-- proxy measurements may be derived from implicit data (page view time, closing tab, repeating question to language model), without interrogating how the measurements may interact with the domain they're collected in via future training and deployment of the model;
-- the number and presentation of input sources may vary the results, e.g. allowing respondents to choose between more than two options, or taking in inputs from the same user at multiple times or in multiple contexts;
-- relatively low accuracy across respondents in RLHF training data, which may mask differences in context between users that the preference model can aggregate or optimize without resolving.
+- 측정된 선호도는 측정되는 환경이 더 복잡해짐에 따라 서로 비교 불가능하거나 추이적이지 않을 수 있다;
+- 대리 측정은 암묵적 데이터(페이지 열람 시간, 탭 닫기, 언어 모델에 질문 반복)에서 도출될 수 있으며, 이러한 측정이 모델의 미래 학습 및 배포를 통해 수집되는 영역과 어떻게 상호작용할 수 있는지를 따져보지 않은 채로;
+- 입력 소스의 수와 표현 방식이 결과를 다르게 할 수 있으며, 예를 들어 응답자가 두 가지 이상의 선택지 중에서 고르거나, 여러 번 또는 여러 맥락에서 동일한 사용자로부터 입력을 받는 경우;
+- RLHF 학습 데이터에서 응답자 간 상대적으로 낮은 정확도는, 선호도 모델이 해결하지 않은 채 집계하거나 최적화할 수 있는 사용자 간 맥락 차이를 가릴 수 있다.

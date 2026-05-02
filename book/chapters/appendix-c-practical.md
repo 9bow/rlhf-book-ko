@@ -5,90 +5,90 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "Style & Information"
+prev-chapter: "스타일 & 정보"
 prev-url: "appendix-b-style"
-page-title: "Appendix C: Practical Issues"
-search-title: "Appendix C: Practical Issues"
-next-chapter: "Home"
+page-title: "부록 C: 실용적 이슈"
+search-title: "부록 C: 실용적 이슈"
+next-chapter: "홈"
 next-url: "https://rlhfbook.com/"
 ---
 
-# Practical Issues and Advice
+# 실용적 이슈와 조언
 
-This appendix covers practical considerations for running post-training experiments at scale. 
-This takes the form of a list of lessons, rather than a coherent narrative.
+이 부록은 대규모 후처리 학습 (post-training) 실험을 진행할 때의 실용적인 고려 사항들을 다룬다.
+이것은 일관된 서술보다는 교훈들의 목록 형태로 제시된다.
 
-## 1. Compute Costs of Post-Training
+## 1. 후처리 학습의 컴퓨팅 비용
 
-There are two different ways of scoping costs for post-training runs.
-The largest cost is in developing the recipe, which can easily be 10 to 100X the compute of the final few training runs.
-The secondary costs, which are easier to measure, are the costs to thoroughly apply a recipe, which entails multiple seeds, careful evaluation, potential engineering headaches, etc.
+후처리 학습 실행의 비용을 산정하는 두 가지 방법이 있다.
+가장 큰 비용은 레시피를 개발하는 것으로, 최종 몇 번의 학습 실행 컴퓨팅의 10배에서 100배에 이를 수 있다.
+두 번째 비용은 측정하기 더 쉬운 것으로, 레시피를 철저히 적용하는 비용이며, 이는 여러 시드, 신중한 평가 (evaluation), 잠재적인 엔지니어링 문제들 등을 수반한다.
 
-For the first cost, to develop a post-training recipe like Tülu 3 [@lambert2024t], the team ran on the order of thousands of experiments/evaluations at the 7B scale before having the final model.
+첫 번째 비용에 대해, Tülu 3 [@lambert2024t] 같은 후처리 학습 레시피를 개발하기 위해, 팀은 최종 모델을 갖기 전에 7B 규모에서 수천 개의 실험/평가를 수행했다.
 
-For final runs, the Olmo 3 report has a detailed accounting of what is involved in training the final 32B Think model [@teamolmo2025olmo3]:
+최종 실행의 경우, Olmo 3 보고서에는 최종 32B Think 모델을 학습하는 데 관련된 것들의 자세한 설명이 있다 [@teamolmo2025olmo3]:
 
-> Post-training follows a different operational pattern in which we run each stage multiple times, sweeping over learning rates and other hyperparameters. The theory for post-training, particularly, RL, is less developed, so we have to run multiple experiments to identify the optimal hyperparameters for a given base model. We hope to address this in future work.
+> 후처리 학습은 각 단계를 여러 번 실행하고, 학습률 및 기타 하이퍼파라미터 (hyperparameter)를 탐색하는 다른 운영 패턴을 따릅니다. 후처리 학습, 특히 RL의 이론은 덜 발달되어 있어, 주어진 기반 모델에 대한 최적의 하이퍼파라미터를 식별하기 위해 여러 실험을 실행해야 합니다. 이 문제는 향후 작업에서 해결하길 바랍니다.
 >
-> During post-training, checkpoint evaluation consumes a larger proportion of compute resources, in part due to long generations from reasoning models on core benchmarks. For SFT, we swept over four candidate learning rates, on 256 GPUs each, in parallel for 36 hours. Then approximately 12 hours was spent on evaluation, merging, and checkpoint confirmation, totaling approximately two days. DPO training takes less time per run (about 18 hours for a full learning-rate sweep on 64 GPUs per job) but in practice extended over multiple days due to cluster instability. The final RL runs for the initial Olmo 3 Think 32B spanned approximately 5 days with at least a day of training time lost due to stability issues. After the initial release of Olmo 3, we continued our best RL run for another 21 days on 224 GPUs to produce Olmo 3.1 Think 32B.
+> 후처리 학습 중에는 체크포인트 (checkpoint) 평가가 컴퓨팅 리소스의 더 많은 비율을 소비하는데, 부분적으로는 핵심 벤치마크에서 추론 모델의 긴 생성 때문입니다. SFT의 경우, 256개의 GPU에서 각각 36시간 동안 병렬로 네 개의 후보 학습률을 탐색했습니다. 그런 다음 약 12시간이 평가, 병합, 체크포인트 확인에 사용되어 총 약 이틀이 걸렸습니다. DPO 학습은 실행당 시간이 덜 걸리지만 (작업당 64개 GPU에서 전체 학습률 탐색에 약 18시간), 실제로는 클러스터 불안정성으로 인해 며칠에 걸쳐 진행되었습니다. 초기 Olmo 3 Think 32B를 위한 최종 RL 실행은 안정성 문제로 인해 최소 하루의 학습 시간을 잃으면서 약 5일이 걸렸습니다. Olmo 3 초기 출시 후, 우리는 Olmo 3.1 Think 32B를 생성하기 위해 224개의 GPU에서 추가로 21일 동안 최선의 RL 실행을 계속했습니다.
 
-As scaling reinforcement learning becomes more standard practice, this will shift yet again [@khatri2025art].
-Continuing the above example, where the original Olmo 3 32B Think post-training took only a couple of weeks, to release the improved Olmo 3.1 32B Think model the team needed to train it for an additional 3.5 weeks with RLVR. This is a substantial cost in *time* more than in total compute.
+강화학습 (RL)을 스케일링하는 것이 더 표준적인 관행이 됨에 따라, 이는 다시 변화할 것이다 [@khatri2025art].
+위의 예시를 계속하면, 원래 Olmo 3 32B Think 후처리 학습이 불과 몇 주밖에 걸리지 않은 반면, 개선된 Olmo 3.1 32B Think 모델을 출시하기 위해 팀은 RLVR로 추가 3.5주 동안 학습해야 했다. 이것은 총 컴퓨팅보다는 *시간* 측면에서 상당한 비용이다.
 
-## 2. Evaluation Variance
+## 2. 평가 분산
 
-One underappreciated challenge in post-training is evaluation variance, especially with the rise of reasoning models that need to use sampling with temperatures above 0 to get the best evaluation scores. 
-With any sampling from models, the outputs become more variable.
-Different benchmarks have vastly different stability characteristics, due to the variance in difficulty of the prompts, the number of prompts in the evaluation set, the brittleness of the models being trained, etc.
+후처리 학습에서 충분히 인식되지 않는 과제는 평가 분산이며, 특히 최상의 평가 점수를 얻기 위해 0 이상의 온도로 샘플링을 사용해야 하는 추론 모델의 부상과 함께 더욱 그렇다.
+모델에서 어떤 샘플링이든 출력이 더 가변적이 된다.
+서로 다른 벤치마크들은 프롬프트의 난이도 분산, 평가 세트의 프롬프트 수, 학습 중인 모델의 취약성 등으로 인해 매우 다른 안정성 특성을 갖는다.
 
-During Olmo 3, the team tracked the variance of different evaluations used to evaluate reasoning models.
-The table below shows the standard deviation of each evaluation, computed as the mean of the standard deviation from 3 runs of 14 models (take variance of each model, then average per evaluation):
+Olmo 3 동안, 팀은 추론 모델 평가에 사용된 다양한 평가들의 분산을 추적했다.
+아래 표는 각 평가의 표준 편차를 보여주며, 14개 모델의 3번 실행에서 표준 편차의 평균으로 계산된다 (각 모델의 분산을 구한 다음 평가별로 평균화):
 
-| Category | Benchmark | Std. Dev. |
+| 카테고리 | 벤치마크 | 표준 편차 |
 |----------|-----------|-----------|
-| High Variance | GPQA | 1.48 |
+| 고분산 | GPQA | 1.48 |
 | | AlpacaEval 3 | 1.24 |
 | | IFEval | 0.88 |
-| Stable | ZebraLogic | 0.56 |
+| 안정적 | ZebraLogic | 0.56 |
 | | Omega | 0.56 |
 | | AIME 24 (Avg@32) | 0.54 |
 | | HumanEvalPlus | 0.46 |
 | | AgiEval | 0.43 |
 | | BigBenchHard | 0.39 |
-| Very Stable | LiveCodeBench (Avg@10) | 0.29 |
+| 매우 안정적 | LiveCodeBench (Avg@10) | 0.29 |
 | | MBPPPlus | 0.27 |
 | | MATH | 0.25 |
 | | MMLU | 0.22 |
 | | PopQA | 0.16 |
 
-Table: Standard deviation of evaluation benchmarks across multiple inference runs, categorized by stability (data from Olmo 3). {#tbl:eval_variance}
+Table: 여러 추론 실행에 걸친 평가 벤치마크의 표준 편차, 안정성으로 분류됨 (Olmo 3의 데이터). {#tbl:eval_variance}
 
-Some evaluations, such as LiveCodeBench, were both noisy and cheap (via few prompts in the set), so by re-running the evaluation 10 times per model, the evaluation could move from the high-variance set to a stable setting. This could be done for every evaluation, but it can easily balloon costs.
+LiveCodeBench 같은 일부 평가들은 노이즈가 많으면서도 저렴했으므로 (세트에 프롬프트가 적어서), 모델당 평가를 10번 재실행함으로써 평가를 고분산 집합에서 안정적인 설정으로 이동시킬 수 있었다. 이것은 모든 평가에 수행될 수 있지만, 비용이 쉽게 부풀어 오를 수 있다.
 
-We also see sources of variance in evaluation settings like batch size, tensor parallel settings within VLLM (e.g., TP=2 for baselines), and other sensitive numerics for sampling long generations across infrastructure. Variance is everywhere with reasoners.
+또한 배치 크기, VLLM 내의 텐서 병렬 설정 (예: 기준선의 경우 TP=2), 그리고 인프라에 걸쳐 긴 생성을 샘플링하는 다른 민감한 수치들 같은 평가 설정에서도 분산의 원인들을 본다. 추론 모델에서는 어디에나 분산이 있다.
 
-## 3. Managing Training Performance Variance
+## 3. 학습 성능 분산 관리
 
-Throughout all the post-training recipes and tools discussed in this book, the final model is subject to meaningful variance in performance.
-Understanding the distribution of this variance, its sources, and its effects is crucial to creating strong models.
-The goal of training a final model is to sample many points, by varying training parameters and random seeds, in order to get the strongest model possible.
-Note that this is a balance between the model *actually* being better, and not just the benefit of re-rolling from evaluation noise.
+이 책에서 논의된 모든 후처리 학습 레시피와 도구들 전반에 걸쳐, 최종 모델은 성능에서 의미 있는 분산의 영향을 받는다.
+이 분산의 분포, 원인, 그리고 효과를 이해하는 것은 강력한 모델을 만드는 데 매우 중요하다.
+최종 모델 학습의 목표는 가능한 가장 강력한 모델을 얻기 위해 학습 파라미터와 무작위 시드를 변경하여 많은 점들을 샘플링하는 것이다.
+이것은 모델이 *실제로* 더 좋아지는 것과 단순히 평가 노이즈로부터의 재시도 이득 사이의 균형임을 유의하라.
 
-Where the previous section focuses on *evaluation* noise, the trickier source of noise is training uncertainty.
-Where evaluation noise can be managed by running more tests on a given checkpoint (uniformly reducing noise), models are trained once and can *benefit* from a positive outlier.
+이전 절이 *평가* 노이즈에 초점을 맞추는 반면, 더 까다로운 노이즈 원인은 학습 불확실성이다.
+평가 노이즈는 주어진 체크포인트에서 더 많은 테스트를 실행함으로써 관리될 수 있는 반면 (균등하게 노이즈 감소), 모델은 한 번 학습되고 긍정적인 이상치 *이익*을 얻을 수 있다.
 
-In practice, training teams take many steps to capture the maximum possible value out of their training recipe:
+실제로, 학습 팀은 학습 레시피에서 최대한의 가치를 포착하기 위해 많은 단계를 취한다:
 
-1. Sweep core optimization values like learning rate, batch size, etc. for every final model run. For example, with a new base model, I'd recommend running 10 learning rates over a wide region to be sure you're in the optimal range, then re-run in the tighter, optimal window.
-2. Run multiple seeds on the best few settings. Random seed can have meaningful effects on the final model, and it's worth spending compute on.
-3. Model merging is established as a key tool used to create strong models. Merging can be done in many ways, from merging different checkpoints on the same data or specialized models on specific domains. Generally, merging is seen to be a strong and simple tool in final recipes, but clear best practices aren't established on how to prepare a model for later merging in a recipe [@yadav2024matters].
+1. 모든 최종 모델 실행에서 학습률, 배치 크기 등 핵심 최적화 값들을 탐색하라. 예를 들어, 새 기반 모델의 경우, 최적 범위에 있는지 확인하기 위해 넓은 영역에서 10개의 학습률을 실행한 다음, 더 좁은 최적 창에서 다시 실행하는 것을 권장한다.
+2. 최선의 몇 가지 설정에서 여러 시드를 실행하라. 무작위 시드는 최종 모델에 의미 있는 영향을 미칠 수 있으며, 여기에 컴퓨팅을 투자할 가치가 있다.
+3. 모델 병합 (merging)은 강력한 모델을 만드는 데 사용되는 핵심 도구로 확립되었다. 병합은 동일한 데이터의 다양한 체크포인트를 병합하거나 특정 도메인의 전문 모델을 병합하는 것 등 여러 방식으로 수행될 수 있다. 일반적으로 병합은 최종 레시피에서 강력하고 단순한 도구로 여겨지지만, 레시피에서 이후 병합을 위해 모델을 어떻게 준비할지에 대한 명확한 모범 사례는 확립되지 않았다 [@yadav2024matters].
 
-## 4. Identifying Bad Training Jobs
+## 4. 불량 학습 작업 식별
 
-A simple intuition that's important to establish when training models is the different types of model issues. 
-You want most of your time to be spent on issues where the current data, algorithm, or recipe just isn't good enough.
-On the other hand, there are plenty of times when setting up a new recipe that certain methods are just broken.
+모델을 학습할 때 확립해야 할 중요한 간단한 직관은 서로 다른 유형의 모델 문제들이다.
+현재 데이터, 알고리즘, 또는 레시피가 충분하지 않은 문제들에 대부분의 시간을 보내고 싶을 것이다.
+반면에, 새로운 레시피를 설정할 때 특정 방법들이 그냥 고장난 경우가 많이 있다.
 
-The best way to understand this is to evaluate many models on a largely static evaluation suite. Then you develop an intuition for which tests are hard to move with post-training interventions (often knowledge-heavy evaluations such as MMLU).
-When something is very, *very* broken in a post-training setup these largely stable evaluations can often drop by 10-20 points in a training job. 
-This is one of the most useful signals there are when developing tooling!
+이를 이해하는 가장 좋은 방법은 주로 정적인 평가 모음에서 많은 모델을 평가하는 것이다. 그러면 후처리 학습 개입으로 움직이기 어려운 테스트들이 어떤 것인지 직관이 생긴다 (종종 MMLU 같은 지식 집약적 평가들).
+후처리 학습 설정에서 무언가가 매우 *심각하게* 고장났을 때, 이러한 주로 안정적인 평가들은 종종 학습 작업에서 10-20 포인트 떨어질 수 있다.
+이것은 도구를 개발할 때 가장 유용한 신호 중 하나이다!

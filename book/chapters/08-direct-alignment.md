@@ -5,203 +5,203 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "Reasoning"
+prev-chapter: "추론"
 prev-url: "07-reasoning"
-page-title: Direct Alignment
-search-title: "Chapter 8: Direct Alignment"
-next-chapter: "Rejection Sampling"
+page-title: 직접 정렬
+search-title: "8장: 직접 정렬"
+next-chapter: "거부 샘플링"
 next-url: "09-rejection-sampling"
 ---
 
-# Direct Alignment Algorithms (DAAs)
+# 직접 정렬 알고리즘 (DAAs)
 
-Direct Alignment Algorithms (DAAs) allow one to update models to solve the same RLHF objective without ever training an intermediate reward model or using reinforcement learning optimizers. 
-DAAs solve the same preference learning problem we've been studying (with literally the same data!), in order to make language models more aligned, smarter, and easier to use.
-The lack of a reward model and online optimization makes DAAs far simpler to implement, reducing compute spent during training and making experimentation easier.
-This chapter details the complex mathematics done to derive these algorithms, and then shows that the sometimes tedious derivations result in simple implementations.
- 
-The most prominent DAA and one that catalyzed an entire academic movement of aligning language models is Direct Preference Optimization (DPO) [@rafailov2024direct].
-At its core, DPO is using gradient ascent to solve the same constrained RLHF objective (see Chapter 3):
+직접 정렬 알고리즘 (Direct Alignment Algorithms, DAAs)은 중간 보상 모델을 훈련하거나 강화학습 최적화기를 사용하지 않고도 동일한 RLHF 목적 함수를 풀도록 모델을 업데이트할 수 있게 해준다.
+DAA는 우리가 지금까지 연구해온 동일한 선호도 학습 문제를 (문자 그대로 동일한 데이터로!) 풀어서, 언어 모델을 더 정렬되고, 더 똑똑하며, 사용하기 쉽게 만든다.
+보상 모델과 온라인 최적화가 없으면 DAA는 구현이 훨씬 간단해지고, 훈련 중 소비되는 연산이 줄어들며, 실험이 더 쉬워진다.
+이 장은 이 알고리즘들을 도출하기 위한 복잡한 수학을 자세히 설명하고, 때로는 지루한 도출 과정이 결국 간단한 구현으로 이어짐을 보여준다.
+
+가장 저명한 DAA이자 언어 모델 정렬의 전체 학문적 운동을 촉발시킨 것은 직접 선호도 최적화 (Direct Preference Optimization, DPO) [@rafailov2024direct]다.
+그 핵심에서 DPO는 동일한 제약된 RLHF 목적 함수 (3장 참조)를 풀기 위해 경사 상승법을 사용한다:
 
 $$ \max_{\pi} \mathbb{E}_{x \sim \mathcal{D}}\mathbb{E}_{y \sim \pi(y|x)} \left[r_\theta(x, y)\right] - \beta \mathcal{D}_{\text{KL}}\left(\pi(y|x) \| \pi_{\text{ref}}(y|x)\right)$$ {#eq:review_rlhf}
 
-Since its release in May of 2023, after a brief delay where the community figured out the right data and hyperparameters to use DPO with (specifically, surprisingly low learning rates), many popular models have used DPO or its variants, from Zephyr-$\beta$ kickstarting it in October of 2023 [@tunstall2023zephyr], Llama 3 Instruct [@dubey2024llama], Tülu 2 [@ivison2023camels] and 3 [@lambert2024t], Nemotron 4 340B [@adler2024nemotron], and others.
-Technically, Sequence Likelihood Calibration (SLiC-HF) was the first, modern direct alignment algorithm released [@zhao2023slic], but it did not catch on due to a combination of factors (unwinding the adoption of research methods is always a tricky task).
+2023년 5월 출시 이후, 커뮤니티가 DPO와 함께 사용할 적절한 데이터와 하이퍼파라미터를 파악한 짧은 지연 기간 (특히 놀라울 정도로 낮은 학습률) 이후, Zephyr-$\beta$가 2023년 10월에 이를 시작한 것을 계기로 [@tunstall2023zephyr] Llama 3 Instruct [@dubey2024llama], Tülu 2 [@ivison2023camels] 및 3 [@lambert2024t], Nemotron 4 340B [@adler2024nemotron] 등 많은 인기 모델들이 DPO 또는 그 변형을 사용해왔다.
+기술적으로, 시퀀스 우도 보정 (Sequence Likelihood Calibration, SLiC-HF)이 최초의 현대적 직접 정렬 알고리즘이었지만 [@zhao2023slic], 여러 요인의 조합으로 인해 널리 채택되지 못했다 (연구 방법의 채택을 되돌리는 것은 항상 까다로운 일이다).
 
-The most impactful part of DPO and DAAs is lowering the barrier of entry to experimenting with language model post-training -- it uses less compute, is easier to implement from scratch, and is easier to get working on both toy and production examples.
+DPO와 DAA의 가장 영향력 있는 부분은 언어 모델 후처리 학습 실험의 진입 장벽을 낮추는 것이다---더 적은 연산을 사용하고, 처음부터 구현하기 더 쉬우며, 장난감 예시와 프로덕션 예시 모두에서 작동시키기 더 쉽다.
 
-*Throughout this chapter, we use $x$ to denote prompts and $y$ to denote completions. This notation is common in the language model literature, where methods operate on full prompt-completion pairs rather than individual tokens.*
+*이 장 전체에서, $x$는 프롬프트를, $y$는 완성을 나타낸다. 이 표기법은 언어 모델 문헌에서 일반적이며, 방법들은 개별 토큰보다 전체 프롬프트-완성 쌍에서 작동한다.*
 
-## Direct Preference Optimization (DPO)
+## 직접 선호도 최적화 (DPO)
 
-Here we explain intuitions for how DPO works and re-derive the core equations fully. 
+여기서는 DPO가 어떻게 작동하는지에 대한 직관을 설명하고 핵심 방정식을 완전히 재도출한다.
 
-### How DPO Works
+### DPO의 작동 방식
 
-DPO at a surface level is directly optimizing a policy to solve the RLHF objective.
-The loss function for this, which we will revisit below in the derivations, compares how much the learned policy's probability of chosen and rejected completions has shifted relative to a reference model.
-The loss function derived from a Bradley-Terry reward model follows:
+DPO는 표면적으로 RLHF 목적 함수를 풀기 위해 정책을 직접 최적화한다.
+이를 위한 손실 함수는 아래에서 도출 과정에서 다시 살펴볼 것인데, 학습된 정책의 선택된 완성과 거부된 완성에 대한 확률이 참조 모델 대비 얼마나 변화했는지를 비교한다.
+Bradley-Terry 보상 모델에서 도출된 손실 함수는 다음과 같다:
 
 $$ \mathcal{L}_{\text{DPO}}(\pi_\theta; \pi_{\text{ref}}) = -\mathbb{E}_{(x, y_c, y_r) \sim \mathcal{D}}\left[ \log \sigma\left( \beta \log \frac{\pi_{\theta}(y_c \mid x)}{\pi_{\text{ref}}(y_c \mid x)} - \beta \log \frac{\pi_{\theta}(y_r \mid x)}{\pi_{\text{ref}}(y_r \mid x)} \right) \right] $$ {#eq:dpo_core}
 
-Inside the sigmoid, the first term $\beta \log \frac{\pi_{\theta}(y_c | x)}{\pi_{\text{ref}}(y_c | x)}$ measures how much the policy has increased the probability of the *chosen* completion relative to the reference model, and the second term does the same for the *rejected* completion. The loss decreases when the chosen shift exceeds the rejected shift -- i.e. when the policy learns to prefer the right response.
+시그모이드 함수 내부에서, 첫 번째 항 $\beta \log \frac{\pi_{\theta}(y_c | x)}{\pi_{\text{ref}}(y_c | x)}$는 정책이 참조 모델 대비 *선택된* 완성의 확률을 얼마나 증가시켰는지를 측정하고, 두 번째 항은 *거부된* 완성에 대해 동일한 것을 한다. 선택된 이동이 거부된 이동을 초과할 때, 즉 정책이 올바른 응답을 선호하도록 학습할 때 손실이 감소한다.
 
-Throughout, $\beta$ is a hyperparameter balancing the reward optimization to the KL divergence between the final model and the initial reference (i.e. balancing over-optimization, a crucial hyperparameter when using DPO correctly).
-This relies on the implicit reward for DPO training that replaces using an external reward model, which is a log-ratio of probabilities:
+전체에서 $\beta$는 최종 모델과 초기 참조 사이의 KL 발산에 대한 보상 최적화의 균형을 맞추는 하이퍼파라미터다 (즉, 과최적화의 균형을 맞추는 것으로, DPO를 올바르게 사용할 때 중요한 하이퍼파라미터다).
+이는 외부 보상 모델을 사용하는 것을 대체하는 DPO 훈련을 위한 암묵적 보상에 의존하는데, 이는 확률의 로그 비율이다:
 
 $$r(x, y) = \beta  \log \frac{\pi_r(y \mid x)}{\pi_{\text{ref}}(y \mid x)}$$ {#eq:dpo_reward}
 
-where $\pi_r(y \mid x)$ is the exact, optimal reward policy that we are solving for.
-This comes from deriving the Bradley-Terry reward with respect to an optimal policy (shown in @eq:dpo_opt_policy), as shown in the Bradley-Terry model section of Chapter 5. 
-Essentially, as stated in the DPO paper, this reparameterization gives us "the probability of human preference data in terms of the optimal policy rather than the reward model" -- meaning we can bypass learning an explicit reward model entirely.
+여기서 $\pi_r(y \mid x)$는 우리가 풀고자 하는 정확한 최적 보상 정책이다.
+이는 (5장의 Bradley-Terry 모델 섹션에서 보이듯이) 최적 정책에 대한 Bradley-Terry 보상을 도출함으로써 나온다 (@eq:dpo_opt_policy 참조).
+본질적으로, DPO 논문에서 말하듯이, 이 재매개변수화는 "보상 모델이 아닌 최적 정책의 관점에서 인간 선호도 데이터의 확률"을 제공한다---이는 명시적인 보상 모델 학습을 완전히 우회할 수 있음을 의미한다.
 
-Let us consider the loss shown in @eq:dpo_core that the optimizer must decrease. 
-Here, the loss will be lower when the log-ratio of the chosen response is bigger than the log-ratio of the rejected response (normalized by the reference model).
-In practice, this is a sum of log-probabilities of the model across the sequence of tokens in the data presented.
-Hence, DPO is increasing the gap in relative log-probabilities between the chosen and rejected responses.
+최적화기가 줄여야 하는 @eq:dpo_core의 손실을 고려해보자.
+여기서, 참조 모델로 정규화된 선택된 응답의 로그 비율이 거부된 응답의 로그 비율보다 클 때 손실이 낮아진다.
+실제로, 이는 제시된 데이터의 토큰 시퀀스에 걸친 모델의 로그 확률의 합이다.
+따라서 DPO는 선택된 응답과 거부된 응답 사이의 상대적 로그 확률의 격차를 벌린다.
 
-With the reward in @eq:dpo_reward, we can write the gradient of the loss to further interpret what is going on:
+@eq:dpo_reward의 보상으로, 무슨 일이 일어나고 있는지 더 해석하기 위해 손실의 그래디언트를 쓸 수 있다:
 
 $$\nabla_{\theta}\mathcal{L}_{\text{DPO}}(\pi_{\theta}; \pi_{\text{ref}}) = -\beta \mathbb{E}_{(x, y_c, y_r)\sim \mathcal{D}}\Big[ w \cdot \left(\nabla_{\theta}\log \pi(y_c \mid x) - \nabla_{\theta}\log \pi(y_r \mid x)\right) \Big]$$ {#eq:dpo_gradient}
 
-where $w = \sigma\!\left(r_{\theta}(x, y_r) - r_{\theta}(x, y_c)\right)$.
+여기서 $w = \sigma\!\left(r_{\theta}(x, y_r) - r_{\theta}(x, y_c)\right)$이다.
 
-Here, the gradient solves the above objective by doing the following:
+여기서, 그래디언트는 다음을 수행하여 위의 목적 함수를 해결한다:
 
-- The first term within the sigmoid function, $\sigma(\cdot)$, creates a weight of the parameter update from 0 to 1 that is higher when the reward estimate is incorrect. When the rejected sample is preferred over the chosen, the weight update should be larger!
-- Second, the terms in the inner brackets $[\cdot]$ increase the likelihood of the chosen response $y_c$ and decrease the likelihood of the rejected $y_r$.
-- These terms are weighted by $\beta$, which controls how the update balances ordering the completions correctly relative to the KL divergence.
-
-
-The core intuition is that DPO is fitting an implicit reward model whose corresponding optimal policy can be extracted in closed form (@eq:dpo_opt_policy, thanks to gradient descent and our ML tools).
-Because the DPO loss is directly differentiable, it is straightforward to compute the exact gradient, rather than needing to reach it by proxy of training a reward model and sampling completions to score.
-What is often misunderstood is that DPO is learning a reward model at its core, hence the subtitle of the paper *Your Language Model is Secretly a Reward Model.* 
-It is easy to confuse this with the DPO objective training a policy directly, hence studying the derivations below is good for a complete understanding.
-
-With the implicit reward model learning, DPO is generating an optimal solution to the RLHF objective given the data in the dataset and the specific KL constraint in the objective $\beta$. 
-Here, DPO solves for the exact policy given a specific KL divergence because the generations are not online as in policy gradient algorithms -- a core difference from the RL methods for preference tuning.
-In many ways, this makes the $\beta$ value easier to tune with DPO relative to online RL methods, but crucially and intuitively the optimal value depends on the model being trained and the data training it.
-
-At each batch of preference data, composed of many pairs of completions $y_{chosen} \succ y_{rejected}$, DPO takes gradient steps directly towards the optimal solution.
-It is far simpler than policy gradient methods.
-
-![When DPO first released it sparked a fierce debate in the research community about how to best do RLHF and preference learning. This meme does a great job capturing the sentiment, where the debate often felt forced and over the top, but many people both getting started and in top labs were getting immense benefit out of DPO. DPO simplicity meme, credit Tom Goldstein.](images/dpo_meme.jpeg){#fig:dpo-meme}
+- 시그모이드 함수 $\sigma(\cdot)$ 내의 첫 번째 항은 보상 추정치가 틀렸을 때 더 높은 0에서 1 사이의 파라미터 업데이트 가중치를 생성한다. 거부된 샘플이 선택된 것보다 선호될 때 가중치 업데이트가 더 커야 한다!
+- 둘째, 내부 괄호 $[\cdot]$ 안의 항들은 선택된 응답 $y_c$의 가능성을 높이고 거부된 응답 $y_r$의 가능성을 낮춘다.
+- 이 항들은 $\beta$로 가중되는데, 이는 업데이트가 KL 발산 대비 완성의 올바른 순서 지정의 균형을 어떻게 맞출지를 제어한다.
 
 
-### DPO Derivation
+핵심 직관은 DPO가 대응하는 최적 정책을 폐쇄형으로 추출할 수 있는 (@eq:dpo_opt_policy, 경사 하강법과 우리의 ML 도구 덕분에) 암묵적 보상 모델을 피팅한다는 것이다.
+DPO 손실은 직접 미분 가능하기 때문에, 보상 모델을 훈련하고 완성을 샘플링하여 채점하는 대리 과정 없이 정확한 그래디언트를 계산하는 것이 간단하다.
+종종 오해받는 것은 DPO가 그 핵심에서 보상 모델을 학습하고 있다는 것이며, 따라서 논문의 부제인 *당신의 언어 모델은 몰래 보상 모델이다*가 붙은 것이다.
+DPO 목적 함수가 정책을 직접 훈련한다는 것과 혼동하기 쉬우므로, 아래의 도출을 공부하는 것이 완전한 이해에 좋다.
 
-The DPO derivation takes two primary parts. 
-First, the authors show the form of the policy that optimally solved the RLHF objective used throughout this book.
-Next, they show how to arrive at that solution from pairwise preference data (i.e. a Bradley Terry model).
+암묵적 보상 모델 학습으로, DPO는 데이터셋의 데이터와 목적 함수의 특정 KL 제약 $\beta$가 주어진 RLHF 목적 함수에 대한 최적 해를 생성한다.
+여기서 DPO는 생성이 정책 그래디언트 알고리즘에서처럼 온라인이 아니기 때문에 특정 KL 발산에 대한 정확한 정책을 풀어낸다---선호도 조정을 위한 RL 방법과의 핵심 차이점이다.
+많은 면에서, 이는 온라인 RL 방법에 비해 DPO로 $\beta$ 값을 조정하기 더 쉽게 만들지만, 결정적으로 그리고 직관적으로 최적 값은 훈련되는 모델과 그것을 훈련하는 데이터에 따라 달라진다.
 
-#### 1. Deriving the Optimal RLHF Solution
+선택된 완성과 거부된 완성의 많은 쌍 $y_{chosen} \succ y_{rejected}$로 구성된 각 선호도 데이터 배치에서, DPO는 최적 해를 향해 직접 그래디언트 스텝을 취한다.
+이는 정책 그래디언트 방법보다 훨씬 간단하다.
 
-To start, we should consider the RLHF optimization objective once again, here indicating we wish to maximize this quantity:
+![DPO가 처음 출시되었을 때 RLHF와 선호도 학습을 가장 잘 수행하는 방법에 대한 연구 커뮤니티의 치열한 논쟁을 불러일으켰다. 이 밈은 그 감정을 훌륭하게 포착하는데, 논쟁이 종종 강요되고 과장된 것처럼 느껴졌지만, 입문자부터 최고 연구소의 많은 사람들이 DPO에서 엄청난 이익을 얻고 있었다. DPO 단순성 밈, 크레딧 Tom Goldstein.](images/dpo_meme.jpeg){#fig:dpo-meme}
+
+
+### DPO 도출
+
+DPO 도출은 두 가지 주요 부분으로 이루어진다.
+먼저, 저자들은 이 책 전체에서 사용된 RLHF 목적 함수를 최적으로 풀어내는 정책의 형태를 보여준다.
+그 다음, 쌍별 선호도 데이터 (즉, Bradley Terry 모델)로부터 그 해에 도달하는 방법을 보여준다.
+
+#### 1. 최적 RLHF 해 도출
+
+시작을 위해, 이 양을 최대화하고자 함을 나타내면서 RLHF 최적화 목적 함수를 다시 고려해야 한다:
 
 $$ \max_{\pi} \mathbb{E}_{x \sim \mathcal{D}}\mathbb{E}_{y \sim \pi(y|x)} \left[r_\theta(x, y)\right] - \beta \mathcal{D}_{\text{KL}}\left(\pi(y|x) \| \pi_{\text{ref}}(y|x)\right)$$ {#eq:rlhf_opt_eq_repeat}
 
-Here, the dual expectation only applies to the sampling to compute the expected reward, as the KL term is still an analytical expression.
-First, let us expand the definition of KL-divergence. Recall that $\mathcal{D}_{\text{KL}}(\pi \| \pi_{\text{ref}}) = \mathbb{E}_{y \sim \pi}\left[\log \frac{\pi(y|x)}{\pi_{\text{ref}}(y|x)}\right]$, where the $\pi(y|x)$ weighting in the sum becomes the sampling distribution. 
-Since both terms now share the same expectation over $y \sim \pi(y|x)$, we can combine them:
+여기서, 이중 기댓값은 기대 보상을 계산하기 위한 샘플링에만 적용되는데, KL 항은 여전히 분석적 표현이기 때문이다.
+먼저, KL 발산의 정의를 전개해보자. $\mathcal{D}_{\text{KL}}(\pi \| \pi_{\text{ref}}) = \mathbb{E}_{y \sim \pi}\left[\log \frac{\pi(y|x)}{\pi_{\text{ref}}(y|x)}\right]$이고, 합의 $\pi(y|x)$ 가중치가 샘플링 분포가 된다는 것을 상기하자.
+이제 두 항이 $y \sim \pi(y|x)$에 대한 동일한 기댓값을 공유하므로, 이를 결합할 수 있다:
 
 $$\max_{\pi} \mathbb{E}_{x \sim \mathcal{D}}\mathbb{E}_{y \sim \pi(y|x)}\left[r(x,y)-\beta\log\frac{\pi(y|x)}{\pi_{\text{ref}}(y|x)}\right] $$ {#eq:dpo_deriv_1}
 
-Next, bring the negative sign out of the difference in brackets. To do this, split it into two terms:
+다음으로, 괄호 안의 차이에서 음의 부호를 꺼낸다. 이를 위해 두 항으로 나눈다:
 
 $$ = \max_{\pi}\left(\mathbb{E}_{x \sim \mathcal{D}}\mathbb{E}_{y \sim \pi(y|x)}[r(x,y)] - \beta\,\mathbb{E}_{x \sim \mathcal{D}}\mathbb{E}_{y \sim \pi(y|x)}\left[\log\frac{\pi(y|x)}{\pi_{\text{ref}}(y|x)}\right]\right) $$ {#eq:dpo_deriv_2}
 
-Then, multiply by $-1$ to convert the maximization into a minimization:
+그런 다음, $-1$을 곱하여 최대화를 최소화로 변환한다:
 
 $$ = \min_{\pi}\left(-\mathbb{E}_{x \sim \mathcal{D}}\mathbb{E}_{y \sim \pi(y|x)}[r(x,y)] + \beta\,\mathbb{E}_{x \sim \mathcal{D}}\mathbb{E}_{y \sim \pi(y|x)}\left[\log\frac{\pi(y|x)}{\pi_{\mathrm{ref}}(y|x)}\right]\right) $$ {#eq:dpo_deriv_3}
 
-Divide by $\beta$ and recombine:
+$\beta$로 나누고 재결합한다:
 
 $$ = \min_{\pi}\left(\mathbb{E}_{x \sim \mathcal{D}}\mathbb{E}_{y \sim \pi(y|x)}\left[ \log\frac{\pi(y|x)}{\pi_{\text{ref}}(y|x)} - \frac{1}{\beta}r(x,y) \right]\right) $$ {#eq:dpo_deriv_4}
 
 
-Next, we must introduce a partition function, $Z(x)$:
+다음으로, 분배 함수 $Z(x)$를 도입해야 한다:
 
 $$ Z(x) = \sum_y \pi_{\text{ref}}(y|x)\exp\left(\frac{1}{\beta}r(x,y)\right) $$ {#eq:dpo_partition}
 
-The partition function acts as a normalization factor for the unnormalized density $\pi_{\text{ref}}(y|x)\exp\left(\frac{1}{\beta}r(x,y)\right)$, thereby making it a valid probability function over $y$ for each fixed $x$. The exact need for this will become clear shortly as we proceed with the derivation.
+분배 함수는 정규화되지 않은 밀도 $\pi_{\text{ref}}(y|x)\exp\left(\frac{1}{\beta}r(x,y)\right)$의 정규화 인자 역할을 하여, 각 고정된 $x$에 대해 $y$에 대한 유효한 확률 함수를 만든다. 이것이 필요한 정확한 이유는 도출을 계속 진행하면서 곧 명확해질 것이다.
 
-With this substituted in, we obtain our intermediate transformation:
+이를 대입하면, 중간 변환을 얻는다:
 
 $$ \min_{\pi}\mathbb{E}_{x\sim\mathcal{D}}\mathbb{E}_{y\sim\pi(y|x)}\left[\log\frac{\pi(y|x)}{\frac{1}{Z(x)}\pi_{\text{ref}}(y|x)\exp\left(\frac{1}{\beta}r(x,y)\right)} - \log Z(x)\right] $$ {#eq:dpo_deriv_5}
 
-To see how this is obtained, consider the internal part of the optimization in brackets of @eq:dpo_deriv_4:
+이것이 어떻게 얻어지는지 보기 위해, @eq:dpo_deriv_4의 최적화에서 대괄호 안의 내부 부분을 고려하자:
 
 $$ \log\frac{\pi(y|x)}{\pi_{\text{ref}}(y|x)} - \frac{1}{\beta}r(x,y) $$ {#eq:dpo_deriv_6}
 
-Then, add $\log Z(x) - \log Z(x)$ to both sides:
+그런 다음, 양쪽에 $\log Z(x) - \log Z(x)$를 더한다:
 
 $$ = \log\frac{\pi(y|x)}{\pi_{\text{ref}}(y|x)} - \frac{1}{\beta}r(x,y) + \log Z(x) - \log Z(x) $$ {#eq:dpo_deriv_7}
 
-Then, we group the terms:
+그런 다음, 항들을 그룹화한다:
 
 $$ = \left( \log \frac{\pi(y|x)}{\pi_{\text{ref}}(y|x)} + \log Z(x) \right) - \log Z(x) - \frac{1}{\beta}r(x,y) $$ {#eq:dpo_deriv_8}
 
-With $\log(x) + \log(y) = \log(x\cdot y)$ (and moving $Z$ to the denominator), we get:
+$\log(x) + \log(y) = \log(x\cdot y)$ (그리고 $Z$를 분모로 이동)를 사용하면:
 
 $$ = \log \frac{\pi(y|x)}{\frac{1}{Z(x)}\pi_{\text{ref}}(y|x)}- \log Z(x) - \frac{1}{\beta}r(x,y) $$ {#eq:dpo_deriv_9}
 
-Next, we expand $\frac{1}{\beta}r(x,y)$ to $\log \exp \frac{1}{\beta}r(x,y)$ and do the same operation to get @eq:dpo_deriv_5, which we slightly rewrite here:
+다음으로, $\frac{1}{\beta}r(x,y)$를 $\log \exp \frac{1}{\beta}r(x,y)$로 전개하고 동일한 연산을 수행하여 @eq:dpo_deriv_5를 얻는데, 여기서 약간 다시 쓴다:
 
 $$ \min_{\pi}\mathbb{E}_{x\sim\mathcal{D}} \left[ \mathbb{E}_{y\sim\pi(y|x)}\left[\log\frac{\pi(y|x)}{\frac{1}{Z(x)}\pi_{\text{ref}}(y|x)\exp\left(\frac{1}{\beta}r(x,y)\right)} \right] - \log Z(x)\right] $$ {#eq:dpo_deriv_10}
 
-With this optimization form, we need to actually solve for the optimal policy $\pi^*$.
-Since we introduced the partition function $Z(x)$, thereby making the term $\frac{1}{Z(x)}\pi_{\text{ref}}(y|x)\exp\left(\frac{1}{\beta}r(x,y)\right)$ a valid probability distribution over $y$, we can recognize that the inner expectation is in fact a proper KL-divergence!
+이 최적화 형태로, 우리는 실제로 최적 정책 $\pi^*$를 풀어야 한다.
+분배 함수 $Z(x)$를 도입함으로써 $\frac{1}{Z(x)}\pi_{\text{ref}}(y|x)\exp\left(\frac{1}{\beta}r(x,y)\right)$ 항을 $y$에 대한 유효한 확률 분포로 만들었으므로, 내부 기댓값이 사실 고유한 KL 발산임을 인식할 수 있다!
 
 $$ \min_{\pi}\mathbb{E}_{x\sim\mathcal{D}}\left[\mathcal{D}_{\text{KL}} \left(\pi(y|x) \middle\| \frac{1}{Z(x)}\pi_{\text{ref}}(y|x)\exp\left(\frac{1}{\beta}r(x,y)\right) \right) - \log Z(x)\right] $$ {#eq:dpo_deriv_11}
 
-Since the term $\log Z(x)$ does not depend on the final answer, we can ignore it. This leaves us with just the KL divergence between the policy we are learning and a form relating the partition, $\beta$, reward, and reference policy.
-Gibbs' inequality tells us this is minimized at a distance of 0, only when the two quantities are equal!
-Hence, we get an optimal policy:
+$\log Z(x)$ 항은 최종 답에 의존하지 않으므로 무시할 수 있다. 이는 우리가 학습하는 정책과 분배, $\beta$, 보상, 참조 정책을 관련짓는 형태 사이의 KL 발산만 남긴다.
+깁스 불등식은 이것이 두 양이 같을 때, 즉 거리 0에서만 최소화된다는 것을 말해준다!
+따라서, 우리는 최적 정책을 얻는다:
 
 $$ \pi^*(y|x) = \pi(y|x) = \frac{1}{Z(x)}\pi_{\text{ref}}(y|x)\exp\left(\frac{1}{\beta}r(x,y)\right) $$ {#eq:dpo_opt_policy}
 
 
-#### 2. Deriving DPO Objective for Bradley Terry Models
+#### 2. Bradley Terry 모델을 위한 DPO 목적 함수 도출
 
-To start, recall from Chapter 5 on Reward Modeling and Chapter 11 on Preference Data that a Bradley-Terry model of human preferences is formed as:
+시작을 위해, 보상 모델링에 관한 5장과 선호도 데이터에 관한 11장에서 인간 선호도의 Bradley-Terry 모델이 다음과 같이 형성됨을 상기하자:
 
 $$p^*(y_1 \succ y_2 \mid x) = \frac{\exp\left(r^*(x,y_1)\right)}{\exp\left(r^*(x,y_1)\right) + \exp\left(r^*(x, y_2)\right)} $$ {#eq:bradley_terry_dpo}
 
-By manipulating @eq:dpo_opt_policy, we can solve for the optimal reward. First, take the logarithm of both sides:
+@eq:dpo_opt_policy를 조작하여 최적 보상을 풀 수 있다. 먼저, 양쪽에 로그를 취한다:
 
 $$\log \pi^*(y|x) = \log \left( \frac{1}{Z(x)}\pi_{\text{ref}}(y|x)\exp\left(\frac{1}{\beta}r^*(x,y)\right) \right)$$ {#eq:dpo_reward_deriv1}
 
-Expanding the right-hand side using $\log(abc) = \log a + \log b + \log c$:
+$\log(abc) = \log a + \log b + \log c$를 사용하여 우변을 전개한다:
 
 $$\log \pi^*(y|x) = -\log Z(x) + \log \pi_{\text{ref}}(y|x) + \frac{1}{\beta}r^*(x,y)$$ {#eq:dpo_reward_deriv2}
 
-Rearranging to solve for $r^*(x,y)$:
+$r^*(x,y)$를 풀기 위해 재배열한다:
 
 $$\frac{1}{\beta}r^*(x,y) = \log \pi^*(y|x) - \log \pi_{\text{ref}}(y|x) + \log Z(x)$$ {#eq:dpo_reward_deriv3}
 
-Multiplying both sides by $\beta$:
+양쪽에 $\beta$를 곱한다:
 
 $$r^*(x, y) = \beta \log \frac{\pi^*(y \mid x)}{\pi_{\text{ref}}(y \mid x)} + \beta \log Z(x)$$ {#eq:dpo_reward_full}
 
-We then can substitute the reward into the Bradley-Terry equation shown in @eq:bradley_terry_dpo to obtain:
+그런 다음 @eq:bradley_terry_dpo에 표시된 Bradley-Terry 방정식에 보상을 대입하면:
 
 $$p^*(y_1 \succ y_2 \mid x) = \frac{\exp\left(\beta \log \frac{\pi^*(y_1 \mid x)}{\pi_{\text{ref}}(y_1 \mid x)} + \beta \log Z(x)\right)}
 {\exp\left(\beta \log \frac{\pi^*(y_1 \mid x)}{\pi_{\text{ref}}(y_1 \mid x)} + \beta \log Z(x)\right) + \exp\left(\beta \log \frac{\pi^*(y_2 \mid x)}{\pi_{\text{ref}}(y_2 \mid x)} + \beta \log Z(x)\right)} $$ {#eq:dpo_loss_deriv0}
 
-By decomposing the exponential expressions from $e^{a+b}$ to $e^a e^b$ and then cancelling out the terms $e^{\log(Z(x))}$, this simplifies to:
+지수 표현식을 $e^{a+b}$에서 $e^a e^b$로 분해하고 $e^{\log(Z(x))}$ 항들을 약분하면 다음으로 단순화된다:
 
 $$p^*(y_1 \succ y_2 \mid x) = \frac{\exp\left(\beta \log \frac{\pi^*(y_1 \mid x)}{\pi_{\text{ref}}(y_1 \mid x)}\right)}
 {\exp\left(\beta \log \frac{\pi^*(y_1 \mid x)}{\pi_{\text{ref}}(y_1 \mid x)}\right) + \exp\left(\beta \log \frac{\pi^*(y_2 \mid x)}{\pi_{\text{ref}}(y_2 \mid x)}\right)} $$ {#eq:dpo_loss_deriv1}
 
-Then, multiply the numerator and denominator by $\exp\left(-\beta \log \frac{\pi^*(y_1 \mid x)}{\pi_{\text{ref}}(y_1 \mid x)}\right)$ to obtain:
+그런 다음, 분자와 분모에 $\exp\left(-\beta \log \frac{\pi^*(y_1 \mid x)}{\pi_{\text{ref}}(y_1 \mid x)}\right)$를 곱하면:
 
 $$p^*(y_1 \succ y_2 \mid x) = \frac{1}{1 + \exp\left(\beta \log \frac{\pi^*(y_2 \mid x)}{\pi_{\text{ref}}(y_2 \mid x)} - \beta \log \frac{\pi^*(y_1 \mid x)}{\pi_{\text{ref}}(y_1 \mid x)}\right)} $$ {#eq:dpo_loss_deriv2}
 
-Finally, with the definition of a sigmoid function as $\sigma(x) = \frac{1}{1+e^{-x}}$, we obtain:
+마지막으로, $\sigma(x) = \frac{1}{1+e^{-x}}$로서의 시그모이드 함수 정의와 함께:
 
 $$p^*(y_1 \succ y_2 \mid x) = \sigma\left(\beta \log \frac{\pi^*(y_1 \mid x)}{\pi_{\text{ref}}(y_1 \mid x)} - \beta \log \frac{\pi^*(y_2 \mid x)}{\pi_{\text{ref}}(y_2 \mid x)}\right) $$ {#eq:dpo_loss_deriv3}
 
-This is the likelihood of preference data under the Bradley-Terry model, given the optimal policy $\pi^*$. Recall from Chapter 5 on Reward Modeling, we have derived the Bradley-Terry objective as maximizing the likelihood, or equivalently minimizing the negative log-likelihood, which gives us the loss:
+이것은 최적 정책 $\pi^*$가 주어진 Bradley-Terry 모델 하에서 선호도 데이터의 우도다. 보상 모델링에 관한 5장에서 Bradley-Terry 목적 함수를 우도 최대화, 동등하게는 음의 로그 우도 최소화로 도출했음을 상기하면, 다음과 같은 손실 함수를 얻는다:
 $$
 \begin{aligned}
 \mathcal{L}_{\text{DPO}}(\pi_{\theta}; \pi_{\text{ref}}) &= -\mathbb{E}_{(x,y_c,y_r)\sim\mathcal{D}}\left[ \log p(y_c \succ y_r \mid x)  \right] \\
@@ -209,61 +209,61 @@ $$
 \end{aligned}
 $${#eq:dpo_loss_deriv4}
 
-This is the loss function for DPO, in a form as shown in @eq:dpo_core. 
-The DPO paper has an additional derivation for the objective under a Plackett-Luce Model, which is far less used in practice [@rafailov2024direct].
+이것이 @eq:dpo_core에서 보이는 형태의 DPO 손실 함수다.
+DPO 논문에는 실제로는 훨씬 덜 사용되는 Plackett-Luce 모델 하에서의 목적 함수에 대한 추가 도출이 있다 [@rafailov2024direct].
 
-#### 3. Deriving the Bradley Terry DPO Gradient
+#### 3. Bradley Terry DPO 그래디언트 도출
 
-We used the DPO gradient shown in @eq:dpo_gradient to explain intuitions for how the model learns.
-To derive this, we must take the gradient of @eq:dpo_loss_deriv4 with respect to the model parameters.
+@eq:dpo_gradient에서 보인 DPO 그래디언트를 모델이 어떻게 학습하는지에 대한 직관을 설명하기 위해 사용했다.
+이를 도출하기 위해, 모델 파라미터에 대한 @eq:dpo_loss_deriv4의 그래디언트를 취해야 한다.
 
 $$\nabla_{\theta}\mathcal{L}_{\text{DPO}}(\pi_{\theta}; \pi_{\text{ref}}) = -\nabla_{\theta}\mathbb{E}_{(x,y_c,y_r)\sim\mathcal{D}}\left[ \log \sigma\left(\beta \log \frac{\pi_{\theta}(y_c|x)}{\pi_{\text{ref}}(y_c|x)} - \beta \log \frac{\pi_{\theta}(y_r|x)}{\pi_{\text{ref}}(y_r|x)}\right)\right] $$ {#eq:dpo_grad_0}
 
-To start, this can be rewritten.
-We know that the derivative of a sigmoid function $\frac{d}{dx} \sigma(x) = \sigma(x)(1-\sigma(x))$, the derivative of logarithm $\frac{d}{dx} \log x = \frac{1}{x}$, and properties of sigmoid $\sigma(-x)=1-\sigma(x)$, so we can reformat the above equation. 
+시작을 위해, 이를 다시 쓸 수 있다.
+시그모이드 함수의 도함수 $\frac{d}{dx} \sigma(x) = \sigma(x)(1-\sigma(x))$, 로그의 도함수 $\frac{d}{dx} \log x = \frac{1}{x}$, 그리고 시그모이드의 성질 $\sigma(-x)=1-\sigma(x)$를 알고 있으므로, 위의 방정식을 재구성할 수 있다.
 
-First, let $u=\beta \log \frac{\pi_{\theta}(y_c|x)}{\pi_{\text{ref}}(y_c|x)} - \beta \log \frac{\pi_{\theta}(y_r|x)}{\pi_{\text{ref}}(y_r|x)}$ (the expression inside the sigmoid).
-Then, we have
+먼저, $u=\beta \log \frac{\pi_{\theta}(y_c|x)}{\pi_{\text{ref}}(y_c|x)} - \beta \log \frac{\pi_{\theta}(y_r|x)}{\pi_{\text{ref}}(y_r|x)}$ (시그모이드 안의 표현식)로 놓는다.
+그러면 다음과 같다:
 
 $$\nabla_{\theta}\mathcal{L}_{\text{DPO}}(\pi_{\theta};\pi_{\text{ref}}) = -\mathbb{E}_{(x, y_c, y_r)\sim \mathcal{D}}\left[\frac{\sigma'(u)}{\sigma(u)}\nabla_{\theta}u\right] $$ {#eq:dpo_grad_2}
 
-Expanding this and using the above expressions for sigmoid and logarithms results in the gradient introduced earlier:
+이를 전개하고 시그모이드와 로그에 대한 위의 표현식을 사용하면 앞서 소개된 그래디언트를 얻는다:
 
 $$ -\mathbb{E}_{(x,y_c,y_r)\sim\mathcal{D}}\left[\beta\sigma\left(\beta\log\frac{\pi_{\theta}(y_r|x)}{\pi_{\text{ref}}(y_r|x)} - \beta\log\frac{\pi_{\theta}(y_c|x)}{\pi_{\text{ref}}(y_c|x)}\right)\left[\nabla_{\theta}\log\pi(y_c|x)-\nabla_{\theta}\log\pi(y_r|x)\right]\right] $$ {#eq:dpo_grad_3}
 
-## Numerical Concerns, Weaknesses, and Alternatives
+## 수치적 우려사항, 약점 및 대안
 
-Many variants of the DPO algorithm have been proposed to address weaknesses of DPO.
-For example, without rollouts where a reward model can rate generations, DPO treats every pair of preference data with equal weight. 
-In reality, as seen in Chapter 11 on Preference Data, there are many ways of capturing preference data with a richer label than binary.
-Multiple algorithms have been proposed to re-balance the optimization away from treating each pair equally.
+DPO 알고리즘의 약점을 해결하기 위해 많은 변형들이 제안되었다.
+예를 들어, 보상 모델이 생성을 평가할 수 있는 롤아웃 없이, DPO는 모든 선호도 데이터 쌍을 동일한 가중치로 처리한다.
+실제로, 선호도 데이터에 관한 11장에서 보듯이, 이진보다 풍부한 레이블로 선호도 데이터를 포착하는 많은 방법들이 있다.
+각 쌍을 동등하게 처리하는 것에서 벗어나 최적화를 재균형화하기 위한 여러 알고리즘들이 제안되었다.
 
-- **REgression to RElative REward Based RL (REBEL)** adds signal from a reward model, as a margin between chosen and rejected responses, rather than solely the pairwise preference data to more accurately solve the RLHF problem [@gao2024rebel].
-- **Conservative DPO (cDPO) and Identity Preference Optimization (IPO)** address overfitting by assuming noise in the preference data. cDPO assumes N percent of the data is incorrectly labeled [@rafailov2024direct] and IPO changes the optimization to soften the probability of preference rather than optimize directly from a label [@azar2024general]. Practically, IPO changes the preference probability to a nonlinear function, moving away from the Bradley-Terry assumption, with $\Psi(q) = \log\left(\frac{q}{1-q}\right)$.
-- **DPO with an offset (ODPO)** "requires the difference between the likelihood of the preferred and dispreferred response to be greater than an offset value" [@amini2024direct] -- do not treat every data pair equally, but this can come at the cost of a more difficult labeling environment.
+- **상대 보상 기반 RL로의 회귀 (REBEL)** 는 더 정확하게 RLHF 문제를 풀기 위해 순수한 쌍별 선호도 데이터가 아닌 선택된 응답과 거부된 응답 사이의 여백으로서 보상 모델의 신호를 추가한다 [@gao2024rebel].
+- **보수적 DPO (cDPO)와 아이덴티티 선호도 최적화 (IPO)** 는 선호도 데이터에서의 노이즈를 가정하여 과적합을 해결한다. cDPO는 데이터의 N 퍼센트가 잘못 레이블링되었다고 가정하고 [@rafailov2024direct], IPO는 레이블로부터 직접 최적화하는 것이 아닌 선호도의 확률을 부드럽게 하기 위해 최적화를 변경한다 [@azar2024general]. 실제로, IPO는 선호도 확률을 비선형 함수로 변경하여 Bradley-Terry 가정에서 벗어나며, $\Psi(q) = \log\left(\frac{q}{1-q}\right)$로 나타낸다.
+- **오프셋을 가진 DPO (ODPO)** 는 "선호되는 응답과 선호되지 않는 응답의 우도 차이가 오프셋 값보다 크도록 요구한다" [@amini2024direct]---모든 데이터 쌍을 동등하게 취급하지 않지만, 이는 더 어려운 레이블링 환경을 초래할 수 있다.
 
-Some variants to DPO attempt to either improve the learning signal by making small changes to the loss or make the application more efficient by reducing memory usage.
+일부 DPO 변형들은 손실에 소규모 변경을 가하여 학습 신호를 개선하거나, 메모리 사용량을 줄여 적용을 더 효율적으로 만들려 한다.
 
-- **Odds Ratio Policy Optimization (ORPO)** directly updates the policy model with a pull towards the chosen response, similar to the instruction fine-tuning loss, with a small penalty on the chosen response [@hong2024reference]. This change of loss function removes the need for a reference model, simplifying the setup. The best way to view ORPO is DPO inspired, rather than a DPO derivative.
-- **Simple Preference Optimization SimPO** makes a minor change to the DPO optimization, by averaging the log-probabilities rather than summing them (SimPO) or adding length normalization, to improve performance [@meng2025simpo].
+- **오즈 비율 정책 최적화 (ORPO)** 는 참조 모델에 대한 소규모 패널티와 함께 지시 미세조정 손실과 유사한 선택된 응답 방향의 당김으로 정책 모델을 직접 업데이트한다 [@hong2024reference]. 이 손실 함수의 변경은 참조 모델의 필요성을 제거하여 설정을 단순화한다. ORPO를 보는 가장 좋은 방법은 DPO에서 영감을 받은 것이지, DPO의 파생물이 아니라는 것이다.
+- **단순 선호도 최적화 (SimPO)** 는 성능을 향상시키기 위해 DPO 최적화에 소규모 변경을 가하는데, 로그 확률을 합산하는 대신 평균을 내거나 (SimPO) 길이 정규화를 추가한다 [@meng2025simpo].
 
-![Sketch of preference displacement in DPO.](images/dpo_displacement.png){#fig:dpo_issue .center}
+![DPO에서의 선호도 변위 스케치.](images/dpo_displacement.png){#fig:dpo_issue .center}
 
-One of the core issues *apparent* in DPO is that the optimization drives only to increase the margin between the probability of the chosen and rejected responses.
-Numerically, the model reduces the probability of both the chosen and rejected responses, but the *rejected response is reduced by a greater extent* as shown in @fig:dpo_issue.
-Intuitively, it is not clear how this generalizes, but work has posited that it increases the probability of unaddressed behaviors -- i.e. tokens that the language model could generate, but are not in the distribution of the post-training datasets [@razin2024unintentional] [@ren2024learning]. 
-Simple methods---such as Cal-DPO [@xiao2024cal], which adjusts the optimization process, and AlphaPO [@gupta2025alphapo], which modifies the reward shape---mitigate this **preference displacement**.
-In practice, the exact impact of this is not well known, but points to a potential reason why online methods can outperform vanilla DPO.
+DPO에서 *명백한* 핵심 문제 중 하나는 최적화가 선택된 응답과 거부된 응답의 확률 사이의 여백을 증가시키는 방향으로만 유도된다는 것이다.
+수치적으로, 모델은 선택된 응답과 거부된 응답 모두의 확률을 줄이지만, @fig:dpo_issue에 나타난 것처럼 *거부된 응답이 더 큰 폭으로 감소한다*.
+직관적으로, 이것이 어떻게 일반화되는지는 명확하지 않지만, 연구들은 이것이 다루어지지 않은 행동들의 확률을 증가시킨다고 주장했다---즉, 언어 모델이 생성할 수 있지만 후처리 학습 데이터셋의 분포에 없는 토큰들 [@razin2024unintentional] [@ren2024learning].
+이 **선호도 변위**를 최적화 과정을 조정하는 Cal-DPO [@xiao2024cal]와 보상 형태를 수정하는 AlphaPO [@gupta2025alphapo] 같은 단순한 방법들로 완화할 수 있다.
+실제로 이것의 정확한 영향은 잘 알려져 있지 않지만, 온라인 방법이 일반적인 DPO를 능가할 수 있는 잠재적 이유를 가리킨다.
 
-The largest other reason that is posited for DPO-like methods to have a lower ceiling on performance than online (RL based) RLHF methods is that the training signal comes from completions from previous or other models.
-Online variants of DPO alleviate these limitations by generating new completions and incorporating a preference signal at training time. **Online DPO** [@guo2024direct] samples generations from the current model, while **Discriminator-Guided DPO** (D2PO) [@singhal2024d2po] uses reward model relabelling to create new preference data on the fly, and many more variants exist.
+DPO 유사 방법들이 온라인 (RL 기반) RLHF 방법보다 성능 상한이 낮다고 주장되는 가장 큰 다른 이유는 훈련 신호가 이전 모델이나 다른 모델로부터의 완성에서 나온다는 것이다.
+DPO의 온라인 변형들은 훈련 시점에 새로운 완성을 생성하고 선호도 신호를 통합함으로써 이러한 한계를 완화한다. **온라인 DPO** [@guo2024direct]는 현재 모델로부터 생성을 샘플링하는 반면, **판별기 유도 DPO** (D2PO) [@singhal2024d2po]는 즉석에서 새로운 선호도 데이터를 생성하기 위해 보상 모델 재레이블링을 사용하며, 더 많은 변형들이 존재한다.
 
-There is a long list of other DAA variants, such as Direct Nash Optimization (DNO) [@rosset2024direct] or Binary Classifier Optimization (BCO) [@jung2024binary], but the choice of algorithm is far less important than the initial model and the data used [@lambert2024t] [@zhao2024rainbowpo] [@gorbatovski2025differences].
+직접 내시 최적화 (DNO) [@rosset2024direct]나 이진 분류기 최적화 (BCO) [@jung2024binary]와 같은 다른 DAA 변형들의 긴 목록이 있지만, 알고리즘 선택은 초기 모델과 사용된 데이터보다 훨씬 덜 중요하다 [@lambert2024t] [@zhao2024rainbowpo] [@gorbatovski2025differences].
 
-## Implementation Details
+## 구현 세부사항
 
-DAAs such as DPO are implemented very differently than policy gradient optimizers.
-The DPO loss, taken from the original implementation, largely can be summarized as follows [@rafailov2024direct]:
+DPO와 같은 DAA는 정책 그래디언트 최적화기와는 매우 다르게 구현된다.
+원래 구현에서 가져온 DPO 손실은 대체로 다음과 같이 요약할 수 있다 [@rafailov2024direct]:
 
 ```python
 # Log-probability gaps for the policy and the frozen reference model
@@ -283,44 +283,44 @@ chosen_rewards = beta * (policy_chosen_logps - reference_chosen_logps).detach()
 rejected_rewards = beta * (policy_rejected_logps - reference_rejected_logps).detach()
 ```
 
-This can be used in standard language model training stacks as this information is already collated during the forward pass of a model (with the addition of a reference model).
+이 정보가 모델의 순전파 중에 이미 수집되기 때문에 (참조 모델 추가와 함께), 이는 표준 언어 모델 훈련 스택에서 사용될 수 있다.
 
-In most ways, DAAs are simpler and a quality of life improvement, but they also offer a different set of considerations.
+대부분의 면에서 DAA는 더 간단하고 삶의 질을 향상시키지만, 다른 고려사항들도 제공한다.
 
-1. **KL divergence is static**: In DPO and other algorithms, the KL divergence is set explicitly by the $\beta$ parameter that balances the distance penalty to the optimization. This is due to the fact that DPO takes gradient steps towards the *optimal* solution to the RLHF objective given the data -- it steps exactly to the solution set by the $\beta$ term. On the other hand, RL based optimizers take steps based on the batch and recent data.
-2. **Caching log-probabilities**: Simple implementations of DPO do the forward passes for the policy model and reference models at the same time for convenience with respect to the loss function. Though, this doubles the memory used and results in increased GPU usage. To avoid this, one can compute the log-probabilities of the reference model over the training dataset first, then reference it when computing the loss and updating the parameters per batch, reducing the peak memory usage by 50%.
+1. **KL 발산은 정적이다**: DPO 및 다른 알고리즘에서 KL 발산은 거리 패널티와 최적화의 균형을 맞추는 $\beta$ 파라미터로 명시적으로 설정된다. 이는 DPO가 데이터가 주어진 RLHF 목적 함수의 *최적* 해를 향해 그래디언트 스텝을 취하기 때문이다---$\beta$ 항에 의해 설정된 해를 정확히 향해 나아간다. 반면, RL 기반 최적화기는 배치와 최근 데이터를 기반으로 스텝을 취한다.
+2. **로그 확률 캐싱**: DPO의 단순한 구현은 손실 함수에 대한 편의를 위해 정책 모델과 참조 모델의 순전파를 동시에 수행한다. 하지만 이는 사용되는 메모리를 두 배로 늘리고 GPU 사용량 증가를 초래한다. 이를 피하기 위해, 먼저 훈련 데이터셋에 대한 참조 모델의 로그 확률을 계산한 다음, 배치별 파라미터를 계산하고 업데이트할 때 이를 참조하여 최대 메모리 사용량을 50% 줄일 수 있다.
 
-## DAAs with Synthetic Preference Data
+## 합성 선호도 데이터를 이용한 DAA
 
-Most of the popular datasets for performing preference fine-tuning with DAAs these days are synthetic preferences where a frontier model rates outputs from other models as the winner or the loser. 
-Prominent examples include UltraFeedback (the first of this category) [@cui2023ultrafeedback], Tülu 3 (built with an expanded UltraFeedback methodology) [@lambert2024t], SmolLM 3's data [@bakouch2025smollm3], or the Dolci Pref dataset released with Olmo 3 [@teamolmo2025olmo3].
+요즘 DAA로 선호도 미세조정 (PreFT)을 수행하는 데 사용되는 인기 있는 데이터셋의 대부분은 프론티어 모델이 다른 모델의 출력을 승자 또는 패자로 평가하는 합성 선호도다.
+대표적인 예로는 UltraFeedback (이 범주의 첫 번째) [@cui2023ultrafeedback], Tülu 3 (확장된 UltraFeedback 방법론으로 구축) [@lambert2024t], SmolLM 3의 데이터 [@bakouch2025smollm3], 또는 Olmo 3과 함께 출시된 Dolci Pref 데이터셋 [@teamolmo2025olmo3]이 있다.
 
-The best-practices for constructing these datasets are still evolving.
-Tülu 3 and datasets around its release in November of 2024 demonstrated that synthetic, pairwise preference data needs to be "on-policy" in a sense that some completions are generated from the model you're fine-tuning (while being mixed in a bigger model pool).
-This on-policy nature of the data ensured that the DAA would optimize the correct token space within which the model generates -- as the loss functions are contrastive and less direct than instruction fine-tuning.
-Later, with the release of Olmo 3 and SmolLM 3 in 2025, other works supported a different theory called Delta Learning, which argues that the difference between the chosen and rejected completions is more important to learning than exactly which models are used for the completions [@geng2025the].
-For example, in both of these two referenced models, the chosen responses are from Qwen 3 32B and the rejected responses are from Qwen 3 0.6B -- both authors developed this pairing concurrently and independently.
+이러한 데이터셋을 구성하는 모범 사례들은 여전히 발전하고 있다.
+2024년 11월 출시된 Tülu 3 및 그 주변의 데이터셋들은 합성 쌍별 선호도 데이터가 미세조정할 모델에서 일부 완성이 생성되는 (더 큰 모델 풀에 혼합되는) 방식으로 "온-정책"이어야 한다는 것을 보여주었다.
+이 데이터의 온-정책 특성은 DAA가 모델이 생성하는 올바른 토큰 공간을 최적화하도록 보장했는데---손실 함수들이 지시 미세조정보다 대비적이고 덜 직접적이기 때문이다.
+이후 2025년 Olmo 3와 SmolLM 3의 출시와 함께, 다른 연구들은 델타 학습이라는 다른 이론을 지지했는데, 이는 선택된 완성과 거부된 완성 사이의 차이가 완성에 어떤 모델이 사용되는지보다 학습에 더 중요하다고 주장한다 [@geng2025the].
+예를 들어, 이 두 모델 모두에서, 선택된 응답은 Qwen 3 32B에서, 거부된 응답은 Qwen 3 0.6B에서 나왔다---두 저자들이 이 쌍을 동시에 독립적으로 개발했다.
 
-Overall, training models on synthetic preference data with DAAs is the place most practitioners should start with given the simplicity of implementation and strong performance relative to preference fine-tuning with reinforcement learning based methods.
-Other minor issues exist when using extensive, synthetic preference data, such as biases of the model judging between completions.
-Given that frontier models such as GPT-4 are known to have length bias [@dubois2024length] and a preference for outputs that match themselves [@panickssery2024llm] (see Chapter 12 for more information), it is slightly more likely for a piece of text in the "chosen" section of the dataset to be either from an OpenAI model or another strong model that is stylistically similar to it. 
+전반적으로, DAA로 합성 선호도 데이터에 대해 모델을 훈련하는 것은 구현의 단순성과 강화학습 기반 방법에 비해 강력한 성능으로 인해 대부분의 실무자들이 시작해야 할 곳이다.
+합성 선호도 데이터를 광범위하게 사용할 때 완성들 사이를 판단하는 모델의 편향과 같은 다른 소소한 문제들이 있다.
+GPT-4와 같은 프론티어 모델들이 길이 편향 [@dubois2024length]과 자신과 일치하는 출력에 대한 선호도 [@panickssery2024llm]를 가진 것으로 알려져 있으므로 (자세한 내용은 12장 참조), 데이터셋의 "선택됨" 섹션에 있는 텍스트가 OpenAI 모델 또는 스타일적으로 유사한 다른 강력한 모델에서 나올 가능성이 약간 더 높다.
 
-To conclude this section, we'll cover an intuition for how these methods change the generations of the model being trained.
-At a high level, most DAAs optimize to increase the margin between the probability of "chosen" and "rejected" completions (some less popular algorithms are designed to slightly change these dynamics, but the core remains).
-As discussed earlier in this chapter (see @fig:dpo_issue), this often means both probabilities decrease, but the rejected response decreases by a greater extent.
-Each token in a sequence receives a different gradient (magnitude and direction) based on how much it contributed to the overall preference margin, allowing the optimizer to identify which tokens matter most to the outcome.
+이 섹션을 마무리하면서, 이 방법들이 훈련되는 모델의 생성을 어떻게 변경하는지에 대한 직관을 다룰 것이다.
+높은 수준에서, 대부분의 DAA는 "선택됨"과 "거부됨" 완성의 확률 사이의 여백을 증가시키기 위해 최적화한다 (일부 덜 인기 있는 알고리즘들은 이 역학을 약간 변경하도록 설계되었지만, 핵심은 유지된다).
+이 장의 앞에서 논의한 것처럼 (@fig:dpo_issue 참조), 이는 종종 두 확률이 모두 감소하지만, 거부된 응답이 더 큰 폭으로 감소함을 의미한다.
+시퀀스의 각 토큰은 전체 선호도 여백에 얼마나 기여했는지에 따라 다른 그래디언트 (크기와 방향)를 받으며, 이를 통해 최적화기는 결과에 가장 중요한 토큰을 파악할 수 있다.
 
-## DAAs vs. RL: Online vs. Offline Data
+## DAA 대 RL: 온라인 대 오프라인 데이터
 
-Broadly, the argument boils down to one question: Do we need the inner workings of reinforcement learning, with value functions, policy gradients, and all, to align language models with RLHF? 
-This, like most questions phrased this way, is overly simple. 
-Of course, both methods are well-established, but it is important to illustrate where the fundamental differences and performance manifolds lie.
+광범위하게, 논쟁은 하나의 질문으로 귀결된다: 언어 모델을 RLHF로 정렬하기 위해 가치 함수, 정책 그래디언트 등을 갖춘 강화학습의 내부 작동이 필요한가?
+이것은, 이런 식으로 표현된 대부분의 질문들처럼, 지나치게 단순하다.
+물론, 두 방법 모두 잘 확립되어 있지만, 근본적인 차이와 성능 매니폴드가 어디에 있는지 설명하는 것이 중요하다.
 
-Multiple reports have concluded that policy-gradient based and RL methods outperform DPO and its variants.
-The arguments take different forms, from training models with different algorithms but controlled data [@ivison2024unpacking] [@xu2024dpo] or studying the role of on-policy data within the RL optimization loop [@tajwar2024preference].
-In all of these cases, DPO algorithms are a hair behind.
+여러 보고서들이 정책 그래디언트 기반 및 RL 방법들이 DPO와 그 변형들을 능가한다고 결론지었다.
+논쟁은 다른 알고리즘으로 모델을 훈련하되 데이터를 제어하거나 [@ivison2024unpacking] [@xu2024dpo], RL 최적화 루프 내에서 온-정책 데이터의 역할을 연구하는 등 [@tajwar2024preference] 다양한 형태를 취한다.
+이 모든 경우에서, DPO 알고리즘들은 약간 뒤처진다.
 
-Even with this performance delta, DAAs are still used extensively in leading models due to their simplicity.
-DAAs provide a controlled environment where iterations on training data and other configurations can be made rapidly, and given that data is often far more important than algorithms, using DPO can be fine.
+이 성능 차이에도 불구하고, DAA는 단순성으로 인해 선도적인 모델들에서 여전히 광범위하게 사용된다.
+DAA는 훈련 데이터 및 다른 구성에 대한 반복이 빠르게 이루어질 수 있는 제어된 환경을 제공하며, 알고리즘보다 데이터가 훨씬 더 중요한 경우가 많기 때문에 DPO를 사용하는 것이 괜찮을 수 있다.
 
-With the emergence of reasoning models that are primarily trained with RL, further investment will return to using RL for preference-tuning, which in the long-term will improve the robustness of RL infrastructure and cement this margin between DAAs and RL for optimizing from human feedback.
+주로 RL로 훈련되는 추론 모델의 등장으로, 선호도 조정을 위한 RL 사용으로의 추가 투자가 이루어질 것이며, 이는 장기적으로 RL 인프라의 견고성을 향상시키고 인간 피드백에서의 최적화를 위한 DAA와 RL 사이의 이 여백을 굳힐 것이다.

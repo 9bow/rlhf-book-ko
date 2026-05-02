@@ -5,111 +5,111 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "Crafting Model Character and Products"
+prev-chapter: "모델 캐릭터와 제품 구성"
 prev-url: "17-product"
-page-title: "Appendix A: Definitions"
-search-title: "Appendix A: Definitions"
-next-chapter: "Style & Information"
+page-title: "부록 A: 정의"
+search-title: "부록 A: 정의"
+next-chapter: "스타일 & 정보"
 next-url: "appendix-b-style"
 ---
 
-# Definitions & Background
+# 정의 및 배경
 
-This chapter includes all the definitions, symbols, and operations frequently used in the RLHF process, with a quick overview of language models, which is the guiding application of this book.
+이 장에는 RLHF 과정에서 자주 사용되는 모든 정의, 기호, 연산, 그리고 이 책의 지도적인 응용 분야인 언어 모델에 대한 간략한 개요가 포함되어 있다.
 
-## Language Modeling Overview
+## 언어 모델링 개요
 
-The majority of modern language models are trained to learn the joint probability distribution of sequences of tokens (words, subwords, or characters) in an autoregressive manner. 
-Autoregression simply means that each next prediction depends on the previous entities in the sequence.
-Given a sequence of tokens $x = (x_1, x_2, \ldots, x_T)$, the model factorizes the probability of the entire sequence into a product of conditional distributions:
+현대 언어 모델의 대부분은 자기회귀 (autoregressive) 방식으로 토큰 (token, 단어, 서브워드, 또는 문자) 시퀀스의 결합 확률 분포를 학습하도록 훈련된다.
+자기회귀는 단순히 다음 예측이 시퀀스의 이전 요소들에 의존한다는 것을 의미한다.
+토큰 시퀀스 $x = (x_1, x_2, \ldots, x_T)$가 주어지면, 모델은 전체 시퀀스의 확률을 조건부 분포의 곱으로 인수분해한다:
 
 $$P_{\theta}(x) = \prod_{t=1}^{T} P_{\theta}(x_{t} \mid x_{1}, \ldots, x_{t-1}).$$ {#eq:llming}
 
-In order to fit a model that accurately predicts this, the goal is often to maximize the likelihood of the training data as predicted by the current model. 
-To do so, we can minimize a negative log-likelihood (NLL) loss:
+이를 정확하게 예측하는 모델을 적합시키기 위해, 목표는 종종 현재 모델이 예측한 학습 데이터의 우도 (likelihood)를 최대화하는 것이다.
+이를 위해 음의 로그 우도 (NLL, negative log-likelihood) 손실을 최소화할 수 있다:
 
 $$\mathcal{L}_{\text{LM}}(\theta)=-\,\mathbb{E}_{x \sim \mathcal{D}}\left[\sum_{t=1}^{T}\log P_{\theta}\left(x_t \mid x_{<t}\right)\right]. $$ {#eq:nll}
 
-In practice, one uses a cross-entropy loss with respect to each next-token prediction, computed by comparing the true token in a sequence to what was predicted by the model.
+실제로는 각 다음 토큰 예측에 대해 교차 엔트로피 (cross-entropy) 손실을 사용하며, 이는 시퀀스에서 실제 토큰과 모델이 예측한 것을 비교하여 계산된다.
 
-Language models come in many architectures with different trade-offs in terms of knowledge, speed, and other performance characteristics.
-Modern LMs, including ChatGPT, Claude, Gemini, etc., most often use **decoder-only Transformers** [@Vaswani2017AttentionIA].
-The core innovation of the Transformer was heavily utilizing the **self-attention** [@Bahdanau2014NeuralMT] mechanism to allow the model to directly attend to concepts in context and learn complex mappings.
-Throughout this book, particularly when covering reward models in Chapter 5, we will discuss adding new heads or modifying a language modeling (LM) head of the transformer.
-The LM head is a final linear projection layer that maps from the model's internal embedding space to the tokenizer space (a.k.a. vocabulary).
-We'll see in this book that different "heads" of a language model can be applied to fine-tune the model to different purposes -- in RLHF this is most often done when training a reward model, which is highlighted in Chapter 5.
+언어 모델은 지식, 속도, 기타 성능 특성 측면에서 다양한 트레이드오프를 가진 여러 아키텍처로 나뉜다.
+ChatGPT, Claude, Gemini 등을 포함한 현대 대규모 언어 모델 (LLM)들은 **디코더 전용 트랜스포머 (decoder-only Transformers)** [@Vaswani2017AttentionIA]를 가장 많이 사용한다.
+트랜스포머의 핵심 혁신은 **자기 어텐션 (self-attention)** [@Bahdanau2014NeuralMT] 메커니즘을 광범위하게 활용하여 모델이 컨텍스트의 개념들에 직접 주의를 기울이고 복잡한 매핑을 학습할 수 있도록 한 것이었다.
+이 책 전반에 걸쳐, 특히 5장의 보상 모델 (reward model) 설명에서, 트랜스포머에 새로운 헤드 (head)를 추가하거나 언어 모델링 (LM) 헤드를 수정하는 것에 대해 논의할 것이다.
+LM 헤드는 모델의 내부 임베딩 (embedding) 공간에서 토크나이저 공간 (즉, 어휘 (vocabulary))으로 매핑하는 최종 선형 투영 레이어이다.
+이 책에서 언어 모델의 다양한 "헤드들"이 모델을 다른 목적으로 미세조정하는 데 어떻게 적용될 수 있는지 살펴볼 것이다 -- RLHF에서는 5장에서 중점적으로 다루는 보상 모델을 학습시킬 때 가장 많이 이루어진다.
 
-## ML Definitions
+## 머신러닝 정의
 
-- **Kullback-Leibler (KL) divergence ($\mathcal{D}_{\text{KL}}(P || Q)$)**, also known as KL divergence, is a measure of the difference between two probability distributions.
-For discrete probability distributions $P$ and $Q$ defined on the same probability space $\mathcal{X}$, the KL distance from $Q$ to $P$ is defined as:
+- **쿨백-라이블러 발산 (Kullback-Leibler divergence, $\mathcal{D}_{\text{KL}}(P || Q)$)**, KL 발산이라고도 알려진 이 개념은 두 확률 분포 간의 차이를 측정한다.
+동일한 확률 공간 $\mathcal{X}$ 위에 정의된 이산 확률 분포 $P$와 $Q$에 대해, $Q$에서 $P$까지의 KL 거리는 다음과 같이 정의된다:
 
 $$ \mathcal{D}_{\text{KL}}(P || Q) = \sum_{x \in \mathcal{X}} P(x) \log \left(\frac{P(x)}{Q(x)}\right) $$ {#eq:def_kl}
 
 
-## NLP Definitions
+## 자연어 처리 정의
 
-- **Prompt ($x$)**: The input text given to a language model to generate a response or completion.
+- **프롬프트 ($x$)**: 응답이나 완성 (completion)을 생성하기 위해 언어 모델에 주어지는 입력 텍스트.
 
-- **Completion ($y$)**: The output text generated by a language model in response to a prompt. Often the completion is denoted as $y\mid x$. Rewards and other values are often computed as $r(y\mid x)$ or $P(y\mid x)$.
+- **완성 ($y$)**: 프롬프트에 응답하여 언어 모델이 생성한 출력 텍스트. 종종 완성은 $y\mid x$로 표기된다. 보상 (reward)과 다른 값들은 종종 $r(y\mid x)$ 또는 $P(y\mid x)$로 계산된다.
 
-- **Chosen Completion ($y_c$)**: The completion that is selected or preferred over other alternatives, often denoted as $y_{chosen}$.
+- **선택된 완성 ($y_c$)**: 다른 대안들보다 선택되거나 선호되는 완성으로, 종종 $y_{chosen}$으로 표기된다.
 
-- **Rejected Completion ($y_r$)**: The disfavored completion in a pairwise setting.
+- **거부된 완성 ($y_r$)**: 쌍 비교 설정에서 선호되지 않는 완성.
 
-- **Preference Relation ($\succ$)**: A symbol indicating that one completion is preferred over another, e.g., $y_{chosen} \succ y_{rejected}$. For example, a reward model predicts the probability of a preference relation, $P(y_c \succ y_r \mid x)$.
+- **선호도 관계 ($\succ$)**: 하나의 완성이 다른 것보다 선호됨을 나타내는 기호, 예: $y_{chosen} \succ y_{rejected}$. 예를 들어, 보상 모델은 선호도 관계의 확률인 $P(y_c \succ y_r \mid x)$를 예측한다.
 
-- **Policy ($\pi$)**: A probability distribution over possible completions, parameterized by $\theta$: $\pi_\theta(y\mid x)$.
+- **정책 ($\pi$)**: $\theta$로 파라미터화된 가능한 완성들에 대한 확률 분포: $\pi_\theta(y\mid x)$.
 
-## RL Definitions
+## 강화학습 정의
 
-- **Reward ($r$)**: A scalar value indicating the desirability of an action or state, typically denoted as $r$.
+- **보상 ($r$)**: 행동이나 상태의 바람직함을 나타내는 스칼라 값으로, 일반적으로 $r$로 표기된다.
 
-- **Action ($a$)**: A decision or move made by an agent in an environment, often represented as $a \in A$, where $A$ is the set of possible actions.
+- **행동 ($a$)**: 환경에서 에이전트가 내리는 결정이나 행동으로, 종종 $a \in A$로 표현되며, $A$는 가능한 행동들의 집합이다.
 
-- **State ($s$)**: The current configuration or situation of the environment, usually denoted as $s \in S$, where $S$ is the state space.
+- **상태 ($s$)**: 환경의 현재 구성이나 상황으로, 일반적으로 $s \in S$로 표기되며, $S$는 상태 공간이다.
 
-- **Trajectory ($\tau$)**: A trajectory $\tau$ is a sequence of states, actions, and rewards experienced by an agent: $\tau = (s_0, a_0, r_0, s_1, a_1, r_1, ..., s_T, a_T, r_T)$. 
+- **궤적 ($\tau$)**: 궤적 $\tau$는 에이전트가 경험하는 상태, 행동, 보상의 시퀀스이다: $\tau = (s_0, a_0, r_0, s_1, a_1, r_1, ..., s_T, a_T, r_T)$.
 
-- **Trajectory Distribution ($(\tau\mid\pi)$)**: The probability of a trajectory under policy $\pi$ is $P(\tau\mid\pi) = p(s_0)\prod_{t=0}^T \pi(a_t\mid s_t)p(s_{t+1}\mid s_t,a_t)$, where $p(s_0)$ is the prior state distribution and $p(s_{t+1}\mid s_t,a_t)$ is the transition probability. 
+- **궤적 분포 ($(\tau\mid\pi)$)**: 정책 $\pi$ 하에서 궤적의 확률은 $P(\tau\mid\pi) = p(s_0)\prod_{t=0}^T \pi(a_t\mid s_t)p(s_{t+1}\mid s_t,a_t)$이며, 여기서 $p(s_0)$는 사전 상태 분포이고 $p(s_{t+1}\mid s_t,a_t)$는 전이 확률이다.
 
-- **Policy ($\pi$)**, also called the **policy model** in RLHF: In RL, a policy is a strategy or rule that the agent follows to decide which action to take in a given state: $\pi(a\mid s)$. 
+- **정책 ($\pi$)**, RLHF에서는 **정책 모델 (policy model)**이라고도 한다: 강화학습 (RL)에서 정책은 주어진 상태에서 어떤 행동을 취할지 결정하기 위해 에이전트가 따르는 전략이나 규칙이다: $\pi(a\mid s)$.
 
-- **Discount Factor ($\gamma$)**: A scalar $0 \le \gamma < 1$ that exponentially down-weights future rewards in the return, trading off immediacy versus long-term gain and guaranteeing convergence for infinite-horizon sums. Sometimes discounting is not used, which is equivalent to $\gamma=1$.
+- **할인 계수 ($\gamma$)**: $0 \le \gamma < 1$ 범위의 스칼라로, 수익에서 미래 보상을 지수적으로 낮게 가중하여 즉각성 대 장기 이득을 트레이드오프하고 무한 수평선 합의 수렴을 보장한다. 때로 할인이 사용되지 않는데, 이는 $\gamma=1$에 해당한다.
 
-- **Value Function ($V$)**: A function that estimates the expected cumulative reward from a given state: $V(s) = \mathbb{E}[\sum_{t=0}^{\infty} \gamma^t r_t \mid s_0 = s]$.
+- **가치 함수 ($V$)**: 주어진 상태에서 기대되는 누적 보상을 추정하는 함수: $V(s) = \mathbb{E}[\sum_{t=0}^{\infty} \gamma^t r_t \mid s_0 = s]$.
 
-- **Q-Function ($Q$)**: A function that estimates the expected cumulative reward from taking a specific action in a given state: $Q(s,a) = \mathbb{E}[\sum_{t=0}^{\infty} \gamma^t r_t \mid s_0 = s, a_0 = a]$.
+- **Q 함수 ($Q$)**: 주어진 상태에서 특정 행동을 취함으로써 기대되는 누적 보상을 추정하는 함수: $Q(s,a) = \mathbb{E}[\sum_{t=0}^{\infty} \gamma^t r_t \mid s_0 = s, a_0 = a]$.
 
-- **Advantage Function ($A$)**: The advantage function $A(s,a)$ quantifies the relative benefit of taking action $a$ in state $s$ compared to the average action. It's defined as $A(s,a) = Q(s,a) - V(s)$. Advantage functions (and value functions) can depend on a specific policy, $A^\pi(s,a)$. 
+- **이점 함수 ($A$)**: 이점 함수 $A(s,a)$는 평균 행동에 비해 상태 $s$에서 행동 $a$를 취하는 것의 상대적 이점을 정량화한다. $A(s,a) = Q(s,a) - V(s)$로 정의된다. 이점 함수 (및 가치 함수)는 특정 정책에 의존할 수 있다, $A^\pi(s,a)$.
 
-- **Policy-conditioned Values ($[]^{\pi(\cdot)}$)**: Across RL derivations and implementations, a crucial component of the theory and practice is collecting data or values conditioned on a specific policy. Throughout this book we will switch between the simpler notation of value functions ($V,A,Q,G$) and their specific policy-conditioned values ($V^\pi,A^\pi,Q^\pi$). Also crucial in the expected value computation is sampling from data $d$, that is conditioned on a specific policy, $d_\pi$ (e.g., $s \sim d_\pi$ and $a \sim \pi(\cdot\mid s)$ when estimating $\mathbb{E}_{s\sim d_\pi,\,a\sim\pi(\cdot\mid s)}[A^\pi(s,a)]$).
+- **정책 조건부 값들 ($[]^{\pi(\cdot)}$)**: RL 유도 및 구현 전반에 걸쳐, 이론과 실제의 중요한 요소는 특정 정책에 조건화된 데이터나 값들을 수집하는 것이다. 이 책 전반에 걸쳐 우리는 가치 함수의 더 단순한 표기법 ($V,A,Q,G$)과 그들의 특정 정책 조건부 값들 ($V^\pi,A^\pi,Q^\pi$) 사이를 전환할 것이다. 기대값 계산에서 중요한 것은 특정 정책에 조건화된 데이터 $d$에서 샘플링하는 것이다, $d_\pi$ (예: $\mathbb{E}_{s\sim d_\pi,\,a\sim\pi(\cdot\mid s)}[A^\pi(s,a)]$를 추정할 때 $s \sim d_\pi$이고 $a \sim \pi(\cdot\mid s)$).
 
-- **Expectation of Reward Optimization**: The primary goal in RL, which involves maximizing the expected cumulative reward:
+- **보상 최적화의 기대값**: RL의 주요 목표로, 기대되는 누적 보상을 최대화하는 것을 포함한다:
 
   $$\max_{\theta} \mathbb{E}_{s \sim \rho_\pi, a \sim \pi_\theta}[\sum_{t=0}^{\infty} \gamma^t r_t]$$ {#eq:expect_reward_opt}
 
-  where $\rho_\pi$ is the state distribution under policy $\pi$, and $\gamma$ is the discount factor.
+  여기서 $\rho_\pi$는 정책 $\pi$ 하의 상태 분포이고, $\gamma$는 할인 계수이다.
 
-- **Finite Horizon Reward ($J(\pi_\theta)$)**: The expected finite-horizon discounted return of the policy $\pi_\theta$, parameterized by $\theta$ is defined as:
+- **유한 수평선 보상 ($J(\pi_\theta)$)**: $\theta$로 파라미터화된 정책 $\pi_\theta$의 기대 유한 수평선 할인 수익은 다음과 같이 정의된다:
 
   $$J(\pi_\theta) = \mathbb{E}_{\tau \sim \pi_\theta} \left[ \sum_{t=0}^T \gamma^t r_t \right]$$ {#eq:finite_horizon_return}
   
-  where $\tau \sim \pi_\theta$ denotes trajectories sampled by following policy $\pi_\theta$ and $T$ is the finite horizon.
+  여기서 $\tau \sim \pi_\theta$는 정책 $\pi_\theta$를 따라 샘플링된 궤적을 나타내고 $T$는 유한 수평선이다.
 
-- **On-policy**: In RLHF, particularly in the debate between RL and Direct Alignment Algorithms, the discussion of **on-policy** data is common. In the RL literature, on-policy means that the data is generated *exactly* by the current form of the agent, but in the general preference-tuning literature, on-policy is expanded to mean generations from that edition of model -- e.g. an instruction-tuned checkpoint before running any preference fine-tuning. In this context, off-policy could be data generated by any other language model being used in post-training.
+- **온-정책 (On-policy)**: RLHF에서, 특히 RL과 직접 정렬 알고리즘 간의 논쟁에서, **온-정책** 데이터에 대한 논의가 일반적이다. RL 문헌에서 온-정책은 데이터가 에이전트의 현재 형태에 의해 *정확히* 생성됨을 의미하지만, 일반적인 선호도 조정 문헌에서 온-정책은 해당 버전의 모델의 생성들을 의미하는 것으로 확장된다 -- 예를 들어, 선호도 미세조정 (PreFT)을 실행하기 전의 지시 조정된 체크포인트 (checkpoint). 이 맥락에서, 오프-정책은 후처리 학습에서 사용되는 다른 언어 모델이 생성한 데이터가 될 수 있다.
 
-## RLHF Only Definitions
+## RLHF 전용 정의
 
-- **Reference Model ($\pi_{\text{ref}}$)**: This is a saved set of parameters used in RLHF where outputs of it are used to regularize the optimization.
+- **참조 모델 ($\pi_{\text{ref}}$)**: 출력이 최적화를 정규화 (regularization)하는 데 사용되는 RLHF에서의 저장된 파라미터 집합이다.
 
-## Extended Glossary
+## 확장 용어집
 
-- **Synthetic Data**: This is any training data for an AI model that is the output from another AI system. This could be anything from text generated from an open-ended prompt of a model to a model rewriting existing content.
-- **Distillation**: Distillation is a general set of practices in training AI models where a model is trained on the outputs of a stronger model. This is a type of synthetic data known to make strong, smaller models. Most models make the rules around distillation clear through either the license, for open-weight models, or the terms of service, for models accessible only via API. The term distillation is now overloaded with a specific technical definition from the ML literature.
-- **(Teacher-student) Knowledge Distillation**: Knowledge distillation from a specific teacher to a student model is a specific type of distillation described above and where the term originated. It is a specific deep learning method where a neural network loss is modified to learn from the log-probabilities of the teacher model over multiple potential tokens/logits, instead of learning directly from a chosen output [@hinton2015distilling]. An example of a modern series of models trained with Knowledge Distillation is Gemma 2 [@team2024gemma] or Gemma 3. For a language modeling setup, the next-token loss function can be modified as follows [@agarwal2024policy], where the student model $P_\theta$ learns from the teacher distribution $P_\phi$:
+- **합성 데이터 (Synthetic Data)**: AI 모델을 위한 학습 데이터로 다른 AI 시스템의 출력인 것이다. 이는 모델의 개방형 프롬프트에서 생성된 텍스트부터 기존 콘텐츠를 재작성하는 모델까지 어떤 것이든 될 수 있다.
+- **증류 (Distillation)**: 증류는 AI 모델 학습에서 더 강력한 모델의 출력으로 모델을 학습시키는 일반적인 관행의 집합이다. 이것은 강하고 작은 모델을 만드는 것으로 알려진 합성 데이터의 한 유형이다. 대부분의 모델은 오픈 가중치 모델의 경우 라이선스를 통해, API를 통해서만 접근 가능한 모델의 경우 서비스 약관을 통해 증류에 관한 규칙을 명확히 한다. 증류라는 용어는 이제 ML 문헌의 특정 기술적 정의와 함께 중의적 의미를 갖게 되었다.
+- **(교사-학생) 지식 증류 (Knowledge Distillation)**: 특정 교사에서 학생 모델로의 지식 증류 (knowledge distillation)는 위에서 설명한 특정 유형의 증류이자 용어가 유래한 곳이다. 이것은 신경망 손실이 선택된 출력에서 직접 학습하는 대신 여러 잠재적 토큰/로짓 (logit)에 걸쳐 교사 모델의 로그 확률로부터 학습하도록 수정되는 특정 딥러닝 방법이다 [@hinton2015distilling]. 지식 증류로 학습된 현대 모델 시리즈의 예는 Gemma 2 [@team2024gemma] 또는 Gemma 3이다. 언어 모델링 설정의 경우, 다음 토큰 손실 함수는 다음과 같이 수정될 수 있으며 [@agarwal2024policy], 학생 모델 $P_\theta$가 교사 분포 $P_\phi$에서 학습한다:
 
 $$\mathcal{L}_{\text{KD}}(\theta) = -\,\mathbb{E}_{x \sim \mathcal{D}}\left[\sum_{t=1}^{T} P_{\phi}(x_t \mid x_{<t}) \log P_{\theta}(x_t \mid x_{<t})\right]. $$ {#eq:knowledge_distillation}
 
-- **In-context Learning (ICL)**: In-context here refers to any information within the context window of the language model. Usually, this is information added to the prompt. The simplest form of in-context learning is adding examples of a similar form before the prompt. Advanced versions can learn which information to include for a specific use-case.
-- **Chain-of-Thought (CoT)**: Chain-of-thought is a specific behavior of language models where they are steered towards a behavior that breaks down a problem in a step-by-step form. The original version of this was through the prompt "Let's think step-by-step" [@wei2022chain].
+- **문맥 내 학습 (ICL, In-context Learning)**: 여기서 문맥 내는 언어 모델의 컨텍스트 창 내의 모든 정보를 가리킨다. 보통 이것은 프롬프트에 추가된 정보이다. 문맥 내 학습의 가장 단순한 형태는 프롬프트 전에 유사한 형태의 예시들을 추가하는 것이다. 고급 버전은 특정 사용 사례에 어떤 정보를 포함시킬지 학습할 수 있다.
+- **사고의 연쇄 (CoT, Chain-of-Thought)**: 사고의 연쇄는 문제를 단계별 형태로 분해하는 동작으로 모델을 유도하는 언어 모델의 특정 동작이다. 이것의 원래 버전은 "단계별로 생각해 봅시다"라는 프롬프트를 통한 것이었다 [@wei2022chain].
