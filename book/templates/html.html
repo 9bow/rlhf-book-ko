@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="$lang$" xml:lang="$lang$"$if(dir)$ dir="$dir$"$endif$>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko"$if(dir)$ dir="$dir$"$endif$>
 <head>
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
@@ -14,7 +14,7 @@
   <!-- <meta property="og:title" content="$if(title-prefix)$$title-prefix$ – $endif$$pagetitle$" /> -->
   <meta property="og:title" content="RLHF Book by Nathan Lambert" />
   <meta property="og:description" content="The Reinforcement Learning from Human Feedback Book" />
-  <meta property="og:url" content="https://rlhfbook.com" />
+  <meta property="og:url" content="https://9bow.github.io/rlhf-book-ko" />
 
   $for(author-meta)$
   <meta name="author" content="$author-meta$" />
@@ -92,6 +92,15 @@ $endfor$
   plausible.init()
 </script>
 
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8TF95LBYRV"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-8TF95LBYRV');
+</script>
+
 </head>
 <body>
 $for(include-before)$
@@ -118,37 +127,37 @@ $endif$
 $endif$
   <div style="display: flex; align-items: center; justify-content: space-between; gap: 1em; flex-wrap: wrap; margin: 1.5em 20px 0; padding: 0.8em 1.2em; border: 1px solid #e2e2e2; border-radius: 0.35em; background: #fff; box-shadow: 0 4px 12px rgba(17,17,17,0.06);">
     <div>
-      <h3 style="margin: 0 0 0.15em 0; font-size: 1.05em;">Welcome to the Course</h3>
-      <p style="font-size: 0.88em; color: #666; margin: 0;">Video introduction and overview of the RLHF Book</p>
+      <h3 style="margin: 0 0 0.15em 0; font-size: 1.05em;">강좌 소개</h3>
+      <p style="font-size: 0.88em; color: #666; margin: 0;">RLHF Book 개요 및 소개 영상</p>
     </div>
     <a href="https://www.youtube.com/watch?v=jQPiH-KB4B0&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y" target="_blank" style="display: inline-flex; align-items: center; gap: 0.4em; font-size: 0.85em; padding: 0.35em 0.7em; border-radius: 0.3em; border: 1px solid #c0392b; background: rgba(192,57,43,0.1); color: #c0392b; text-decoration: none; white-space: nowrap;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-      Watch
+      보기
     </a>
   </div>
   <section id="changelog" style="padding: 0 20px;">
-    <h3>Changelog</h3>
-    <p><em>Last built: $date$</em></p>
-    <p><strong>April 2026</strong>: Final editorial polish for print &mdash; ported Manning edition improvements, clarity pass on equations and terminology, typo/grammar fixes across all chapters, product chapter expansions. The book is heading to print, so expect fewer content changes going forward.</p>
-    <p><strong>March 2026</strong>: Launch <a href="https://rlhfbook.com/course">course page</a> with lecture videos; PDF syntax highlighting; product chapter expansions (Ch. 17).</p>
-    <p><strong>February 2026</strong>: v2 content: direct alignment chapter, new diagrams, RL cheatsheet, appendices, search bar, Kindle support, editor fixes.</p>
-    <p><strong>January 2026</strong>: Major chapter reorganization to match Manning book structure; code examples library; old URLs redirect to new locations.</p>
-    <p><strong>December 2025</strong>: Working on v2 of the book based on editors feedback! Do check back for updates!</p>
-    <p><strong>November 2025</strong>: <a href="https://www.manning.com/books/the-rlhf-book">Manning preorder</a> available.</p>
-    <p><strong>July 2025</strong>: Add tool use chapter (see <a href="https://github.com/natolambert/rlhf-book/pull/122">PR</a>)</p>
-    <p><strong>June 2025</strong>: v1.1. Lots of RLVR/reasoning improvements (see <a href="https://github.com/natolambert/rlhf-book/pull/120">PR</a>)</p>
-    <p><strong>April 2025</strong>: Finish v0; overoptimization, open questions, etc.; evaluation section; RLHF x Product research, improving website, reasoning section.</p>
-    <p><strong>March 2025</strong>: Improving policy gradient section; finish DPO, major cleaning; start DPO chapter, improve intro.</p>
-    <p><strong>February 2025</strong>: Improve SEO, add IFT chapter; RM additions, preference data, policy gradient finalization; PPO and GAE; added changelog, revamped introduction.</p>
+    <h3>업데이트 내역</h3>
+    <p><em>마지막 빌드: $date$</em></p>
+    <p><strong>2026년 4월</strong>: 인쇄를 위한 최종 편집 — Manning 판본 개선 사항 반영, 방정식 및 용어 명확화, 전 챕터 오탈자/문법 수정, 제품 챕터 확장. 책이 인쇄 단계에 들어가 향후 내용 변경이 줄어들 예정입니다.</p>
+    <p><strong>2026년 3월</strong>: <a href="https://9bow.github.io/rlhf-book-ko/course">강좌 페이지</a> 출시(강의 영상 포함); PDF 구문 강조; 제품 챕터 확장(17장).</p>
+    <p><strong>2026년 2월</strong>: v2 콘텐츠: 직접 정렬 챕터, 새 다이어그램, RL 치트시트, 부록, 검색 바, Kindle 지원, 편집 수정.</p>
+    <p><strong>2026년 1월</strong>: Manning 도서 구조에 맞춘 챕터 대폭 재편성; 코드 예제 라이브러리; 이전 URL 리다이렉트.</p>
+    <p><strong>2025년 12월</strong>: 편집자 피드백을 반영한 v2 작업 중! 업데이트를 확인하세요!</p>
+    <p><strong>2025년 11월</strong>: <a href="https://www.manning.com/books/the-rlhf-book">Manning 사전 주문</a> 가능.</p>
+    <p><strong>2025년 7월</strong>: 도구 사용 챕터 추가 (참고: <a href="https://github.com/natolambert/rlhf-book/pull/122">PR</a>)</p>
+    <p><strong>2025년 6월</strong>: v1.1. RLVR/추론 개선 다수 (참고: <a href="https://github.com/natolambert/rlhf-book/pull/120">PR</a>)</p>
+    <p><strong>2025년 4월</strong>: v0 완성; 과최적화, 미해결 문제 등; 평가 섹션; RLHF × 제품 연구, 웹사이트 개선, 추론 섹션.</p>
+    <p><strong>2025년 3월</strong>: 정책 경사 섹션 개선; DPO 완성, 대규모 정리; DPO 챕터 시작, 소개 개선.</p>
+    <p><strong>2025년 2월</strong>: SEO 개선, IFT 챕터 추가; RM 내용 추가, 선호도 데이터, 정책 경사 완성; PPO 및 GAE; 변경 이력 추가, 소개 개편.</p>
   </section>
   <section id="acknowledgements" style="padding: 20px;">
-    <h3>Acknowledgements</h3>
-    <p>I would like to thank the following people who helped me directly with this project: Costa Huang, Ross Taylor, Hamish Ivison, John Schulman, Valentina Pyatkin, Daniel Han, Shane Gu, Joanne Jang, LJ Miranda, Sharan Maiya, Andrew Carr, Cameron R. Wolfe, and others in my RL sphere (and of course Claude).</p>
-    <p>Additionally, thank you to the <a href="https://github.com/natolambert/rlhf-book/graphs/contributors">contributors on GitHub</a> who helped improve this project.</p>
+    <h3>감사의 말</h3>
+    <p>이 프로젝트에 직접 도움을 주신 다음 분들께 감사드립니다: Costa Huang, Ross Taylor, Hamish Ivison, John Schulman, Valentina Pyatkin, Daniel Han, Shane Gu, Joanne Jang, LJ Miranda, Sharan Maiya, Andrew Carr, Cameron R. Wolfe, 그리고 저의 RL 분야 동료들 (물론 Claude도 포함).</p>
+    <p>또한 이 프로젝트 개선에 도움을 주신 <a href="https://github.com/natolambert/rlhf-book/graphs/contributors">GitHub 기여자</a> 여러분께도 감사드립니다.</p>
   </section>
   <section id="citation" style="padding: 0 20px;">
-    <h3>Citation</h3>
-    <p>If you found this useful for your research, please cite it!</p>
+    <h3>인용</h3>
+    <p>이 자료가 연구에 유용했다면 인용해 주세요!</p>
     <pre style="text-align: left; font-size: small; color: #888;">@book{rlhf2026lambert,
   author = {Nathan Lambert},
   title = {Reinforcement Learning from Human Feedback},

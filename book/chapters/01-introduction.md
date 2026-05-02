@@ -6,7 +6,7 @@
 -->
 ---
 prev-chapter: "홈"
-prev-url: "https://rlhfbook.com/"
+prev-url: "https://9bow.github.io/rlhf-book-ko/"
 page-title: 소개
 search-title: "1장: 소개"
 next-chapter: "주요 관련 연구"

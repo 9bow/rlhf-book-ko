@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="$lang$" xml:lang="$lang$"$if(dir)$ dir="$dir$"$endif$>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko"$if(dir)$ dir="$dir$"$endif$>
 <head>
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
@@ -14,7 +14,7 @@
   <!-- <meta property="og:title" content="$if(title-prefix)$$title-prefix$ – $endif$$pagetitle$" /> -->
   <meta property="og:title" content="$if(page-title)$$page-title$$else$$title$$endif$ | RLHF Book by Nathan Lambert" />
   <meta property="og:description" content="The Reinforcement Learning from Human Feedback Book" />
-  <meta property="og:url" content="https://rlhfbook.com" />
+  <meta property="og:url" content="https://9bow.github.io/rlhf-book-ko" />
 
   $for(author-meta)$
   <meta name="author" content="$author-meta$" />
@@ -113,6 +113,15 @@ $endfor$
   plausible.init()
 </script>
 
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8TF95LBYRV"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-8TF95LBYRV');
+</script>
+
 </head>
 <body>
 $for(include-before)$
@@ -120,7 +129,7 @@ $include-before$
 $endfor$
 $if(title)$
 <header id="title-block-header">
-<div class="title" role="heading" aria-level="1"><a href="https://rlhfbook.com/" style="color: inherit; text-decoration: none;">$title$</a></div>
+<div class="title" role="heading" aria-level="1"><a href="https://9bow.github.io/rlhf-book-ko/" style="color: inherit; text-decoration: none;">$title$</a></div>
 $if(subtitle)$
 <p class="subtitle">$subtitle$</p>
 $endif$
@@ -194,8 +203,8 @@ $for(include-after)$
 $include-after$
 $endfor$
 <section id="citation" style="padding: 0 20px;">
-  <h4 style="text-align: left; font-weight: normal;">Citation</h4>
-  <p>If you found this useful for your research, please cite it!</p>
+  <h4 style="text-align: left; font-weight: normal;">인용</h4>
+  <p>이 자료가 연구에 유용했다면 인용해 주세요!</p>
   <pre style="text-align: left; font-size: small; color: #888;">@book{rlhf2026lambert,
   author = {Nathan Lambert},
   title = {Reinforcement Learning from Human Feedback},
