@@ -7,8 +7,8 @@
 ---
 prev-chapter: "소개"
 prev-url: "01-introduction"
-page-title: 주요 관련 연구
-search-title: "2장: 주요 관련 연구"
+page-title: RLHF의 짧은 역사
+search-title: "2장: RLHF의 짧은 역사"
 next-chapter: "학습 개요"
 next-url: "03-training-overview"
 lectures:
@@ -16,7 +16,7 @@ lectures:
     label: "강의 1: 개요 (1–3장)"
 ---
 
-# 주요 관련 연구
+# RLHF의 짧은 역사
 
 RLHF와 관련 방법들은 매우 새롭습니다.
 우리는 절차가 얼마나 최근에 공식화되었는지, 그리고 이 문서화의 얼마나 많은 부분이 학술 문헌에 있는지를 보여주기 위해 역사를 강조합니다.

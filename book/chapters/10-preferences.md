@@ -7,8 +7,8 @@
 ---
 prev-chapter: "거부 샘플링"
 prev-url: "09-rejection-sampling"
-page-title: 선호도란 무엇인가
-search-title: "Chapter 10: 선호도란 무엇인가"
+page-title: 선호도의 본질
+search-title: "10장: 선호도의 본질"
 next-chapter: "선호도 데이터"
 next-url: "11-preference-data"
 ---

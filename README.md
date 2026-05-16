@@ -71,6 +71,7 @@ rlhf-book/
 │   ├── scripts/            # 빌드 유틸리티
 │   └── data/               # 라이브러리 데이터
 ├── code/                   # 참조 구현
+│   ├── instruction_tuning/  # 지시 미세조정(SFT)
 │   ├── policy_gradients/   # PPO, REINFORCE, GRPO, RLOO
 │   ├── reward_models/      # 선호도 RM, ORM, PRM 학습
 │   ├── direct_alignment/   # DPO 및 변형
@@ -92,12 +93,14 @@ rlhf-book/
 
 > Reference implementations for RLHF algorithms in `code/`:
 
-- 정책 경사 방법 (PPO, REINFORCE, GRPO, RLOO 등)
+- 정책 그래디언트 방법 (PPO, REINFORCE, GRPO, RLOO 등)
+- 지시 미세조정 (SFT)
 - 보상 모델 학습 (선호도 RM, ORM, PRM)
 - 직접 정렬 방법 (DPO 및 변형)
 - 거부 샘플링 (최선-N)
 
 > - Policy gradient methods (PPO, REINFORCE, GRPO, RLOO, etc.)
+> - Instruction tuning (SFT)
 > - Reward model training (preference RM, ORM, PRM)
 > - Direct alignment methods (DPO and variants)
 > - Rejection sampling (best-of-N)

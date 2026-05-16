@@ -7,13 +7,13 @@
 ---
 prev-chapter: "정의"
 prev-url: "appendix-a-definitions"
-page-title: "부록 B: 스타일 & 정보"
-search-title: "부록 B: 스타일 & 정보"
+page-title: "부록 B: \"단순한 스타일\"을 넘어서"
+search-title: "부록 B: \"단순한 스타일\"을 넘어서"
 next-chapter: "실용적 이슈"
 next-url: "appendix-c-practical"
 ---
 
-# 스타일과 정보
+# "단순한 스타일"을 넘어서
 
 RLHF의 초기 발전은 RLHF에 "단순한 스타일 변환"이라는 평판을 부여하거나, RLHF가 출력에서 정보를 제시하는 방식을 조작하는 방법에 대한 다른 혹독한 비판들을 만들어냈다.
 이 부록은 스타일이 RLHF가 제공하는 가치를 이해하는 데 핵심인 이유와, 그것이 모델 역량과 사용자 경험 모두에 긍정적으로 영향을 미치는 이유를 설명한다.
@@ -31,7 +31,7 @@ Llama 3 Instruct 모델들은 Arena에서 극히 높은 점수를 받았으며, 
 
 이 장 전반에 걸쳐, "수다스러움 (chattiness)"이라는 용어는 RLHF로 학습된 모델에서 응답 길이가 늘어나는 것을 포괄하는 데 사용되지만, 과도한 마크다운 사용, 이모티콘, 그리고 글머리 기호 목록으로 답변을 형식화하는 기법들도 포함한다.
 이 장의 논의를 구체화하기 위해, 동일한 Tülu 3 계열의 두 모델 -- 지시 미세조정 (IFT)만 적용된 것과 길이 제어 DPO를 통해 선호도 미세조정 (PreFT)이 적용된 것 -- 의 예시 완성이 아래에 나와 있다.
-먼저, `강화학습에서 인간 피드백이란 무엇인가?`라는 프롬프트에 대한 지시 조정된 완성 (정확한 모델은 [Llama 3.1 Tulu 3 70B SFT](https://huggingface.co/allenai/Llama-3.1-Tulu-3-70B-SFT)) [@lambert2024t]:
+먼저, `강화학습에서 인간 피드백이란 무엇인가?`라는 프롬프트에 대한 지시 미세조정된 완성 (정확한 모델은 [Llama 3.1 Tulu 3 70B SFT](https://huggingface.co/allenai/Llama-3.1-Tulu-3-70B-SFT)) [@lambert2024t]:
 
 ```text
 Reinforcement learning from human feedback, also known as human-in-the-loop reinforcement learning, is a subfield of machine learning where the primary goal is to train reinforcement learning agents to perform tasks by incorporating feedback from humans. This feedback can come in various forms, such as binary rewards (e.g., right or wrong), scalar rewards, preferences between actions, demonstrations, natural language instructions, or corrections to the agent's behavior.
@@ -118,7 +118,7 @@ DPO 대 PPO 논쟁이 확산되는 동안 놀라운 벤치마크를 발표하지
 그럼에도 불구하고, 대화 모델을 수다스러움만을 위해 정렬하는 것은 이제 문헌에서 약간의 평판 부담을 갖고 있으며, 이러한 좁은 방법들이 다른 방식으로 모델을 손상시킬 수 있다는 것이 인정된다.
 2023년 원래의 Alibaba Qwen 모델에서 나온 이 주석은 초기 정렬 실험에서 여러 번 관찰된 것으로, 수다스러움과 성능 간의 트레이드오프를 과장한다 [@qwen].
 
-> 우리는 대량의 데이터로 모델을 사전 학습했고, 지도 미세조정 (SFT)과 직접 선호도 최적화 (DPO) 모두로 모델을 후처리 학습했다. 그러나 DPO는 인간 선호도 평가에서는 향상을 가져오지만 벤치마크 평가에서는 저하를 가져온다.
+> 우리는 대량의 데이터로 모델을 사전 학습했고, 지도 미세조정 (SFT)과 직접 선호도 최적화 (DPO) 모두로 모델을 사후 학습했다. 그러나 DPO는 인간 선호도 평가에서는 향상을 가져오지만 벤치마크 평가에서는 저하를 가져온다.
 
 이 트레이드오프가 올바르게 수행된 초기의 좋은 예는 2024년 3월의 Starling Beta 같은 모델이다 [@zhu2024starling].
 이것은 다른 대화 모델인 OpenChat [@wang2023openchat] (실제로는 완전히 다른 조직에서 학습된)에서 미세조정된 모델이다.

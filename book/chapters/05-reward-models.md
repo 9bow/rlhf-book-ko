@@ -5,10 +5,10 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "지시 조정"
+prev-chapter: "지시 미세조정"
 prev-url: "04-instruction-tuning"
-page-title: 보상 모델
-search-title: "5장: 보상 모델"
+page-title: 보상 모델링
+search-title: "5장: 보상 모델링"
 next-chapter: "강화학습"
 next-url: "06-policy-gradients"
 lectures:
@@ -170,7 +170,7 @@ class BradleyTerryRewardModel(nn.Module):
         return rewards
 ```
 
-이 섹션과 이어지는 내용에서, 보상 모델(및 후처리 학습의 대부분)의 구현 복잡성은 데이터 로더를 올바르게 구성하고 분산 학습 시스템을 구축하는 것에 있다.
+이 섹션과 이어지는 내용에서, 보상 모델(및 사후 학습의 대부분)의 구현 복잡성은 데이터 로더를 올바르게 구성하고 분산 학습 시스템을 구축하는 것에 있다.
 보상 모델을 훈련할 때 가장 일반적인 관행은 과적합 (overfitting)을 피하기 위해 에폭 (epoch) 1회만 훈련하는 것임을 주의하라.
 
 ## 보상 모델 변형
@@ -411,7 +411,7 @@ loss = F.cross_entropy(logits[mask], labels[mask])
 
 ## 보상 모델 유형 비교 (및 가치 함수)
 
-다루어진 다양한 유형의 보상 모델들은 RLHF 및 다른 후처리 학습 방법에서 "품질"이 측정될 수 있는 다양한 방법의 스펙트럼을 나타낸다.
+다루어진 다양한 유형의 보상 모델들은 RLHF 및 다른 사후 학습 방법에서 "품질"이 측정될 수 있는 다양한 방법의 스펙트럼을 나타낸다.
 아래에 모델이 예측하는 것과 훈련 방법에 대한 요약이 있다.
 
 ::: {.table-wrap}
@@ -521,7 +521,7 @@ LLM-as-a-judge 워크플로의 견고성을 개선하는 일반적인 트릭은 
 보상 모델링에 대한 학술 문헌은 2024년에 자리를 잡았다.
 보상 모델링의 초기 발전 대부분은 벤치마크 (benchmark) 구축과 행동 모드 파악에 초점을 맞추었다.
 최초의 RM 벤치마크인 RewardBench는 보상 모델 테스트를 위한 공통 인프라를 제공했다 [@lambert2024rewardbench].
-그 이후로 RM 평가는 일반적인 후처리 학습된 모델에 사용 가능한 평가 유형과 유사하게 확장되었으며, 일부 평가는 알려진 정답이 있는 도메인에서의 예측 정확도를 테스트하고 [@lambert2024rewardbench], 다른 일부는 LLM-as-a-judge로 수행되는 "느낌"이나 다른 벤치마크와의 상관관계에 더 가깝다 [@wen2024rethinking].
+그 이후로 RM 평가는 일반적인 사후 학습된 모델에 사용 가능한 평가 유형과 유사하게 확장되었으며, 일부 평가는 알려진 정답이 있는 도메인에서의 예측 정확도를 테스트하고 [@lambert2024rewardbench], 다른 일부는 LLM-as-a-judge로 수행되는 "느낌"이나 다른 벤치마크와의 상관관계에 더 가깝다 [@wen2024rethinking].
 
 새로운 벤치마크의 예시는 다음과 같다:
 
@@ -532,3 +532,37 @@ LLM-as-a-judge 워크플로의 견고성을 개선하는 일반적인 트릭은 
 - **멀티모달:** MJ-Bench [@chen2024mj], Multimodal RewardBench [@yasunaga2025multimodal], VL RewardBench [@li2024vlrewardbench], 또는 VLRMBench [@ruan2025vlrmbench].
 
 보상 모델 *훈련* 의 진전을 이해하려면, 측면 조건부 모델 (aspect-conditioned model) [@wang2024interpretable], 고품질 인간 데이터셋 [@wang2024helpsteer2] [@wang2024helpsteer2p], 스케일링 실험 [@adler2024nemotron], 광범위한 실험 [@touvron2023llama], 또는 데이터 편향 제거 [@park2024offsetbias]를 포함한 새로운 보상 모델 훈련 방법들을 참조할 수 있다.
+
+## 제안 실험
+
+동반 코드 저장소에는 `code/reward_models/` 아래에 작은 보상 모델 학습 스크립트가 포함되어 있다.
+이 스크립트들은 튜닝된 참조 레시피라기보다 학습용 실험으로 의도되었다.
+깨끗한 `code/` 환경에서 `uv sync`를 실행한 뒤, 한 번에 하나의 실험만 실행하는 것부터 시작하라.
+
+1. **UltraFeedback에서 Bradley-Terry 선호도 보상 모델 학습하기.**
+   다음을 실행한다:
+
+   ```bash
+   cd code/
+   uv run python -m reward_models.train_preference_rm --samples 2000 --epochs 1
+   ```
+
+   데모와 W&B 로그에서 선택된 응답과 거부된 응답 사이의 보상 마진이 커지는지 확인한다.
+   그런 다음 `--samples`, `--lr`, `--model-id`를 바꾸어 신호가 언제 잡음이 심해지거나 불안정해지는지 살펴본다.
+
+2. **결과 감독과 과정 감독 비교하기.**
+   GSM8K 결과 보상 모델과 PRM800K 과정 보상 모델을 실행한다:
+
+   ```bash
+   cd code/
+   uv run python -m reward_models.train_orm --samples 400 --epochs 2
+   uv run python -m reward_models.train_prm --samples 500 --epochs 2
+   ```
+
+   학습 뒤 각 모델이 무엇을 채점할 수 있는지 비교한다.
+   ORM은 정답과 오답 최종 답변을 구분해야 하고, PRM은 중간 추론 단계 전반에 점수를 부여해야 한다.
+   이는 시퀀스 수준, 결과 수준, 과정 수준 감독의 차이를 실전으로 확인하는 버전이다.
+
+3. **작은 보류 평가셋으로 보상 모델 평가 추가하기.**
+   유용한 기여는 전체 학습 실행을 요구하지 않고 정확도 또는 선호도 쌍 순서를 보고하는 50-200개 예시 규모의 `reward_models/` 평가다.
+   하이퍼파라미터를 조정하는 동안 사용할 수 있을 만큼 작게 유지하는 것이 좋다.

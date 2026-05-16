@@ -9,7 +9,7 @@ prev-chapter: "직접 정렬"
 prev-url: "08-direct-alignment"
 page-title: 거부 샘플링
 search-title: "9장: 거부 샘플링"
-next-chapter: "선호도란 무엇인가"
+next-chapter: "선호도의 본질"
 next-url: "10-preferences"
 lectures:
   - video: "https://www.youtube.com/watch?v=4gIwiSPmQkU&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=3"
@@ -23,7 +23,7 @@ lectures:
 RS는 훈련 파이프라인의 여러 지점에서 적용될 수 있는데---지시 미세조정 이후, RL 기반 최적화 이후, 또는 심지어 RLVR 이후에도---이를 다재다능하지만 위치 지정이 어려운 도구로 만든다.
 문서화가 부족한 특성과 결합하여, 이것이 핵심 최적화 방법들의 끝부분에 여기에 등장하는 이유다.
 
-거부 샘플링은 새로운 후보 완성들을 선별하고, 훈련된 보상 모델을 기반으로 필터링한 다음, 원래 모델을 상위 완성들에 대해서만 미세조정하는 방식으로 작동한다 (지시 조정과 동일한 손실 함수).
+거부 샘플링은 새로운 후보 완성들을 선별하고, 훈련된 보상 모델을 기반으로 필터링한 다음, 원래 모델을 상위 완성들에 대해서만 미세조정하는 방식으로 작동한다 (지시 미세조정과 동일한 손실 함수).
 
 이 이름은 계산 통계학 [@gilks1992adaptive]에서 유래하는데, 복잡한 분포에서 샘플링하고 싶지만 직접적인 방법이 없는 경우에 해당한다.
 이를 해결하기 위해, 더 간단한 분포에서 샘플링하고 그 샘플이 허용 가능한지 확인하는 휴리스틱을 사용한다.
@@ -206,7 +206,7 @@ np.allclose(x, x_sorted[np.argsort(sorted_indices)])
 ### 3. 미세조정
 
 선택된 완성들로, 현재 버전의 모델에 대해 표준 지시 미세조정을 수행한다.
-자세한 내용은 [지시 조정 장](https://rlhfbook.com/c/04-instruction-tuning)에서 찾을 수 있다.
+자세한 내용은 [지시 미세조정 장](https://rlhfbook.com/c/04-instruction-tuning)에서 찾을 수 있다.
 
 ## 구현 세부사항
 
@@ -214,7 +214,7 @@ np.allclose(x, x_sorted[np.argsort(sorted_indices)])
 
 - **샘플링 파라미터**: 거부 샘플링은 모델로부터 받은 완성에 직접 의존한다. 거부 샘플링의 일반적인 설정에는 0보다 높은 온도, 예를 들어 0.7에서 1.0 사이의 온도와 top-p 또는 top-k 샘플링과 같은 다른 파라미터의 수정이 포함된다.
 - **프롬프트당 완성 수**: 거부 샘플링의 성공적인 구현에는 각 프롬프트당 10개에서 30개 이상의 완성이 포함되었다. 너무 적은 완성을 사용하면 훈련이 편향되거나 노이즈가 생긴다.
-- **지시 조정 세부사항**: 거부 샘플링 중 지시 조정에 대한 명확한 훈련 세부사항은 공개되지 않았다. 초기 지시 조정 단계보다 약간 다른 설정을 사용할 가능성이 높다.
+- **지시 미세조정 세부사항**: 거부 샘플링 중 지시 미세조정에 대한 명확한 훈련 세부사항은 공개되지 않았다. 초기 지시 미세조정 단계보다 약간 다른 설정을 사용할 가능성이 높다.
 - **이기종 모델 생성**: 일부 거부 샘플링 구현은 훈련될 현재 모델뿐만 아니라 여러 모델로부터의 생성을 포함한다. 이를 수행하는 방법에 대한 모범 사례는 확립되지 않았다.
 - **보상 모델 훈련**: 사용되는 보상 모델은 최종 결과에 큰 영향을 미친다. 보상 모델 훈련에 대한 더 많은 자료는 [관련 장](https://rlhfbook.com/c/05-reward-models)을 참조하라.
 
@@ -244,3 +244,46 @@ argmax 방법을 사용하여 프롬프트에 대한 최선의 완성을 선택�
 $$S(R) = \arg\max_{j \in [1,N]} r_j$$ {#eq:selection_function}
 
 $K=1$인 상위-K 방법을 사용하면 동일한 방법으로 귀결되는데, 이는 일반적인 관행이다.
+
+## 제안 실험
+
+`code/rejection_sampling/`의 동반 구현은 완전한 GSM8K 거부 샘플링 파이프라인을 실행한다.
+즉 롤아웃을 생성하고, 보상 모델로 채점하고, 학습 하위 집합을 선택하고, 미세조정한 뒤 정확 일치 정확도로 평가한다.
+네 개의 설정 파일은 보상 선택 실험과 무작위 대조 실험이 서로 대응되도록 맞춰져 있으므로, 독자는 보상 모델이 실제로 도움이 되는지 물어볼 수 있다.
+
+1. **롤아웃 캐시를 한 번 구축하기.**
+
+   ```bash
+   cd code/
+   uv run python -m rejection_sampling.preprocess \
+       --config rejection_sampling/configs/top_per_prompt.yaml
+   ```
+
+   이 명령은 공유 GSM8K 슬라이스에 대한 완성문을 생성하고 채점한다.
+   이후 학습 설정 파일들은 생성 및 채점 설정이 바뀌지 않는 한 이 캐시를 재사용한다.
+
+2. **보상 선택을 무작위 대조 실험과 비교하기.**
+
+   ```bash
+   cd code/
+   uv run python -m rejection_sampling.train \
+       --config rejection_sampling/configs/top_per_prompt.yaml
+   uv run python -m rejection_sampling.train \
+       --config rejection_sampling/configs/random_per_prompt.yaml
+   uv run python -m rejection_sampling.train \
+       --config rejection_sampling/configs/top_k_overall.yaml
+   uv run python -m rejection_sampling.train \
+       --config rejection_sampling/configs/random_k_overall.yaml
+   ```
+
+   결과는 대응 쌍으로 읽는다.
+   `top_per_prompt`는 `random_per_prompt`와, `top_k_overall`은 `random_k_overall`과 비교한다.
+   보상으로 선택한 실행이 무작위 기준선을 이기지 못한다면, 해당 슬라이스에서 보상 모델이나 샘플링된 완성문이 유용한 신호를 주지 못하고 있다는 뜻이다.
+
+3. **보상 모델이 선택할 수 있는 폭을 바꾸기.**
+   설정 파일 하나를 복사하고 `num_completions_per_prompt`, `temperature`, `top_p`, `selection.top_k`를 바꾸어 본다.
+   더 많은 완성문은 가능한 최선의 샘플을 개선할 수 있지만, 보상 모델이 좋은 답과 나쁜 답을 분리할 수 있을 때만 그렇다.
+
+4. **더 작은 정책 모델 시도하기.**
+   `model_name`을 더 작은 호환 instruct 모델로 설정하고, `max_train_samples`를 줄인 뒤 같은 대응 쌍을 다시 실행한다.
+   이렇게 하면 실험 비용이 낮아지고, 거부 샘플링이 약한 생성을 구제하는지 아니면 이미 좋은 생성들 사이에서 고르는 것뿐인지 더 잘 드러난다.

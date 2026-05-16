@@ -5,10 +5,10 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "추론"
+prev-chapter: "추론과 추론 시간 스케일링"
 prev-url: "07-reasoning"
-page-title: 직접 정렬
-search-title: "8장: 직접 정렬"
+page-title: 직접 정렬 알고리즘
+search-title: "8장: 직접 정렬 알고리즘"
 next-chapter: "거부 샘플링"
 next-url: "09-rejection-sampling"
 ---
@@ -28,7 +28,7 @@ $$ \max_{\pi} \mathbb{E}_{x \sim \mathcal{D}}\mathbb{E}_{y \sim \pi(y|x)} \left[
 2023년 5월 출시 이후, 커뮤니티가 DPO와 함께 사용할 적절한 데이터와 하이퍼파라미터를 파악한 짧은 지연 기간 (특히 놀라울 정도로 낮은 학습률) 이후, Zephyr-$\beta$가 2023년 10월에 이를 시작한 것을 계기로 [@tunstall2023zephyr] Llama 3 Instruct [@dubey2024llama], Tülu 2 [@ivison2023camels] 및 3 [@lambert2024t], Nemotron 4 340B [@adler2024nemotron] 등 많은 인기 모델들이 DPO 또는 그 변형을 사용해왔다.
 기술적으로, 시퀀스 우도 보정 (Sequence Likelihood Calibration, SLiC-HF)이 최초의 현대적 직접 정렬 알고리즘이었지만 [@zhao2023slic], 여러 요인의 조합으로 인해 널리 채택되지 못했다 (연구 방법의 채택을 되돌리는 것은 항상 까다로운 일이다).
 
-DPO와 DAA의 가장 영향력 있는 부분은 언어 모델 후처리 학습 실험의 진입 장벽을 낮추는 것이다---더 적은 연산을 사용하고, 처음부터 구현하기 더 쉬우며, 장난감 예시와 프로덕션 예시 모두에서 작동시키기 더 쉽다.
+DPO와 DAA의 가장 영향력 있는 부분은 언어 모델 사후 학습 실험의 진입 장벽을 낮추는 것이다---더 적은 연산을 사용하고, 처음부터 구현하기 더 쉬우며, 장난감 예시와 프로덕션 예시 모두에서 작동시키기 더 쉽다.
 
 *이 장 전체에서, $x$는 프롬프트를, $y$는 완성을 나타낸다. 이 표기법은 언어 모델 문헌에서 일반적이며, 방법들은 개별 토큰보다 전체 프롬프트-완성 쌍에서 작동한다.*
 
@@ -251,7 +251,7 @@ DPO 알고리즘의 약점을 해결하기 위해 많은 변형들이 제안되�
 
 DPO에서 *명백한* 핵심 문제 중 하나는 최적화가 선택된 응답과 거부된 응답의 확률 사이의 여백을 증가시키는 방향으로만 유도된다는 것이다.
 수치적으로, 모델은 선택된 응답과 거부된 응답 모두의 확률을 줄이지만, @fig:dpo_issue에 나타난 것처럼 *거부된 응답이 더 큰 폭으로 감소한다*.
-직관적으로, 이것이 어떻게 일반화되는지는 명확하지 않지만, 연구들은 이것이 다루어지지 않은 행동들의 확률을 증가시킨다고 주장했다---즉, 언어 모델이 생성할 수 있지만 후처리 학습 데이터셋의 분포에 없는 토큰들 [@razin2024unintentional] [@ren2024learning].
+직관적으로, 이것이 어떻게 일반화되는지는 명확하지 않지만, 연구들은 이것이 다루어지지 않은 행동들의 확률을 증가시킨다고 주장했다---즉, 언어 모델이 생성할 수 있지만 사후 학습 데이터셋의 분포에 없는 토큰들 [@razin2024unintentional] [@ren2024learning].
 이 **선호도 변위**를 최적화 과정을 조정하는 Cal-DPO [@xiao2024cal]와 보상 형태를 수정하는 AlphaPO [@gupta2025alphapo] 같은 단순한 방법들로 완화할 수 있다.
 실제로 이것의 정확한 영향은 잘 알려져 있지 않지만, 온라인 방법이 일반적인 DPO를 능가할 수 있는 잠재적 이유를 가리킨다.
 
@@ -324,3 +324,45 @@ GPT-4와 같은 프론티어 모델들이 길이 편향 [@dubois2024length]과 �
 DAA는 훈련 데이터 및 다른 구성에 대한 반복이 빠르게 이루어질 수 있는 제어된 환경을 제공하며, 알고리즘보다 데이터가 훨씬 더 중요한 경우가 많기 때문에 DPO를 사용하는 것이 괜찮을 수 있다.
 
 주로 RL로 훈련되는 추론 모델의 등장으로, 선호도 조정을 위한 RL 사용으로의 추가 투자가 이루어질 것이며, 이는 장기적으로 RL 인프라의 견고성을 향상시키고 인간 피드백에서의 최적화를 위한 DAA와 RL 사이의 이 여백을 굳힐 것이다.
+
+## 제안 실험
+
+`code/direct_alignment/`의 동반 코드는 선호도 데이터에서 DPO와 여러 관련 손실을 학습한다.
+이 설정은 오프라인이므로 보상 모델 서버나 롤아웃 루프가 필요 없다.
+따라서 선호도 튜닝 실험을 시작하기 가장 접근하기 쉬운 곳이다.
+
+1. **UltraFeedback에서 작은 DPO 실행 학습하기.**
+
+   ```bash
+   cd code/
+   uv run python -m direct_alignment.train --loss dpo --max_samples 1000
+   ```
+
+   `loss`, `accuracy`, `margins`, `chosen_rewards`, `rejected_rewards`를 확인한다.
+   핵심 점검 기준은 모델의 샘플 생성이 붕괴하지 않으면서 암묵적 보상 마진이 원하는 방향으로 움직이는지다.
+
+2. **DPO, IPO, 길이 정규화 DPO 비교하기.**
+
+   ```bash
+   cd code/
+   uv run python -m direct_alignment.train --config direct_alignment/configs/dpo.yaml
+   uv run python -m direct_alignment.train --config direct_alignment/configs/ipo.yaml
+   uv run python -m direct_alignment.train --config direct_alignment/configs/dpo_norm.yaml
+   ```
+
+   마진 스케일과 학습률 민감도를 비교한다.
+   IPO의 손실은 DPO와 같은 수치 스케일에 있지 않으므로, 원시 손실만 보지 말고 `accuracy`와 마진 동작을 함께 읽어야 한다.
+
+3. **참조 모델이 없는 변형을 조심스럽게 시도하기.**
+   SimPO 또는 ORPO를 해당 설정 파일로 실행한 뒤, 학습 중 로깅되는 생성 샘플을 점검한다.
+   이 손실들은 로그확률 스케일링과 학습률에 더 민감하므로 좋은 디버깅 연습이 된다.
+
+   ```bash
+   cd code/
+   uv run python -m direct_alignment.train --config direct_alignment/configs/simpo.yaml
+   uv run python -m direct_alignment.train --config direct_alignment/configs/orpo.yaml
+   ```
+
+4. **손실을 바꾸기 전에 데이터를 바꾸기.**
+   손실은 고정하고 `--max_samples`, `--max_length`, 또는 선호도 데이터셋을 바꾸어 본다.
+   DPO 계열 목적함수 사이의 변경보다 결과가 더 크게 움직인다면, 이는 선호도 튜닝의 중심 주제 중 하나인 "데이터가 보통 작은 알고리즘 차이를 지배한다"는 점을 경험적으로 보여준다.

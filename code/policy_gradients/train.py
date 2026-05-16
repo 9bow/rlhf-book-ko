@@ -71,28 +71,27 @@ def main(cfg: Config):
     params = list(model.parameters()) + (list(val_model.parameters()) if val_model else [])
     optimizer = optim.Adam(params, lr=cfg.lr)
 
-    # wandb project can be set via env var WANDB_PROJECT or config file
+    # wandb entity/project can be set via env vars or the config file
+    wandb_entity = os.environ.get("WANDB_ENTITY", cfg.wandb_entity)
     wandb_project = os.environ.get("WANDB_PROJECT", cfg.wandb_project)
     wandb_run_name = os.environ.get("WANDB_RUN_NAME", cfg.wandb_run_name)
 
     if wandb_project is None:
         wandb.init(mode="disabled")
     else:
-        wandb.init(project=wandb_project, name=wandb_run_name, config=vars(cfg))
+        wandb.init(
+            entity=wandb_entity,
+            project=wandb_project,
+            name=wandb_run_name,
+            config=vars(cfg),
+        )
     print_model_info(model)
 
     start_time = time.time()
     for replay_buffer in rollout_engine:
-        avg = lambda x: torch.stack([getattr(e, x) for e in replay_buffer.buffer]).mean().item()
-        wandb.log(
-            {
-                "avg_reward": avg("rewards"),
-                "avg_correctness_reward": avg("correctness"),
-                "avg_format_reward": avg("format"),
-                "avg_response_penalty": avg("penalties"),
-                "hours": (time.time() - start_time) / 3600,
-            }
-        )
+        avg = lambda key: torch.stack([e.rewards[key] for e in replay_buffer.buffer]).mean().item()
+        reward_log = {f"avg_{key}": avg(key) for key in replay_buffer.buffer[0].rewards.keys()}
+        wandb.log({**reward_log, "hours": (time.time() - start_time) / 3600})
 
         torch.cuda.empty_cache()
         model.train()

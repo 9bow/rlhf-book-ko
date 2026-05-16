@@ -533,14 +533,14 @@ def main(cfg: Config):
     print_training_info(console, cfg, len(dataloader.dataset))
 
     # Get loss function
-    # ORPO and SimPO both use average sequence log-probs (TRL-style).
+    # ORPO, SimPO, and DPO-Norm use average sequence log-probs (TRL-style).
     # For ORPO this avoids extreme log-odds magnitudes that show up with summed log-probs.
-    use_average_logprob = cfg.loss in ["simpo", "orpo"]
+    use_average_logprob = cfg.loss in ["simpo", "orpo", "dpo_norm"]
     loss_fn = get_loss_function(
         cfg.loss,
         beta=cfg.beta,
         gamma=cfg.gamma if cfg.loss == "simpo" else None,
-        label_smoothing=cfg.label_smoothing if cfg.loss in ["dpo", "cdpo"] else None,
+        label_smoothing=cfg.label_smoothing if cfg.loss in ["dpo", "dpo_norm", "cdpo"] else None,
     )
 
     # Optimizer with warmup
@@ -569,6 +569,7 @@ def main(cfg: Config):
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
     # Initialize wandb
+    wandb_entity = os.environ.get("WANDB_ENTITY", cfg.wandb_entity)
     wandb_project = os.environ.get("WANDB_PROJECT", cfg.wandb_project)
     wandb_run_name = os.environ.get("WANDB_RUN_NAME", cfg.wandb_run_name)
 
@@ -576,6 +577,7 @@ def main(cfg: Config):
         wandb.init(mode="disabled")
     else:
         wandb.init(
+            entity=wandb_entity,
             project=wandb_project,
             name=wandb_run_name or f"{cfg.loss}-{cfg.model_name.split('/')[-1]}",
             config=vars(cfg),
@@ -771,7 +773,7 @@ def main_cli():
     parser.add_argument(
         "--loss",
         type=str,
-        choices=["dpo", "cdpo", "ipo", "simpo", "orpo", "kto", "apo_zero", "apo_down"],
+        choices=["dpo", "dpo_norm", "cdpo", "ipo", "simpo", "orpo", "kto", "apo_zero", "apo_down"],
     )
     parser.add_argument("--beta", type=float, help="Beta parameter")
     parser.add_argument("--gamma", type=float, help="SimPO gamma/beta ratio")
@@ -782,6 +784,7 @@ def main_cli():
     parser.add_argument("--num_epochs", type=int, help="Number of epochs")
     parser.add_argument("--batch_size", type=int, help="Batch size")
     parser.add_argument("--gradient_accumulation_steps", type=int)
+    parser.add_argument("--wandb_entity", type=str, help="Wandb entity/team name")
     parser.add_argument("--wandb_project", type=str, help="Wandb project name")
     parser.add_argument(
         "--sample_every", type=int, help="Generate samples every N steps (0 to disable)"

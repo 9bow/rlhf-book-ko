@@ -5,11 +5,11 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "보상 모델"
+prev-chapter: "보상 모델링"
 prev-url: "05-reward-models"
 page-title: 강화학습
 search-title: "6장: 강화학습"
-next-chapter: "추론"
+next-chapter: "추론과 추론 시간 스케일링"
 next-url: "07-reasoning"
 lectures:
   - video: "https://www.youtube.com/watch?v=K_Sj_-1BUMM&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=4"
@@ -59,11 +59,11 @@ RL 이전의 정책 사본은 KL 페널티를 계산하기 위한 참조 모델�
 $$\Delta \theta \propto \Psi_t \, \nabla_\theta \log \pi_\theta(a_t \mid s_t)$$ {#eq:policy_gradient_intuition}
 
 이 수식은 두 가지 핵심 구성 요소로 이루어져 있다:
-1. $\nabla_\theta \log \pi_\theta(a_t \mid s_t)$ — 파라미터 공간에서 행동 $a_t$를 더 likely하게 만드는 방향.
+1. $\nabla_\theta \log \pi_\theta(a_t \mid s_t)$ — 파라미터 공간에서 행동 $a_t$가 더 일어날 가능성이 높아지게 만드는 방향.
 2. $\Psi_t$ — 그것이 얼마나 좋았는가? 결과를 점수화하는 스칼라.
 
 이 두 값을 곱하면, 정책 그래디언트 업데이트를 얻게 된다.
-몇 가지 사항은 직관적인데, 예를 들어 $\Psi_t > 0$이면 $a_t$를 더 likely하게 만들도록 파라미터를 업데이트하고, $\Psi_t < 0$이면 덜 likely하게 만든다.
+몇 가지 사항은 직관적인데, 예를 들어 $\Psi_t > 0$이면 $a_t$가 더 일어날 가능성이 높아지도록 파라미터를 업데이트하고, $\Psi_t < 0$이면 가능성이 낮아지게 만든다.
 정책 그래디언트는 어떤 파라미터가 행동에 기여했는지, 그리고 미래에 그 행동을 더 혹은 덜 발생시켜야 하는지를 계산한다.
 이 장의 나머지 부분은 이를 수행하는 다양한 방법과 LLM에서 작동시키기 위한 구체적인 기법들을 깊이 있게 다룬다.
 
@@ -335,7 +335,7 @@ $$J(\theta) = \min\left(\frac{\pi_\theta(a|s)}{\pi_{\theta_{\text{old}}}(a|s)}A,
 $$\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta} \left[ \sum_{t=0}^T \nabla_\theta \log \pi_\theta(a_t|s_t) A^{\pi_\theta}(s_t, a_t) \right].$$ {#eq:advantage_policy_gradient_recall}
 
 이 기댓값은 $\pi_\theta$에서 샘플링된 궤적에 대해 계산되지만, 실제로는 고정된 정책 $\pi_{\theta_{\text{old}}}$에서 수집된 데이터 배치에 대해 여러 그래디언트 스텝을 취하고 싶다.
-이 분포 불일치를 보정하기 위해 중요도 가중치 $\frac{\pi_\theta(a|s)}{\pi_{\theta_{\text{old}}}(a|s)}$를 곱하는데, 이는 현재 정책 대비 데이터 수집 정책에서 샘플이 얼마나 더 또는 덜 likely한지를 반영하여 샘플을 재가중한다.
+이 분포 불일치를 보정하기 위해 중요도 가중치 $\frac{\pi_\theta(a|s)}{\pi_{\theta_{\text{old}}}(a|s)}$를 곱하는데, 이는 현재 정책 대비 데이터 수집 정책에서 샘플의 가능도가 얼마나 높거나 낮은지를 반영하여 샘플을 재가중한다.
 제약 없이 이 중요도 가중 목적함수를 최적화하면 비율이 1에서 크게 벗어날 때 파괴적으로 큰 정책 업데이트가 발생할 수 있다.
 PPO는 비율을 범위 $[1-\varepsilon, 1+\varepsilon]$으로 클리핑하여 단일 업데이트에서 정책이 너무 크게 변하지 않도록 보장함으로써 이를 해결한다.
 
@@ -393,75 +393,75 @@ PPO 목적함수는 샘플링된 행동의 확률을 변경하여 최대화된�
 
 **긍정적 이점 ($A_t > 0$)**
 
-이는 취해진 행동이 가치 함수에 따르면 유익했음을 의미하며, 미래에 그 행동을 취할 likelihood를 높이고 싶다는 것이다. 이제 정책 비율 $\rho(\theta)$의 다양한 경우를 살펴보자:
+이는 취해진 행동이 가치 함수에 따르면 유익했음을 의미하며, 미래에 그 행동을 취할 가능도를 높이고 싶다는 것이다. 이제 정책 비율 $\rho(\theta)$의 다양한 경우를 살펴보자:
 
 1. $\rho(\theta) < 1 - \varepsilon$:
 
-    - **해석**: 새 정책에서 행동이 이전 정책보다 덜 likely함
+    - **해석**: 새 정책에서 행동의 가능도가 이전 정책보다 낮음
     - **비클리핑 항**: $\rho(\theta) A_t$
     - **클리핑 항**: $(1 - \varepsilon) A_t$
     - **목적함수**: $\rho(\theta) A_t$
     - **그래디언트**: $\nabla_\theta \rho(\theta) A_t \neq 0$
-    - **결과**: 일반 정책 그래디언트 업데이트 - 행동의 likelihood 증가
+    - **결과**: 일반 정책 그래디언트 업데이트 - 행동의 가능도 증가
 
 2. $1 - \varepsilon \leq \rho(\theta) \leq 1 + \varepsilon$:
 
-    - **해석**: 새 정책에서 행동이 이전 정책과 거의 동일하게 likely함
+    - **해석**: 새 정책에서 행동의 가능도가 이전 정책과 거의 동일함
     - **비클리핑 항**: $\rho(\theta) A_t$
     - **클리핑 항**: $\rho(\theta) A_t$
     - **목적함수**: $\rho(\theta) A_t$
     - **그래디언트**: $\nabla_\theta \rho(\theta) A_t \neq 0$
-    - **결과**: 일반 정책 그래디언트 업데이트 - 행동의 likelihood 증가
+    - **결과**: 일반 정책 그래디언트 업데이트 - 행동의 가능도 증가
 
 3. $1 + \varepsilon < \rho(\theta)$:
 
-    - **해석**: 새 정책에서 행동이 이전 정책보다 더 likely함
+    - **해석**: 새 정책에서 행동의 가능도가 이전 정책보다 높음
     - **비클리핑 항**: $\rho(\theta) A_t$
     - **클리핑 항**: $(1 + \varepsilon) A_t$
     - **목적함수**: $(1 + \varepsilon) A_t$
     - **그래디언트**: $\nabla_\theta (1 + \varepsilon) A_t = 0$
-    - **결과**: 업데이트 없음 - 새 정책에서 행동이 이미 더 likely함
+    - **결과**: 업데이트 없음 - 새 정책에서 행동의 가능도가 이미 높음
 
 요약하면, 이점이 긍정적($A_t>0$)일 때 행동의 확률을 높이고 싶다. 따라서:
 
-- $\pi_{\text{new}}(a) \leq (1+\varepsilon) \pi_{\text{old}}(a)$인 경우에만 그래디언트 스텝을 수행한다. 직관적으로, 이점이 긍정적이었으므로 행동의 확률을 높이고 싶지만, 실질적으로 더 likely하게 만들 정도로 많이 높이고 싶지는 않다.
+- $\pi_{\text{new}}(a) \leq (1+\varepsilon) \pi_{\text{old}}(a)$인 경우에만 그래디언트 스텝을 수행한다. 직관적으로, 이점이 긍정적이었으므로 행동의 확률을 높이고 싶지만, 과도하게 가능도를 높이고 싶지는 않다.
 - 결정적으로, $\pi_{\text{new}}(a) > (1+\varepsilon) \pi_{\text{old}}(a)$일 때는 어떤 업데이트도 수행하지 않으며, 클리핑된 목적함수의 그래디언트는 $0$이다. 직관적으로, 새 정책에서 행동이 이미 더 많이 표현되어 있으므로 과도하게 강화하고 싶지 않다.
 
 **부정적 이점 ($A_t < 0$)**
 
-이는 취해진 행동이 가치 함수에 따르면 해로웠음을 의미하며, 미래에 그 행동을 취할 likelihood를 낮추고 싶다는 것이다. 이제 정책 비율 $\rho(\theta)$의 다양한 경우를 살펴보자:
+이는 취해진 행동이 가치 함수에 따르면 해로웠음을 의미하며, 미래에 그 행동을 취할 가능도를 낮추고 싶다는 것이다. 이제 정책 비율 $\rho(\theta)$의 다양한 경우를 살펴보자:
 
 1. $\rho(\theta) < 1 - \varepsilon$:
 
-    - **해석**: 새 정책에서 행동이 이전 정책보다 덜 likely함
+    - **해석**: 새 정책에서 행동의 가능도가 이전 정책보다 낮음
     - **비클리핑 항**: $\rho(\theta) A_t$
     - **클리핑 항**: $(1 - \varepsilon) A_t$
     - **목적함수**: $(1 - \varepsilon) A_t$
     - **그래디언트**: $\nabla_\theta (1 - \varepsilon) A_t = 0$
-    - **결과**: 업데이트 없음 - 새 정책에서 행동이 이미 덜 likely함
+    - **결과**: 업데이트 없음 - 새 정책에서 행동의 가능도가 이미 낮음
 
 2. $1 - \varepsilon \leq \rho(\theta) \leq 1 + \varepsilon$:
 
-    - **해석**: 새 정책에서 행동이 이전 정책과 거의 동일하게 likely함
+    - **해석**: 새 정책에서 행동의 가능도가 이전 정책과 거의 동일함
     - **비클리핑 항**: $\rho(\theta) A_t$
     - **클리핑 항**: $\rho(\theta) A_t$
     - **목적함수**: $\rho(\theta) A_t$
     - **그래디언트**: $\nabla_\theta \rho(\theta) A_t \neq 0$
-    - **결과**: 일반 정책 그래디언트 업데이트 - 행동의 likelihood 감소
+    - **결과**: 일반 정책 그래디언트 업데이트 - 행동의 가능도 감소
 
 3. $1 + \varepsilon < \rho(\theta)$:
 
-    - **해석**: 새 정책에서 행동이 이전 정책보다 더 likely함
+    - **해석**: 새 정책에서 행동의 가능도가 이전 정책보다 높음
     - **비클리핑 항**: $\rho(\theta) A_t$
     - **클리핑 항**: $(1 + \varepsilon) A_t$
     - **목적함수**: $\rho(\theta) A_t$
     - **그래디언트**: $\nabla_\theta \rho(\theta) A_t \neq 0$
-    - **결과**: 일반 정책 그래디언트 업데이트 - 행동의 likelihood 감소
+    - **결과**: 일반 정책 그래디언트 업데이트 - 행동의 가능도 감소
 
 요약하면, 이점이 부정적($A_t < 0$)일 때 행동의 확률을 낮추고 싶다. 따라서:
 
 - $\pi_{\text{new}}(a) \geq (1-\varepsilon) \pi_{\text{old}}(a)$인 경우에만 그래디언트 스텝을 수행한다. 직관적으로, 이점이 부정적이었으므로 행동의 확률을 낮추고 싶으며, 이점에 비례하여 그렇게 한다.
-- 결정적으로, $\pi_{\text{new}}(a) < (1-\varepsilon) \pi_{\text{old}}(a)$일 때는 어떤 업데이트도 수행하지 않으며, 클리핑된 목적함수의 그래디언트는 $0$이다. 직관적으로, 새 정책에서 행동이 이미 덜 likely하므로 과도하게 억제하고 싶지 않다.
+- 결정적으로, $\pi_{\text{new}}(a) < (1-\varepsilon) \pi_{\text{old}}(a)$일 때는 어떤 업데이트도 수행하지 않으며, 클리핑된 목적함수의 그래디언트는 $0$이다. 직관적으로, 새 정책에서 행동의 가능도가 이미 낮으므로 과도하게 억제하고 싶지 않다.
 
 신뢰 영역 내에서 PPO는 표준 정책 그래디언트 형태와 거의 동일하다는 점을 기억하는 것이 중요하다.
 
@@ -1176,50 +1176,6 @@ RLOO의 나머지 구현 세부 사항은 정책 그래디언트 구현의 다�
 정책 그래디언트 알고리즘의 적용을 완벽히 익히기 위해서는 무수히 많은 고려 사항이 있습니다.
 여기서는 정책 그래디언트 RL 알고리즘을 성공적으로 배포하는 데 있어 긴 꼬리의 복잡성들을 일부 살펴봅니다.
 
-### 알고리즘 비교
-
-이 장의 각 알고리즘은 동일한 핵심 그래디언트 형태(@eq:policy_gradient_intuition)를 공유하지만, 이점 함수를 추정하는 방법과 최적화를 제어하는 방식에서 차이가 있습니다:
-
-- **REINFORCE**: 보상의 몬테카를로 추정치를 포함하는 간단한 정책 그래디언트 구현으로, 분산을 줄이기 위해 상태 기반 기준선을 도입합니다.
-- **RLOO**: 프롬프트당 여러 샘플을 사용하는 REINFORCE로, 각 샘플의 기준선이 나머지의 평균 보상(리브-원-아웃)이 되어 그래디언트 분산을 줄입니다.
-- **PPO**: 더 정확하고 안정적인 그래디언트 업데이트를 위해 학습된 가치 함수와 클리핑된 정책 비율을 추가합니다.
-- **GRPO**: 프롬프트당 여러 완성을 그룹화하고 그룹 내에서 보상을 정규화하여 이점 함수를 계산하는 PPO의 단순화된 변형으로, 가치 함수가 필요 없습니다.
-- **CISPO**: 중요도 샘플링 가중치를 클리핑하는(PPO/GRPO처럼 목적함수를 클리핑하는 것이 아닌) REINFORCE 스타일 알고리즘으로, 안정성을 위한 그래디언트 중단을 사용하여 모든 토큰이 그래디언트 신호를 받습니다.
-- **GSPO**: GRPO와 유사하지만 완성 길이로 정책 비율을 정규화하여 길이 편향을 방지합니다.
-- **DPO**: RL 알고리즘은 아니지만, 별도의 보상 모델을 완전히 우회하여 선호 쌍에서 직접 최적화함으로써 동일한 선호 최적화 문제를 해결하는 방법입니다(8장 참조).
-
-위의 모든 정책 그래디언트 알고리즘은 도출 과정에서는 온-정책이지만, 대부분 실제 적용에서는 약간의 오프-정책 방식으로 적용됩니다. DPO와 8장의 다른 직접 정렬 알고리즘들은 기본적으로 오프-정책입니다.
-모두 학습된 보상 모델 또는 검증 가능한 보상과 함께 사용할 수 있습니다.
-PPO만이 학습된 가치 함수를 필요로 합니다.
-REINFORCE와 RLOO는 중요도 샘플링 비율이 없습니다 -- 나머지 알고리즘들은 롤아웃 배치당 여러 번의 그래디언트 스텝을 가능하게 하기 위해 각각 하나를 도입하며, 아래에 요약된 것처럼 세분성과 클리핑 전략에서 차이가 있습니다.
-
-| 방법 | IS 세분성 | 클리핑 스타일 | 이점 함수 |
-| :----- | :-----------: | :------------------: | :-------------------: |
-| **REINFORCE** | 없음 | 없음 | 몬테카를로 기준선 |
-| **RLOO** | 없음 | 없음 | 리브-원-아웃 |
-| **PPO** | 토큰 | 목적함수 (양방향) | 학습된 가치 함수 |
-| **GRPO** | 토큰 | 목적함수 (양방향) | 그룹 상대적 |
-| **GSPO** | 시퀀스 | 목적함수 (양방향) | 그룹 상대적 |
-| **CISPO** | 토큰 | 가중치 (그래디언트 중단) | 그룹 상대적 |
-Table: 정책 그래디언트 알고리즘 비교. {#tbl:pg_compare}
-
-각 방법의 핵심 손실 $\mathcal{L}(\theta)$는 다음과 같습니다:
-
-$$\begin{aligned}
-\textbf{REINFORCE:}\quad & -\frac{1}{T}\sum_{t=1}^{T}\log \pi_\theta(a_t\mid s_t)\,\big(G_t - b(s_t)\big) \\[6pt]
-\textbf{RLOO:}\quad & -\frac{1}{K}\sum_{i=1}^{K}\sum_t \log \pi_\theta(a_{i,t}\mid s_{i,t})\left(R_i-\frac{1}{K-1}\sum_{j\neq i}R_j\right) \\[6pt]
-\textbf{CISPO:}\quad & -\sum_{i,t} \mathrm{sg}(\hat{\rho}_{i,t})\, A_{i,t} \log \pi_\theta(a_{i,t}\mid s_{i,t}) \\
-& \quad \hat{\rho}_{i,t} = \mathrm{clip}(\rho_{i,t},\, 1-\varepsilon,\, 1+\varepsilon) \\[6pt]
-\textbf{PPO:}\quad & -\frac{1}{T}\sum_{t=1}^{T}\min\!\big(\rho_t A_t,\ \mathrm{clip}(\rho_t,1-\varepsilon,1+\varepsilon)\, A_t\big) \\
-& \quad \rho_t = \frac{\pi_\theta(a_t\mid s_t)}{\pi_{\theta_{\text{old}}}(a_t\mid s_t)} \\[6pt]
-\textbf{GRPO:}\quad & -\frac{1}{G}\sum_{i=1}^{G}\min\!\big(\rho_i A_i,\ \mathrm{clip}(\rho_i,1-\varepsilon,1+\varepsilon)\, A_i\big) \\
-& \quad \rho_i = \frac{\pi_\theta(a_i\mid s)}{\pi_{\theta_{\text{old}}}(a_i\mid s)},\quad A_i = \frac{r_i-\mathrm{mean}(r_{1:G})}{\mathrm{std}(r_{1:G})} \\[6pt]
-\textbf{GSPO:}\quad & -\frac{1}{G}\sum_{i=1}^{G}\min\!\big(\rho_i A_i,\ \mathrm{clip}(\rho_i,1-\varepsilon,1+\varepsilon)\, A_i\big) \\
-& \quad \rho_i = \left(\frac{\pi_\theta(a_i\mid s)}{\pi_{\theta_{\text{old}}}(a_i\mid s)}\right)^{1/|a_i|} \\[6pt]
-\textbf{DPO:}\quad & -\mathbb{E}_{(x,y^{w},y^{l})}\!\left[\log \sigma\!\big(\beta[\Delta\log \pi_\theta(x)-\Delta\log \pi_{\mathrm{ref}}(x)]\big)\right]
-\end{aligned}$$
-
-
 ### 일반화된 이점 추정 (GAE)
 
 일반화된 이점 추정 (GAE)은 정책 그래디언트 알고리즘에서 이점 함수를 계산하는 대안적 방법으로 [@schulman2015high], 편향-분산 트레이드오프를 더 잘 균형 잡습니다.
@@ -1312,7 +1268,7 @@ RLHF에서 PPO 정규화가 업데이트에 얼마나 영향을 미치는지 모
 
 ### 추가 읽기
 
-RLHF가 현대 사후 훈련의 중심에 자리 잡으면서, 훈련 과정을 개선하기 위해 다른 정책 그래디언트 RL 알고리즘과 일반적인 RL 알고리즘들이 제안되었지만, 최선의 관행을 지배하는 데 있어 중심적인 역할을 하지는 못했습니다.
+RLHF가 현대 사후 학습의 중심에 자리 잡으면서, 훈련 과정을 개선하기 위해 다른 정책 그래디언트 RL 알고리즘과 일반적인 RL 알고리즘들이 제안되었지만, 최선의 관행을 지배하는 데 있어 중심적인 역할을 하지는 못했습니다.
 추가 읽기 예시로는 다음이 있습니다:
 
 - **쌍별 근위 정책 최적화 (P3O; Wu et al., 2023)** [@wu2023pairwise]는 중간 보상 모델을 학습하지 않고 PPO 스타일의 정책 업데이트에서 쌍별 데이터를 직접 사용합니다.
@@ -1320,4 +1276,44 @@ RLHF가 현대 사후 훈련의 중심에 자리 잡으면서, 훈련 과정을 
 - 오프-정책 정책 그래디언트 알고리즘은 **대조 정책 그래디언트 (CoPG)** [@flet2024contrastive](직접 정렬 알고리즘 IPO와 바닐라 정책 그래디언트의 일반화)와 같이 추가적인 비동기 훈련을 가능하게 할 수 있으며, Cohere가 Command A 모델에 사용했습니다 [@cohere2025command].
 - **ReMax** [@li2023remax]와 같이 언어 모델을 위해 설계된 REINFORCE 알고리즘의 다른 구현들이 있는데, 이는 보상 모델 추론으로부터의 불확실성 원인을 수용하도록 특별히 설계된 기준선 정규화를 구현합니다.
 - Apple Intelligence Foundation Models [@gunter2024apple]나 Kimi k1.5 추론 모델 [@team2025kimi]과 같은 일부 파운데이션 모델들은 **미러 디센트 정책 최적화 (MDPO)** [@tomar2020mirror]의 변형을 사용했습니다. 이 분야의 연구는 여전히 기초를 발전시키고 있지만 [@zhang2025improving], 미러 디센트는 정책 그래디언트 알고리즘이 직접적으로 아닌 최적화 방법입니다. 중요한 점은 기존 RL 인프라와 매우 유사하게 대체된다는 것입니다.
-- **분리된 클립 및 동적 샘플링 정책 최적화 (DAPO)**는 긴 추적이 필요하고 새롭고 활용되지 않은 토큰의 확률을 높여야 하는 추론 언어 모델에 더 적합하도록 GRPO에 4가지 수정을 제안합니다 [@yu2025dapo]. 변경 사항은 다음과 같습니다: 1, 두 개의 다른 클립 하이퍼파라미터 $\varepsilon_\text{low}$와 $\varepsilon_\text{high}$를 사용하여 더 나은 탐색을 위해 로그 비율의 양의 측면에서 더 큰 스텝을 밟을 수 있도록 합니다; 2, 배치의 모든 샘플에서 보상 = 0 또는 보상 = 1인 모든 샘플을 제거하는 동적 샘플링(학습 신호 없음); 3, 위의 구현: GRPO에서 논의된 것처럼 토큰당 손실을 사용합니다; 그리고 4, 잘린 답변에서 학습하려는 시도를 피하기 위해 너무 긴 샘플에 대한 소프트 패널티.
+- **분리된 클립 및 동적 샘플링 정책 최적화 (DAPO)**는 긴 추론 궤적이 필요하고 새롭고 덜 활용된 토큰의 확률을 높여야 하는 추론 언어 모델에 더 적합하도록 GRPO에 네 가지 수정을 제안합니다 [@yu2025dapo]. 변경 사항은 다음과 같습니다. 1) 서로 다른 두 클립 하이퍼파라미터 $\varepsilon_\text{low}$와 $\varepsilon_\text{high}$를 사용해 탐색을 늘릴 때 로그 비율의 양수 방향으로 더 큰 단계를 허용한다. 2) 배치에서 보상이 모두 0이거나 모두 1인 샘플을 제거해 학습 신호가 없는 그룹을 제외한다. 3) 앞서 GRPO 구현에서 논의한 것처럼 토큰별 손실을 사용한다. 4) 잘린 답변에서 학습하지 않도록 너무 긴 샘플에 소프트 패널티를 적용한다.
+- **가치 기반 증강 근위 정책 최적화 (VAPO)** [@yuan2025vapo]는 DAPO의 최적화(clip-higher, 토큰 수준 정책 그래디언트, 다른 길이 정규화 포함)와 Value-Calibrated PPO [@yuan2025s]의 통찰을 결합한다. 가치 함수를 사전 학습하고 길이 적응형 GAE를 사용함으로써, GRPO와 비교해 가치 기반 방법이 여전히 유망할 수 있음을 보여준다.
+
+## 제안 실험
+
+`code/policy_gradients/`의 동반 구현은 작고 관찰 가능한 RL 실행을 위해 설계되어 있다.
+기본 설정은 `reasoning-gym`의 `spell_backward` 절차적 과제에서 `Qwen/Qwen3-1.7B`를 학습한다.
+실패와 부분적 진전을 쉽게 확인할 수 있으므로 첫 실험으로 적합하다.
+
+1. **GRPO로 단어 뒤집기 과제를 실행하기.**
+
+   ```bash
+   cd code/
+   uv run python -m policy_gradients.train --config policy_gradients/configs/grpo.yaml
+   ```
+
+   `avg_correctness`, `avg_format`, `avg_binary`를 추적한다.
+   가장 먼저 볼 질문은 각 프롬프트 그룹에 대비가 있는지다.
+   샘플링된 완성문이 전부 맞거나 전부 틀리면, group-relative 업데이트에는 학습 신호가 거의 없다.
+
+2. **그룹 상대 추정기와 단일 샘플 추정기 비교하기.**
+   동일한 시작 설정에 대해 다음을 실행한다:
+
+   ```bash
+   cd code/
+   uv run python -m policy_gradients.train --config policy_gradients/configs/reinforce.yaml
+   uv run python -m policy_gradients.train --config policy_gradients/configs/rloo.yaml
+   uv run python -m policy_gradients.train --config policy_gradients/configs/grpo.yaml
+   ```
+
+   정확도 신호가 얼마나 빠르게 개선되는지와 손실의 잡음이 얼마나 큰지 비교한다.
+   RLOO와 GRPO는 수식만 볼 때보다 프롬프트 내부 기준선의 역할을 훨씬 구체적으로 보여준다.
+
+3. **대비를 조절하는 설정값 탐색하기.**
+   `policy_gradients/configs/grpo.yaml`을 복사하고 `num_rollouts`, `temperature`, `data.size`, `format_weight`를 바꾸어 본다.
+   작은 `num_rollouts`는 그룹 대비를 줄이고, 너무 낮은 temperature는 샘플을 붕괴시킬 수 있으며, 너무 높은 temperature는 잘못된 형식의 답변을 너무 많이 생성할 수 있다.
+   이는 RLVR 레시피가 최적화기를 만지기 전에 샘플링 설정에 많은 노력을 들이는 이유를 보는 가장 단순한 방법이다.
+
+4. **장난감 보상에서 수학 과제로 이동하기.**
+   GSM8K식 실험의 경우 새 온라인 RL 환경을 추가하기 전에 `code/reward_models/train_orm.py`와 `code/rejection_sampling/` 예제부터 시작한다.
+   좋은 기여 예시는 1B 미만 Qwen 모델에서 실행되고 동일한 그룹 대비 진단을 보고하는 작은 `reasoning-gym` 또는 GSM8K 정책 그래디언트 설정이다.

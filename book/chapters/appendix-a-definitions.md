@@ -5,11 +5,11 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "모델 캐릭터와 제품 구성"
+prev-chapter: "모델 캐릭터와 제품"
 prev-url: "17-product"
 page-title: "부록 A: 정의"
 search-title: "부록 A: 정의"
-next-chapter: "스타일 & 정보"
+next-chapter: "\"단순한 스타일\"을 넘어서"
 next-url: "appendix-b-style"
 ---
 
@@ -97,7 +97,7 @@ $$ \mathcal{D}_{\text{KL}}(P || Q) = \sum_{x \in \mathcal{X}} P(x) \log \left(\f
   
   여기서 $\tau \sim \pi_\theta$는 정책 $\pi_\theta$를 따라 샘플링된 궤적을 나타내고 $T$는 유한 수평선이다.
 
-- **온-정책 (On-policy)**: RLHF에서, 특히 RL과 직접 정렬 알고리즘 간의 논쟁에서, **온-정책** 데이터에 대한 논의가 일반적이다. RL 문헌에서 온-정책은 데이터가 에이전트의 현재 형태에 의해 *정확히* 생성됨을 의미하지만, 일반적인 선호도 조정 문헌에서 온-정책은 해당 버전의 모델의 생성들을 의미하는 것으로 확장된다 -- 예를 들어, 선호도 미세조정 (PreFT)을 실행하기 전의 지시 조정된 체크포인트 (checkpoint). 이 맥락에서, 오프-정책은 후처리 학습에서 사용되는 다른 언어 모델이 생성한 데이터가 될 수 있다.
+- **온-정책 (On-policy)**: RLHF에서, 특히 RL과 직접 정렬 알고리즘 간의 논쟁에서, **온-정책** 데이터에 대한 논의가 일반적이다. RL 문헌에서 온-정책은 데이터가 에이전트의 현재 형태에 의해 *정확히* 생성됨을 의미하지만, 일반적인 선호도 조정 문헌에서 온-정책은 해당 버전의 모델의 생성들을 의미하는 것으로 확장된다 -- 예를 들어, 선호도 미세조정 (PreFT)을 실행하기 전의 지시 미세조정된 체크포인트 (checkpoint). 이 맥락에서, 오프-정책은 사후 학습에서 사용되는 다른 언어 모델이 생성한 데이터가 될 수 있다.
 
 ## RLHF 전용 정의
 

@@ -18,19 +18,23 @@ See the parent [`code/README.md`](../README.md) for installation, configuration,
 | **GSPO** | `gspo.yaml` | Group-Sequence Policy Optimization ([Zheng et al., 2025](https://arxiv.org/abs/2505.13818)) |
 | **CISPO** | `cispo.yaml` | Clipped Importance Sampling PO ([MiniMax, 2025](https://arxiv.org/abs/2506.13585)) |
 | **SAPO** | `sapo.yaml` | Soft Adaptive Policy Optimization ([Gao et al., 2025](https://arxiv.org/abs/2511.20347)) |
+| **DAPO** | `dapo.yaml` | Decoupled Clip and Dynamic sAmpling Policy Optimization ([Yu et al., 2025](https://arxiv.org/abs/2503.14476)) |
+| **MaxRL** | `maxrl.yaml` | Maximum Likelihood Reinforcement Learning ([Tajwar et al., 2026](https://arxiv.org/abs/2602.02710)) |
 
 ## Reference Runs
 
 | Algorithm | wandb | Status |
 |-----------|-------|--------|
-| **REINFORCE** | [run](https://wandb.ai/natolambert/rlhf-book/runs/0uqbq4oz) | ✅ Validated |
-| **RLOO** | [run](https://wandb.ai/natolambert/rlhf-book/runs/07xeasn8) | ✅ Validated |
-| **PPO** | [run](https://wandb.ai/natolambert/rlhf-book/runs/ku3r3g9j) | ✅ Validated |
-| **GRPO** | [run](https://wandb.ai/natolambert/rlhf-book/runs/vjp7lgdi) | ✅ Validated |
-| **Dr. GRPO** | [run](https://wandb.ai/natolambert/rlhf-book/runs/a1swuynq) | ✅ Validated |
-| **GSPO** | [run](https://wandb.ai/natolambert/rlhf-book/runs/10sxytli) | ✅ Validated |
-| **CISPO** | [run](https://wandb.ai/natolambert/rlhf-book/runs/6dg0m06n) | ✅ Validated |
-| **SAPO** | [run](https://wandb.ai/natolambert/rlhf-book/runs/79608nwk) | ✅ Validated |
+| **REINFORCE** | [run](https://wandb.ai/rlhf-book/core/runs/0uqbq4oz) | ✅ Validated |
+| **RLOO** | [run](https://wandb.ai/rlhf-book/core/runs/07xeasn8) | ✅ Validated |
+| **PPO** | [run](https://wandb.ai/rlhf-book/core/runs/ku3r3g9j) | ✅ Validated |
+| **GRPO** | [run](https://wandb.ai/rlhf-book/core/runs/vjp7lgdi) | ✅ Validated |
+| **Dr. GRPO** | [run](https://wandb.ai/rlhf-book/core/runs/a1swuynq) | ✅ Validated |
+| **GSPO** | [run](https://wandb.ai/rlhf-book/core/runs/10sxytli) | ✅ Validated |
+| **CISPO** | [run](https://wandb.ai/rlhf-book/core/runs/6dg0m06n) | ✅ Validated |
+| **SAPO** | [run](https://wandb.ai/rlhf-book/core/runs/79608nwk) | ✅ Validated |
+| **DAPO** | [run](https://wandb.ai/rlhf-book/core/runs/db1pipip) | ✅ Validated |
+| **MaxRL** | [run](https://wandb.ai/rlhf-book/core/runs/fdowf1se) | ✅ Validated |
 
 ## Quick Start
 
