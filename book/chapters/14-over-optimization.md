@@ -9,6 +9,7 @@ prev-chapter: "도구 사용"
 prev-url: "13-tools"
 page-title: 과최적화
 search-title: "14장: 과최적화"
+meta-description: "RLHF 과최적화와 보상 해킹이 어떻게 발생하며 사후 학습과 정렬에서 왜 중요한지 설명합니다."
 next-chapter: "정규화"
 next-url: "15-regularization"
 ---

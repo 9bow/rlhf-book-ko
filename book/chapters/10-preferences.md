@@ -9,6 +9,7 @@ prev-chapter: "거부 샘플링"
 prev-url: "09-rejection-sampling"
 page-title: 선호도의 본질
 search-title: "10장: 선호도의 본질"
+meta-description: "인간 선호도, 선호도 학습, 그리고 RLHF가 명세하기 어려운 행동을 최적화할 수 있는 이유를 개념적으로 설명합니다."
 next-chapter: "선호도 데이터"
 next-url: "11-preference-data"
 ---

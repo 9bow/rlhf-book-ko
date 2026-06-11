@@ -9,6 +9,7 @@ prev-chapter: "정규화"
 prev-url: "15-regularization"
 page-title: 평가
 search-title: "16장: 평가"
+meta-description: "RLHF, 사후 학습, 보상 모델, 개방형 생성, 모델 행동을 측정하기 위한 평가 방법을 설명합니다."
 next-chapter: "모델 캐릭터와 제품"
 next-url: "17-product"
 ---

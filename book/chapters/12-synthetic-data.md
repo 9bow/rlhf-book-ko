@@ -9,6 +9,7 @@ prev-chapter: "선호도 데이터"
 prev-url: "11-preference-data"
 page-title: 합성 데이터
 search-title: "12장: 합성 데이터"
+meta-description: "현대 사후 학습 전반에서 쓰이는 합성 데이터, 증류, Constitutional AI, AI 피드백 방법을 설명합니다."
 next-chapter: "도구 사용 및 함수 호출"
 next-url: "13-tools"
 ---
@@ -55,11 +56,11 @@ GPT-4 또는 더 나은 모델들은 특정 콘텐츠에 대한 피드백이나 
 지식 증류라는 용어는 언어 모델에서 합성 데이터의 역할에 관한 논의에서 가장 강력한 형태였다.
 지식 증류라는 용어는 딥러닝 문헌의 교사-학생 지식 증류 [@hinton2015distilling]의 기술적 정의에서 비롯되었다.
 
-![전통적인 지식 증류 (knowledge distillation)는 KL 발산 손실을 사용하여 더 작은 학생 모델이 더 큰 교사 모델의 소프트 확률 분포를 맞추도록 학습시킨다. 두 모델이 동시에 동일한 입력을 처리하며, 온도 스케일링($\tau > 1$)은 분포를 부드럽게 하여 클래스 관계에 대한 더 많은 정보를 드러낸다.](images/knowledge_distillation_tikz.png){#fig:knowledge-distillation}
+![전통적인 지식 증류 (knowledge distillation)는 KL 발산 손실을 사용하여 더 작은 학생 모델이 더 큰 교사 모델의 소프트 확률 분포를 맞추도록 학습시킨다. 두 모델이 동시에 동일한 입력을 처리하며, 온도 스케일링($\tau > 1$)은 분포를 부드럽게 하여 클래스 관계에 대한 더 많은 정보를 드러낸다.](images/knowledge_distillation_tikz.png){#fig:knowledge-distillation data-dark-src="images/knowledge_distillation_tikz-dark.png"}
 
 지식 증류는 구어적으로 더 강한 모델의 출력을 사용해 더 작은 모델을 학습시키는 것을 의미한다.
 
-![LLM 사후 학습에서의 합성 데이터 생성: 프롬프트가 강한 모델을 통해 완성물을 생성하도록 전달되며, 이것이 쌍을 이루어 학습 데이터셋을 만든다. 이 데이터셋은 표준 지도 학습을 통해 더 작은 모델을 미세조정하는 데 사용된다. 더 복잡한 파이프라인은 완성물을 편집하거나, 선호도 쌍을 생성하거나, 품질을 필터링하는 여러 모델을 포함할 수 있다.](images/synthetic_data_distillation_tikz.png){#fig:synthetic-data-generation}
+![LLM 사후 학습에서의 합성 데이터 생성: 프롬프트가 강한 모델을 통해 완성물을 생성하도록 전달되며, 이것이 쌍을 이루어 학습 데이터셋을 만든다. 이 데이터셋은 표준 지도 학습을 통해 더 작은 모델을 미세조정하는 데 사용된다. 더 복잡한 파이프라인은 완성물을 편집하거나, 선호도 쌍을 생성하거나, 품질을 필터링하는 여러 모델을 포함할 수 있다.](images/synthetic_data_distillation_tikz.png){#fig:synthetic-data-generation data-dark-src="images/synthetic_data_distillation_tikz-dark.png"}
 사후 학습에서, 이 일반적인 지식 증류 개념은 두 가지 일반적인 형태를 취한다:
 
 1. 사후 학습 과정의 광범위한 부분에 걸쳐 사용할 데이터 엔진으로: 지시에 대한 완성물, 선호도 데이터(또는 헌법적 AI), 또는 RL을 위한 검증.

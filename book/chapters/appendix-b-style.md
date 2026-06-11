@@ -9,6 +9,7 @@ prev-chapter: "정의"
 prev-url: "appendix-a-definitions"
 page-title: "부록 B: \"단순한 스타일\"을 넘어서"
 search-title: "부록 B: \"단순한 스타일\"을 넘어서"
+meta-description: "RLHF와 사후 학습이 언어 모델에서 형성하는 스타일, 보정, 정보 제시 문제를 설명합니다."
 next-chapter: "실용적 이슈"
 next-url: "appendix-c-practical"
 ---

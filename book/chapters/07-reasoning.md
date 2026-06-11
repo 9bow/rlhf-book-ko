@@ -9,8 +9,12 @@ prev-chapter: "강화학습"
 prev-url: "06-policy-gradients"
 page-title: 추론과 추론 시간 스케일링
 search-title: "7장: 추론과 추론 시간 스케일링"
+meta-description: "RLVR과 사고 모델을 포함해 사후 학습에서의 추론 훈련과 추론 시간 스케일링을 설명합니다."
 next-chapter: "직접 정렬 알고리즘"
 next-url: "08-direct-alignment"
+lectures:
+  - video: "https://www.youtube.com/watch?v=o4AB5xHIDdM&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=7"
+    label: "강의 5: 추론 모델의 부상"
 ---
 
 # 추론 훈련 및 추론 시점 스케일링
@@ -92,7 +96,7 @@ RLVR의 기본 아이디어는 RL 문헌에서 새로운 것이 아니며, 답�
 코드 생성이나 정밀한 지시 따르기와 같은 다른 도메인에서는, 단일 지상 진실 답이 아니라 여러 정답이 있더라도 검사 함수(예: 단위 테스트)로 답을 검증할 수 있다.
 RLVR 발전의 핵심은 정확한 솔루션을 사전에 알지 못하더라도 이러한 검증 가능한 문제들의 다양성과 깊이를 갖추는 것이다.
 
-![RLVR을 RL 피드백 루프 형태로 표현한 그림. 보상 모델 대신 검증 함수가 사용된다.](images/rlvr-system.png){#fig:rlvr}
+![RLVR을 RL 피드백 루프 형태로 표현한 그림. 보상 모델 대신 검증 함수가 사용된다.](images/rlvr-system.png){#fig:rlvr data-dark-src="images/rlvr-system-dark.png"}
 
 이러한 유형의 훈련을 처음으로 성공적으로 배포한 모델은 OpenAI의 o1 [@openai2024o1]과 오픈 웨이트 모델인 DeepSeek R1 [@guo2025deepseek]이었다.
 이후 AI 업계 전체가 이 훈련 과정과 모델 스타일을 우선순위에 두게 되었다.

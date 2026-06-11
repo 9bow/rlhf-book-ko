@@ -9,6 +9,7 @@ prev-chapter: "\"단순한 스타일\"을 넘어서"
 prev-url: "appendix-b-style"
 page-title: "부록 C: 실용적 이슈"
 search-title: "부록 C: 실용적 이슈"
+meta-description: "공학적 제약부터 디버깅까지 RLHF와 사후 학습 실험을 운영하기 위한 실용적 조언을 제공합니다."
 next-chapter: "홈"
 next-url: "https://9bow.github.io/rlhf-book-ko/"
 ---

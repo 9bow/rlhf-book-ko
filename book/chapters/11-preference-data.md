@@ -9,6 +9,7 @@ prev-chapter: "선호도의 본질"
 prev-url: "10-preferences"
 page-title: 선호도 데이터
 search-title: "11장: 선호도 데이터"
+meta-description: "선호도 데이터셋이 RLHF와 언어 모델 사후 학습에 맞게 설계, 수집, 필터링, 활용되는 방식을 설명합니다."
 next-chapter: "합성 데이터"
 next-url: "12-synthetic-data"
 ---

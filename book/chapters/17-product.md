@@ -9,6 +9,7 @@ prev-chapter: "평가"
 prev-url: "16-evaluation"
 page-title: 모델 캐릭터와 제품
 search-title: "17장: 모델 캐릭터와 제품"
+meta-description: "RLHF와 사후 학습이 모델 캐릭터, 제품 동작, UX, 배포된 AI 시스템을 어떻게 형성하는지 설명합니다."
 next-chapter: "정의"
 next-url: "appendix-a-definitions"
 ---
@@ -93,7 +94,7 @@ $$\mathbf{v}_\ell = \frac{1}{|S^+|} \sum_{i \in S^+} \mathbf{a}_\ell^{(i)} - \fr
 여기서 $S^+$는 특성을 나타내는 응답들의 집합, $S^-$는 특성을 억제하는 응답들, $\mathbf{a}_\ell^{(i)}$는 샘플 $i$에 대한 레이어 $\ell$에서의 평균 잔차 스트림 활성화이다.
 가장 강한 조종 효과를 내는 레이어가 최종 페르소나 벡터로 선택된다.
 
-![페르소나 벡터 추출 및 개입 파이프라인. 위: 대조적 시스템 프롬프트들이 특성 긍정적 및 특성 부정적 응답들을 생성하고, 그 잔차 스트림 활성화들이 평균화되고 차이를 구해 페르소나 벡터 -- 잔차 스트림의 선형 조종 방향 -- 를 만들어 낸다. 아래: 추론 시간에 페르소나 벡터가 선택된 레이어들에서 잔차 스트림으로부터 빼져, 모델의 출력을 중립적 기본값에서 원하는 긍정적 동작으로 조종한다. Chen et al. (2025)에서 수정됨.](images/persona-vectors-pipeline.png){#fig:persona-vectors-pipeline}
+![페르소나 벡터 추출 및 개입 파이프라인. 위: 대조적 시스템 프롬프트들이 특성 긍정적 및 특성 부정적 응답들을 생성하고, 그 잔차 스트림 활성화들이 평균화되고 차이를 구해 페르소나 벡터 -- 잔차 스트림의 선형 조종 방향 -- 를 만들어 낸다. 아래: 추론 시간에 페르소나 벡터가 선택된 레이어들에서 잔차 스트림으로부터 빼져, 모델의 출력을 중립적 기본값에서 원하는 긍정적 동작으로 조종한다. Chen et al. (2025)에서 수정됨.](images/persona-vectors-pipeline.png){#fig:persona-vectors-pipeline data-dark-src="images/persona-vectors-pipeline-dark.png"}
 
 추출되면, 페르소나 벡터는 모든 토큰 생성 단계에 적용되는 단순한 덧셈 개입을 통해 동작을 조종한다:
 

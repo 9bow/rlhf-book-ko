@@ -9,6 +9,7 @@ prev-chapter: "학습 개요"
 prev-url: "03-training-overview"
 page-title: 지시 미세조정
 search-title: "4장: 지시 미세조정"
+meta-description: "지시 미세조정이 기본 언어 모델을 사용 가능한 어시스턴트로 바꾸고 이후 RLHF와 사후 학습 단계를 준비하는 방식을 설명합니다."
 next-chapter: "보상 모델링"
 next-url: "05-reward-models"
 lectures:

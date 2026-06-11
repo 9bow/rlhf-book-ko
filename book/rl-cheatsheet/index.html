@@ -1,29 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko-KR" class="rl-cheatsheet-page">
 <head>
   <meta charset="utf-8" />
+  <!-- Set the theme before first paint to avoid a flash of the wrong theme. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme');
+        if (t !== 'light' && t !== 'dark') {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <script src="theme.js" defer></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="canonical" href="https://9bow.github.io/rlhf-book-ko/rl-cheatsheet" />
+  <meta name="description" content="PPO, GRPO, RLOO, REINFORCE, DPO 및 관련 RLHF 방법을 위한 한 페이지 RL 및 사후 학습 손실 참고 자료입니다." />
 
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="RLHF Book" />
   <meta property="og:image" content="https://rlhfbook.com/assets/rlhf-book-share.png" />
   <meta property="og:image:width" content="1920" />
   <meta property="og:image:height" content="1080" />
-  <meta property="og:title" content="RL Cheatsheet | RLHF Book by Nathan Lambert" />
-  <meta property="og:description" content="One-page reference of core RL loss functions: Policy Gradient, REINFORCE, PPO, GRPO, DPO, and more." />
-  <meta property="og:url" content="https://rlhfbook.com/rl-cheatsheet" />
+  <meta property="og:title" content="RL 치트시트 | RLHF Book by Nathan Lambert" />
+  <meta property="og:description" content="PPO, GRPO, RLOO, REINFORCE, DPO 및 관련 RLHF 방법을 위한 한 페이지 RL 및 사후 학습 손실 참고 자료입니다." />
+  <meta property="og:url" content="https://9bow.github.io/rlhf-book-ko/rl-cheatsheet" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="RL 치트시트 | RLHF Book by Nathan Lambert" />
+  <meta name="twitter:description" content="PPO, GRPO, RLOO, REINFORCE, DPO 및 관련 RLHF 방법을 위한 한 페이지 RL 및 사후 학습 손실 참고 자료입니다." />
+  <meta name="twitter:image" content="https://rlhfbook.com/assets/rlhf-book-share.png" />
 
-  <title>RL Cheatsheet | RLHF Book by Nathan Lambert</title>
+  <title>RL 치트시트 | RLHF Book by Nathan Lambert</title>
 
   <style>
     #title-block-header {
       text-align: center;
     }
 
+    html.rl-cheatsheet-page {
+      overflow-x: auto;
+    }
+
+    html.rl-cheatsheet-page body {
+      overflow-x: visible;
+    }
+
     .cheatsheet-section {
-      width: 80vw;
-      max-width: 60em;
+      width: min(92vw, 88rem);
+      max-width: none;
       margin-left: 50%;
       transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .download-buttons {
@@ -51,6 +85,7 @@
     }
 
     .cheatsheet-section h2 {
+      width: 100%;
       font-size: 1.1em;
       text-align: center;
       margin-top: 3em;
@@ -58,6 +93,7 @@
     }
 
     .cheatsheet-section hr {
+      width: 100%;
       margin-bottom: 0.5em;
       border: none;
       border-top: 1px solid #ccc;
@@ -71,7 +107,8 @@
     }
 
     table.equations {
-      width: 92%;
+      width: auto;
+      min-width: 58em;
       margin: 0 auto 1em;
       border-collapse: collapse;
       border: none;
@@ -128,6 +165,10 @@
         max-width: 100%;
       }
 
+      .cheatsheet-section {
+        align-items: flex-start;
+      }
+
       table.equations td:first-child {
         width: auto;
         min-width: auto;
@@ -171,30 +212,34 @@
   </script>
 </head>
 <body>
+<button id="theme-toggle" class="theme-toggle" type="button" aria-label="다크 모드로 전환" title="다크 모드로 전환" aria-pressed="false">
+  <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+  <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+</button>
   <header id="title-block-header">
-    <h1 class="title"><a href="https://rlhfbook.com/" style="color: inherit; text-decoration: none;">Reinforcement Learning from Human Feedback</a></h1>
-    <p class="subtitle">A short introduction to RLHF and post-training focused on language models.</p>
+    <h1 class="title"><a href="https://9bow.github.io/rlhf-book-ko/" style="color: inherit; text-decoration: none;">Reinforcement Learning from Human Feedback</a></h1>
+    <p class="subtitle">언어 모델 중심의 RLHF 및 사후 학습 입문서</p>
     <p class="author">Nathan Lambert</p>
     <navigation-dropdown expanded="false"></navigation-dropdown>
   </header>
 
-  <h1>RL Cheatsheet</h1>
+  <h1>RL 치트시트</h1>
 
   <p>
-    A one-page reference of core RL loss functions used in language model post-training.
-    Covers policy gradient methods, reward modeling, and direct alignment.
-    From the <a href="/c/06-policy-gradients.html">Reinforcement Learning</a> and <a href="/c/08-direct-alignment.html">Direct Alignment</a> chapters.
+    언어 모델 사후 학습에서 쓰이는 핵심 RL 손실 함수를 한 페이지로 정리한 참고 자료입니다.
+    정책 그래디언트 방법, 보상 모델링, 직접 정렬을 다룹니다.
+    <a href="/c/06-policy-gradients.html">강화학습</a> 및 <a href="/c/08-direct-alignment.html">직접 정렬</a> 챕터를 기반으로 합니다.
   </p>
 
   <div class="download-buttons">
-    <a href="inside_cover_back.pdf" download="rlhfbookcheatsheet.pdf">Download PDF</a>
-    <a href="inside_cover_back.tex" download>Download TeX source</a>
+    <a href="inside_cover_back.pdf" download="rlhfbookcheatsheet.pdf">PDF 다운로드</a>
+    <a href="inside_cover_back.tex" download>TeX 소스 다운로드</a>
   </div>
 
-  <p class="desktop-note">Best viewed on desktop. For mobile, download the PDF above.</p>
+  <p class="desktop-note">데스크톱에서 가장 보기 좋습니다. 모바일에서는 위의 PDF를 내려받아 보세요.</p>
 
   <div class="cheatsheet-section">
-    <h2>Core loss \(\mathcal{L}(\theta)\) per RL algorithm</h2>
+    <h2>RL 알고리즘별 핵심 손실 \(\mathcal{L}(\theta)\)</h2>
     <hr>
 
     <table class="equations">
@@ -221,7 +266,10 @@
           Proximal Policy Optimization
           <span class="subtitle">(PPO)</span>
         </td>
-        <td>\(\displaystyle -\;\frac{1}{T}\sum_{t=1}^{T}\min\!\left(\frac{\pi_\theta(a_t\mid s_t)}{\pi_{\theta_{\text{old}}}(a_t\mid s_t)} A_t,\; \text{clip}\!\left(\frac{\pi_\theta(a_t\mid s_t)}{\pi_{\theta_{\text{old}}}(a_t\mid s_t)},\, 1\!-\!\varepsilon,\, 1\!+\!\varepsilon\right) A_t\right)\)</td>
+        <td>
+          \(\displaystyle -\;\frac{1}{T}\sum_{t=1}^{T}\min\!\left(\frac{\pi_\theta(a_t\mid s_t)}{\pi_{\theta_{\text{old}}}(a_t\mid s_t)} A_t,\; \text{clip}\!\left(\frac{\pi_\theta(a_t\mid s_t)}{\pi_{\theta_{\text{old}}}(a_t\mid s_t)},\, 1\!-\!\varepsilon,\, 1\!+\!\varepsilon\right) A_t\right)\)
+          <p class="eq-note">PPO는 보통 GAE로 \(A_t\)를 추정하지만, 다른 이점 추정도 가능합니다.</p>
+        </td>
       </tr>
       <tr>
         <td>
@@ -230,7 +278,7 @@
         </td>
         <td>
           \(\displaystyle -\;\frac{1}{G}\sum_{i=1}^{G}\frac{1}{|a_i|}\sum_{t=1}^{|a_i|}\min\!\left(\frac{\pi_\theta(a_{i,t}\mid s_{i,t})}{\pi_{\theta_{\text{old}}}(a_{i,t}\mid s_{i,t})} \hat{A}_i,\; \text{clip}\!\left(\frac{\pi_\theta(a_{i,t}\mid s_{i,t})}{\pi_{\theta_{\text{old}}}(a_{i,t}\mid s_{i,t})},\, 1\!-\!\varepsilon,\, 1\!+\!\varepsilon\right) \hat{A}_i\right)\)
-          <p class="eq-note">where \(\hat{A}_i = \dfrac{r_i - \overline{r}}{\text{std}(r)}\)</p>
+          <p class="eq-note">여기서 \(\hat{A}_i = \dfrac{r_i - \overline{r}}{\text{std}(r)}\)</p>
         </td>
       </tr>
       <tr>
@@ -247,14 +295,14 @@
         </td>
         <td>
           \(\displaystyle -\;\frac{1}{\sum_i |a_i|}\sum_{i=1}^{K}\sum_{t=1}^{|a_i|} \text{sg}\!\Big(\text{clip}\big(\tfrac{\pi_\theta(a_{i,t}\mid s)}{\pi_{\theta_{\text{old}}}(a_{i,t}\mid s)},\, 1\!-\!\varepsilon_{\text{low}},\, 1\!+\!\varepsilon_{\text{high}}\big)\Big)\, A_{i,t} \log \pi_\theta(a_{i,t}\mid s)\)
-          <p class="eq-note">where \(\text{sg}(\cdot)\) = stop gradient</p>
+          <p class="eq-note">여기서 \(\text{sg}(\cdot)\) = stop gradient</p>
         </td>
       </tr>
     </table>
   </div>
 
   <div class="cheatsheet-section">
-    <h2>Other core equations</h2>
+    <h2>기타 핵심 수식</h2>
     <hr>
 
     <table class="equations">
@@ -279,51 +327,57 @@
   </div>
 
   <div class="cheatsheet-section">
-    <h2>Notation</h2>
+    <h2>표기법</h2>
     <hr>
 
     <table class="notation">
       <tr>
         <td>\(x, y\)</td>
-        <td>Prompt, completion</td>
+        <td>프롬프트, 완성</td>
         <td>\(A_t\)</td>
-        <td>Advantage estimate</td>
+        <td>이점 추정치</td>
       </tr>
       <tr>
         <td>\(y_c,\, y_r\)</td>
-        <td>Chosen / rejected completion</td>
+        <td>선택/거부된 완성</td>
         <td>\(\beta\)</td>
-        <td>KL penalty coefficient</td>
+        <td>KL 페널티 계수</td>
       </tr>
       <tr>
         <td>\(y_c \succ y_r\)</td>
-        <td>\(y_c\) is preferred over \(y_r\)</td>
+        <td>\(y_c\)가 \(y_r\)보다 선호됨</td>
         <td>\(\sigma(z)\)</td>
-        <td>Sigmoid: \(1/(1+e^{-z})\)</td>
+        <td>시그모이드: \(1/(1+e^{-z})\)</td>
       </tr>
       <tr>
         <td>\(\pi_\theta\)</td>
-        <td>Policy (the model being trained)</td>
+        <td>정책(훈련 중인 모델)</td>
         <td>\(\mathcal{D}_{\text{KL}}(P \| Q)\)</td>
-        <td>KL divergence between \(P\) and \(Q\)</td>
+        <td>\(P\)와 \(Q\) 사이의 KL 발산</td>
       </tr>
       <tr>
         <td>\(\pi_{\text{ref}}\)</td>
-        <td>Reference policy (frozen copy)</td>
+        <td>참조 정책(고정된 사본)</td>
         <td>\(G_t\)</td>
-        <td>Return: \(\sum_{k=0}^{\infty} \gamma^k R_{t+k+1}\)</td>
+        <td>리턴: \(\sum_{k=0}^{\infty} \gamma^k R_{t+k+1}\)</td>
       </tr>
       <tr>
         <td>\(\pi_{\theta_{\text{old}}}\)</td>
-        <td>Policy at start of RL batch updates</td>
+        <td>RL 배치 업데이트 시작 시점의 정책</td>
         <td>\(V(s)\)</td>
-        <td>Value: \(\mathbb{E}[G_t \mid S_t = s]\)</td>
+        <td>가치: \(\mathbb{E}[G_t \mid S_t = s]\)</td>
       </tr>
       <tr>
         <td>\(r_\theta(y \mid x)\)</td>
-        <td>Reward model score</td>
-        <td></td>
-        <td></td>
+        <td>보상 모델 점수</td>
+        <td>\(T\)</td>
+        <td>궤적 길이 / 시간 수평선</td>
+      </tr>
+      <tr>
+        <td>\(K\)</td>
+        <td>샘플링된 완성 수</td>
+        <td>\(G\)</td>
+        <td>GRPO / GSPO의 그룹 크기</td>
       </tr>
     </table>
   </div>

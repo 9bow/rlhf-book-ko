@@ -9,6 +9,7 @@ prev-chapter: "모델 캐릭터와 제품"
 prev-url: "17-product"
 page-title: "부록 A: 정의"
 search-title: "부록 A: 정의"
+meta-description: "RLHF, 강화학습, 언어 모델, 사후 학습 용어에 대한 정의와 배경을 제공합니다."
 next-chapter: "\"단순한 스타일\"을 넘어서"
 next-url: "appendix-b-style"
 ---
@@ -77,17 +78,17 @@ $$ \mathcal{D}_{\text{KL}}(P || Q) = \sum_{x \in \mathcal{X}} P(x) \log \left(\f
 
 - **할인 계수 ($\gamma$)**: $0 \le \gamma < 1$ 범위의 스칼라로, 수익에서 미래 보상을 지수적으로 낮게 가중하여 즉각성 대 장기 이득을 트레이드오프하고 무한 수평선 합의 수렴을 보장한다. 때로 할인이 사용되지 않는데, 이는 $\gamma=1$에 해당한다.
 
-- **가치 함수 ($V$)**: 주어진 상태에서 기대되는 누적 보상을 추정하는 함수: $V(s) = \mathbb{E}[\sum_{t=0}^{\infty} \gamma^t r_t \mid s_0 = s]$.
+- **가치 함수 ($V$)**: 주어진 상태에서 기대되는 누적 보상을 추정하는 함수: $V(s) = \mathbb{E}\left[\sum_{t=0}^{\infty} \gamma^t r_t \mid s_0 = s\right]$.
 
-- **Q 함수 ($Q$)**: 주어진 상태에서 특정 행동을 취함으로써 기대되는 누적 보상을 추정하는 함수: $Q(s,a) = \mathbb{E}[\sum_{t=0}^{\infty} \gamma^t r_t \mid s_0 = s, a_0 = a]$.
+- **Q 함수 ($Q$)**: 주어진 상태에서 특정 행동을 취함으로써 기대되는 누적 보상을 추정하는 함수: $Q(s,a) = \mathbb{E}\left[\sum_{t=0}^{\infty} \gamma^t r_t \mid s_0 = s, a_0 = a\right]$.
 
 - **이점 함수 ($A$)**: 이점 함수 $A(s,a)$는 평균 행동에 비해 상태 $s$에서 행동 $a$를 취하는 것의 상대적 이점을 정량화한다. $A(s,a) = Q(s,a) - V(s)$로 정의된다. 이점 함수 (및 가치 함수)는 특정 정책에 의존할 수 있다, $A^\pi(s,a)$.
 
-- **정책 조건부 값들 ($[]^{\pi(\cdot)}$)**: RL 유도 및 구현 전반에 걸쳐, 이론과 실제의 중요한 요소는 특정 정책에 조건화된 데이터나 값들을 수집하는 것이다. 이 책 전반에 걸쳐 우리는 가치 함수의 더 단순한 표기법 ($V,A,Q,G$)과 그들의 특정 정책 조건부 값들 ($V^\pi,A^\pi,Q^\pi$) 사이를 전환할 것이다. 기대값 계산에서 중요한 것은 특정 정책에 조건화된 데이터 $d$에서 샘플링하는 것이다, $d_\pi$ (예: $\mathbb{E}_{s\sim d_\pi,\,a\sim\pi(\cdot\mid s)}[A^\pi(s,a)]$를 추정할 때 $s \sim d_\pi$이고 $a \sim \pi(\cdot\mid s)$).
+- **정책 조건부 값들 ($[]^{\pi(\cdot)}$)**: RL 유도 및 구현 전반에 걸쳐, 이론과 실제의 중요한 요소는 특정 정책에 조건화된 데이터나 값들을 수집하는 것이다. 이 책 전반에 걸쳐 우리는 가치 함수의 더 단순한 표기법 ($V,A,Q,G$)과 그들의 특정 정책 조건부 값들 ($V^\pi,A^\pi,Q^\pi$) 사이를 전환할 것이다. 기대값 계산에서 중요한 것은 특정 정책에 조건화된 데이터 $d$에서 샘플링하는 것이다, $d_\pi$ (예: $\mathbb{E}_{s\sim d_\pi,\,a\sim\pi(\cdot\mid s)}\!\left[A^\pi(s,a)\right]$를 추정할 때 $s \sim d_\pi$이고 $a \sim \pi(\cdot\mid s)$).
 
 - **보상 최적화의 기대값**: RL의 주요 목표로, 기대되는 누적 보상을 최대화하는 것을 포함한다:
 
-  $$\max_{\theta} \mathbb{E}_{s \sim \rho_\pi, a \sim \pi_\theta}[\sum_{t=0}^{\infty} \gamma^t r_t]$$ {#eq:expect_reward_opt}
+  $$\max_{\theta} \mathbb{E}_{s \sim \rho_\pi, a \sim \pi_\theta}\left[\sum_{t=0}^{\infty} \gamma^t r_t\right]$$ {#eq:expect_reward_opt}
 
   여기서 $\rho_\pi$는 정책 $\pi$ 하의 상태 분포이고, $\gamma$는 할인 계수이다.
 

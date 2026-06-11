@@ -9,6 +9,7 @@ prev-chapter: "과최적화"
 prev-url: "14-over-optimization"
 page-title: 정규화
 search-title: "15장: 정규화"
+meta-description: "RLHF와 사후 학습 업데이트가 기본 모델을 망가뜨리지 않고 유용하게 유지되도록 하는 정규화 방법을 설명합니다."
 next-chapter: "평가"
 next-url: "16-evaluation"
 ---
@@ -136,8 +137,8 @@ Chen et al. 2025 [@chen2025retainingdoingroleonpolicy]는 보완적인 질문을
 
 KL 발산은 두 분포 사이의 예상 로그 비율 $\mathbb{E}_{x \sim P}\!\left[\log \frac{P(x)}{Q(x)}\right]$로 정의되며, 두 방향의 로그 차이로 쓸 수 있습니다:
 
-- **순방향 KL (Forward KL)**: $\text{KL}(P \| Q) = \mathbb{E}_{x \sim P}[\log P(x) - \log Q(x)]$
-- **역방향 KL (Reverse KL)**: $\text{KL}(Q \| P) = \mathbb{E}_{x \sim Q}[\log Q(x) - \log P(x)]$
+- **순방향 KL (Forward KL)**: $\text{KL}(P \| Q) = \mathbb{E}_{x \sim P}\!\left[\log P(x) - \log Q(x)\right]$
+- **역방향 KL (Reverse KL)**: $\text{KL}(Q \| P) = \mathbb{E}_{x \sim Q}\!\left[\log Q(x) - \log P(x)\right]$
 
 여기서 $P$는 목표 분포이고 $Q$는 파라미터 $\theta$로 모델링하는 분포입니다.
 핵심 차이는 어느 분포에서 샘플링하느냐입니다: 순방향 KL은 목표(또는 최적) 분포 $P$에서 샘플링하고, 역방향 KL은 우리의 정책 $Q$에서 샘플링합니다.
@@ -157,8 +158,8 @@ $$
 = \mathbb{E}_{(x,y) \sim \mathcal{D}} \left[ \log \pi_\star(y \mid x) \right] - \mathbb{E}_{(x,y) \sim \mathcal{D}} \left[ \log \pi_\theta(y \mid x) \right]
 $$
 
-첫 번째 항 $\mathbb{E}[\log \pi_\star(y \mid x)]$는 데이터 분포에만 의존하며 음의 엔트로피 (entropy) $-H(\pi_\star)$와 같습니다 -- $\theta$에 따라 변하지 않는 상수.
-두 번째 항 $-\mathbb{E}[\log \pi_\theta(y \mid x)]$는 데이터셋에 대한 음의 로그 우도 (negative log-likelihood)이며, 이것은 표준 SFT 교차 엔트로피 (cross-entropy) 손실 $\mathcal{L}_\text{SFT}(\theta)$입니다. 대입하면:
+첫 번째 항 $\mathbb{E}\!\left[\log \pi_\star(y \mid x)\right]$는 데이터 분포에만 의존하며 음의 엔트로피 (entropy) $-H(\pi_\star)$와 같습니다 -- $\theta$에 따라 변하지 않는 상수.
+두 번째 항 $-\mathbb{E}\!\left[\log \pi_\theta(y \mid x)\right]$는 데이터셋에 대한 음의 로그 우도 (negative log-likelihood)이며, 이것은 표준 SFT 교차 엔트로피 (cross-entropy) 손실 $\mathcal{L}_\text{SFT}(\theta)$입니다. 대입하면:
 
 $$
 = \underbrace{-H(\pi_\star)}_\text{const} + \mathcal{L}_\text{SFT}(\theta) \propto \mathcal{L}_\text{SFT}(\theta)

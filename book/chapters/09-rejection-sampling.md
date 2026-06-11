@@ -9,6 +9,7 @@ prev-chapter: "직접 정렬"
 prev-url: "08-direct-alignment"
 page-title: 거부 샘플링
 search-title: "9장: 거부 샘플링"
+meta-description: "보상 또는 선호도 신호로 사후 학습된 언어 모델을 개선하는 거부 샘플링과 최선-N 방법을 설명합니다."
 next-chapter: "선호도의 본질"
 next-url: "10-preferences"
 lectures:
@@ -93,7 +94,7 @@ $$r_{i,j} = \mathcal{R}(y_{i,j} \mid x_i)$$ {#eq:rs_reward_computation}
 
 첫 번째 잠재적 선택 함수는 프롬프트당 최대 보상을 취한다.
 
-$$S(R) = [\arg\max_{j} r_{1,j}, \arg\max_{j} r_{2,j}, ..., \arg\max_{j} r_{M,j}]$$ {#eq:rs_selection_per_prompt}
+$$S(R) = \left[\arg\max_{j} r_{1,j}, \arg\max_{j} r_{2,j}, ..., \arg\max_{j} r_{M,j}\right]$$ {#eq:rs_selection_per_prompt}
 
 이 함수 $S$는 인덱스 벡터를 반환하는데, 각 인덱스는 $R$의 각 행에서 최대 보상을 가진 열에 해당한다.
 이 인덱스들을 사용하여 선택된 완성들을 선택할 수 있다:
@@ -142,7 +143,7 @@ $$R = \begin{bmatrix}
 
 argmax 방법을 사용하여 각 프롬프트에 대한 최선의 완성을 선택한다:
 
-$$S(R) = [\arg\max_{j} r_{i,j} \text{ for } i \in [1,5]]$$ {#eq:rs_example_selection_formula}
+$$S(R) = \left[\arg\max_{j} r_{i,j} \text{ for } i \in [1,5]\right]$$ {#eq:rs_example_selection_formula}
 
 $$S(R) = [1, 2, 1, 3, 4]$$ {#eq:rs_example_selection_result}
 

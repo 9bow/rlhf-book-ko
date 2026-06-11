@@ -9,6 +9,7 @@ prev-chapter: "보상 모델링"
 prev-url: "05-reward-models"
 page-title: 강화학습
 search-title: "6장: 강화학습"
+meta-description: "PPO, REINFORCE, RLOO, GRPO와 구현 세부사항을 포함해 RLHF와 LLM 사후 학습에 쓰이는 정책 그래디언트 방법을 설명합니다."
 next-chapter: "추론과 추론 시간 스케일링"
 next-url: "07-reasoning"
 lectures:
@@ -78,7 +79,7 @@ $$G_{t} = \gamma{G_{t+1}} + R_{t+1}.$$ {#eq:recursive_return}
 
 이 리턴은 현재 상태가 주어졌을 때 추정된 미래 리턴인 가치 함수 $V(s)$를 학습하는 기초가 된다:
 
-$$V(s) = \mathbb{E}\big[G_t | S_t = s \big].$$ {#eq:value_function}
+$$V(s) = \mathbb{E}\left[G_t \mid S_t = s \right].$$ {#eq:value_function}
 
 모든 정책 그래디언트 알고리즘은 기대 리턴을 최대화하도록 정책 $\pi_\theta(a\mid s)$를 최적화한다. 이 목적함수는 유도된 가치 함수 $V^{\pi_\theta}(s)$를 사용하여 표현될 수 있다.
 
@@ -207,8 +208,8 @@ $$ {#eq:general_gradient}
 *기준선*은 정책 업데이트의 분산을 줄이는 데 사용되는 값이다 (자세한 내용은 아래 참조).
 
 언어 모델에서는 이러한 개념 중 일부가 그다지 의미 있지 않다.
-예를 들어, 결정론적 정책 $\pi$에 대해 상태 가치는 $V^{\pi}(s_t) = Q^{\pi}(s_t, \pi(s_t))$이고 (최적 가치 함수에 대해서는 $V^*(s_t)=\max_{a_t} Q^*(s_t,a_t)$). 확률적 정책에서 유사한 항등식은 $V^{\pi}(s_t) = \mathbb{E}_{a_t \sim \pi(\cdot\mid s_t)}[Q^{\pi}(s_t,a_t)]$이다.
-벨만 방정식은 Q와 V를 연결한다: 일반적으로 $Q^\pi(s_t,a_t) = \mathbb{E}[r_t + \gamma V^\pi(s_{t+1}) \mid s_t, a_t]$이지만, 상태 전이가 결정론적인 언어 모델에서는 $Q(s_t,a_t) = r_t + \gamma V(s_{t+1})$로 단순화된다.
+예를 들어, 결정론적 정책 $\pi$에 대해 상태 가치는 $V^{\pi}(s_t) = Q^{\pi}(s_t, \pi(s_t))$이고 (최적 가치 함수에 대해서는 $V^*(s_t)=\max_{a_t} Q^*(s_t,a_t)$). 확률적 정책에서 유사한 항등식은 $V^{\pi}(s_t) = \mathbb{E}_{a_t \sim \pi(\cdot\mid s_t)}\!\left[Q^{\pi}(s_t,a_t)\right]$이다.
+벨만 방정식은 Q와 V를 연결한다: 일반적으로 $Q^\pi(s_t,a_t) = \mathbb{E}\!\left[r_t + \gamma V^\pi(s_{t+1}) \mid s_t, a_t\right]$이지만, 상태 전이가 결정론적인 언어 모델에서는 $Q(s_t,a_t) = r_t + \gamma V(s_{t+1})$로 단순화된다.
 이점 함수는 행동 $a_t$가 평균에 비해 얼마나 더 나은지를 측정한다:
 
 $$A(s_t,a_t) = Q(s_t,a_t) - V(s_t) = r_t + \gamma V(s_{t+1}) - V(s_t)$$ {#eq:advantage_trick}
@@ -220,7 +221,7 @@ $$A(s_t,a_t) = Q(s_t,a_t) - V(s_t) = r_t + \gamma V(s_{t+1}) - V(s_t)$$ {#eq:adv
 기본 정책 그래디언트 구현은 정책 파라미터에 대해 미분하여 위의 $J(\theta)$ 표현식을 최적화한다.
 전체 리턴에 대한 간단한 버전은 다음과 같다:
 
-$$\nabla_\theta J(\theta) = \mathbb{E}_\tau \left[ \sum_{t=0}^T \nabla_\theta \log \pi_\theta(a_t|s_t) R_t \right]$$ {#eq:vanilla_policy_gradient}
+$$\nabla_\theta J(\theta) = \mathbb{E}_\tau \left[ \sum_{t=0}^T \nabla_\theta \log \pi_\theta(a_t|s_t) G_t \right]$$ {#eq:vanilla_policy_gradient}
 
 기본 정책 그래디언트 알고리즘의 일반적인 문제는 그래디언트 업데이트의 높은 분산이며, 이는 여러 방법으로 완화될 수 있다.
 높은 분산은 리턴 $G$를 환경에서의 종종 소규모 롤아웃 집합으로부터 추정하는 것에서 비롯되는데, 이는 노이즈에 취약한 경향이 있다 (예를 들어 온도 $>0$에서 언어 모델로 생성하는 것의 확률론적 특성).
@@ -228,7 +229,7 @@ $$\nabla_\theta J(\theta) = \mathbb{E}_\tau \left[ \sum_{t=0}^T \nabla_\theta \l
 이를 완화하기 위해 가치 추정을 정규화하는 다양한 기법인 *기준선*이 사용된다.
 기준선은 하류 행동 대비 상태의 가치로 정규화하는 등 여러 방식으로 이를 달성한다 (예를 들어 Q 가치와 가치의 차이인 이점의 경우).
 가장 단순한 기준선은 보상 배치의 평균이나 이동 평균이다.
-이러한 행동 독립적 기준선조차도 기대 그래디언트를 변경하지 않고 분산을 줄일 수 있다. 임의의 상태 의존 $b(s)$에 대해 $\mathbb{E}_{a \sim \pi(a|s)}[b(s) \nabla_\theta \log \pi_\theta(a|s)] = 0$이 성립하여 학습 신호를 크게 개선한다.
+이러한 행동 독립적 기준선조차도 기대 그래디언트를 변경하지 않고 분산을 줄일 수 있다. 임의의 상태 의존 $b(s)$에 대해 $\mathbb{E}_{a \sim \pi(a|s)}\!\left[b(s) \nabla_\theta \log \pi_\theta(a|s)\right] = 0$이 성립하여 학습 신호를 크게 개선한다.
 
 이 장에서 논의되는 많은 정책 그래디언트 알고리즘은 이점 공식화를 기반으로 한다:
 
@@ -258,10 +259,10 @@ $$ \Delta_\theta = \alpha(r - b)e $$ {#eq:REINFORCE_BASIC}
 $$
 \nabla_{\theta}\,J(\theta)
 \;=\;
-\mathbb{E}_{\tau \sim \pi_{\theta}}\!\Big[
+\mathbb{E}_{\tau \sim \pi_{\theta}}\!\left[
     \sum_{t=0}^{T}
     \nabla_{\theta} \log \pi_{\theta}(a_t \mid s_t)\,(G_t - b(s_t))
-\Big],
+\right],
 $$ {#eq:REINFORCE_with_baseline}
 
 여기서 값 $G_t - b(s_t)$는 현재 상태에서 정책의 *이점*이므로, 이점 $A$를 사용하여 정책 그래디언트를 이후에도 계속 사용하는 형태로 재공식화할 수 있다:
@@ -269,15 +270,15 @@ $$ {#eq:REINFORCE_with_baseline}
 $$
 \nabla_{\theta}\,J(\theta)
 \;=\;
-\mathbb{E}_{\tau \sim \pi_{\theta}}\!\Big[
+\mathbb{E}_{\tau \sim \pi_{\theta}}\!\left[
     \sum_{t=0}^{T}
     \nabla_{\theta} \log \pi_{\theta}(a_t \mid s_t)\,A_t
-\Big],
+\right],
 $$ {#eq:REINFORCE_with_advantage}
 
 REINFORCE는 그래디언트의 Monte Carlo 추정기를 사용하는 기본 정책 그래디언트의 특정 구현이다.
 
-![언어 모델을 위한 기본 REINFORCE 구조. 형성된 보상은 보상 모델 점수와 참조 모델의 KL 페널티를 결합한다. 이 구조를 이 장 전체에서 발전시켜 나간다.](images/reinforce_tikz.png){#fig:reinforce-arch}
+![언어 모델을 위한 기본 REINFORCE 구조. 형성된 보상은 보상 모델 점수와 참조 모델의 KL 페널티를 결합한다. 이 구조를 이 장 전체에서 발전시켜 나간다.](images/reinforce_tikz.png){#fig:reinforce-arch data-dark-src="images/reinforce_tikz-dark.png"}
 
 ### REINFORCE Leave One Out (RLOO)
 
@@ -317,7 +318,7 @@ PPO는 $A_t$를 계산하기 전에 토큰별 KL을 토큰별 보상에서 차�
 GRPO는 일반적으로 보상에서 차감하는 대신 손실에 별도의 토큰별 항을 추가하여 시퀀스 수준의 이점을 유지한다.
 이러한 세부사항과 트레이드오프는 이 장 후반에서 논의된다.
 
-![REINFORCE Leave-One-Out (RLOO) 구조. 프롬프트당 여러 완성이 가치 함수 학습 없이 이점 추정을 위한 leave-one-out 기준선을 제공한다.](images/rloo_tikz.png){#fig:rloo-arch}
+![REINFORCE Leave-One-Out (RLOO) 구조. 프롬프트당 여러 완성이 가치 함수 학습 없이 이점 추정을 위한 leave-one-out 기준선을 제공한다.](images/rloo_tikz.png){#fig:rloo-arch data-dark-src="images/rloo_tikz-dark.png"}
 
 <!-- A nice formulation of LM RL loss functions is found here https://arxiv.org/pdf/2502.01600 -->
 
@@ -362,7 +363,7 @@ $$ J(\theta) = \frac{1}{|a|} \sum_{t=0}^{|a|} \min\left(\frac{\pi_\theta(a_{t}|s
 이것은 다른 정책 그래디언트 방법에도 적용되는 PPO의 토큰별 버전으로, 이 장의 구현 절에서 더 자세히 탐구된다.
 여기서 행동의 토큰 수로 평균을 내는 항 $\frac{1}{|a|}$는 일반적인 구현 관행에서 비롯되지만, 손실의 공식적인 유도에는 없다 ([@liu2025understanding]에서 논의됨).
 
-![PPO 프레임워크. 학습된 가치 함수는 클리핑된 대리 목적함수와 함께 사용되는 토큰별 이점을 위한 Generalized Advantage Estimation (GAE)를 가능하게 한다.](images/ppo_tikz.png){#fig:ppo-arch}
+![PPO 프레임워크. 학습된 가치 함수는 클리핑된 대리 목적함수와 함께 사용되는 토큰별 이점을 위한 Generalized Advantage Estimation (GAE)를 가능하게 한다.](images/ppo_tikz.png){#fig:ppo-arch data-dark-src="images/ppo_tikz-dark.png"}
 
 여기서는 다양한 이점과 정책 비율에 대해 이 손실 함수가 유발하는 다양한 경우를 설명한다.
 구현 수준에서, PPO의 내부 계산은 두 가지 주요 항을 포함한다: 1) 학습된 이점을 사용한 표준 정책 그래디언트와 2) 최대 스텝 크기에 기반한 클리핑된 정책 그래디언트.
@@ -479,7 +480,7 @@ Generalized Advantage Estimation (GAE)은 현대 시스템에서 최신이자 �
 가치 함수는 정책을 업데이트하는 데 사용된 롤아웃의 Monte Carlo 추정치로도 학습될 수 있다.
 PPO는 두 가지 손실을 가진다 — 하나는 가치 함수를 학습하고 다른 하나는 그 가치 함수를 사용하여 정책을 업데이트한다.
 
-![가치 함수 훈련은 온-정책 롤아웃을 사용하여 목표를 계산한다. 모델은 각 토큰에서 $V_t$를 예측하고, 이는 목표 리턴 $\hat{V}_t$에 대해 MSE로 훈련된다. 그러면 이점 $A_t = \hat{V}_t - V_t$가 정책 그래디언트 업데이트에 가중치를 부여한다.](images/value_fn_training.png){#fig:value_fn_training}
+![가치 함수 훈련은 온-정책 롤아웃을 사용하여 목표를 계산한다. 모델은 각 토큰에서 $V_t$를 예측하고, 이는 목표 리턴 $\hat{V}_t$에 대해 MSE로 훈련된다. 그러면 이점 $A_t = \hat{V}_t - V_t$가 정책 그래디언트 업데이트에 가중치를 부여한다.](images/value_fn_training.png){#fig:value_fn_training data-dark-src="images/value_fn_training-dark.png"}
 
 아래에 가치 네트워크 손실의 간단한 예제 구현이 나와 있다.
 
@@ -563,7 +564,7 @@ J(\theta) = \frac{1}{G}\sum_{i=1}^G  \frac{1}{|a_i|} \sum_{t=1}^{|a_i|} \Bigg( &
 
 $$A_i = \frac{r_i - \text{mean}({r_1, r_2, \cdots, r_G})}{\text{std}({r_1, r_2, \cdots, r_G})}.$$ {#eq:GRPO_ADV}
 
-![GRPO 구조. 이점은 그룹 평균 및 표준 편차에 대해 정규화된다. KL 페널티는 보상을 조정하는 대신 손실에 직접 적용된다.](images/grpo_tikz.png){#fig:grpo-arch}
+![GRPO 구조. 이점은 그룹 평균 및 표준 편차에 대해 정규화된다. KL 페널티는 보상을 조정하는 대신 손실에 직접 적용된다.](images/grpo_tikz.png){#fig:grpo-arch data-dark-src="images/grpo_tikz-dark.png"}
 
 직관적으로, GRPO 업데이트는 배치 내의 단일 질문에 대한 여러 답변을 비교한다.
 모델은 정답으로 표시된 답변처럼 더 많이, 그리고 다른 답변처럼 덜 행동하도록 학습한다.
@@ -1208,7 +1209,7 @@ $$
 \hat{A}_t^{GAE(\gamma,\lambda)} = (1-\lambda)(\hat{A}_t^{(1)} + \lambda\hat{A}_t^{(2)} + \lambda^2\hat{A}_t^{(3)} + \cdots) \\
 = (1-\lambda)(\delta_t^V + \lambda(\delta_t^V + \gamma\delta_{t+1}^V) + \lambda^2(\delta_t^V + \gamma\delta_{t+1}^V + \gamma^2\delta_{t+2}^V) + \cdots) \\
 = (1-\lambda)(\delta_t^V(1 + \lambda + \lambda^2 + \cdots) + \gamma\delta_{t+1}^V(\lambda + \lambda^2 + \cdots) + \cdots) \\
-= (1-\lambda)(\delta_t^V\frac{1}{1-\lambda} + \gamma\delta_{t+1}^V\frac{\lambda}{1-\lambda} + \cdots) \\
+= (1-\lambda)\left(\delta_t^V\frac{1}{1-\lambda} + \gamma\delta_{t+1}^V\frac{\lambda}{1-\lambda} + \cdots\right) \\
 = \sum_{l=0}^{\infty}(\gamma\lambda)^l\delta_{t+l}^V
 \end{array}
 $$ {#eq:GAE_DFN}

@@ -9,6 +9,7 @@ prev-chapter: "홈"
 prev-url: "https://9bow.github.io/rlhf-book-ko/"
 page-title: 소개
 search-title: "1장: 소개"
+meta-description: "RLHF의 기본 원리, 언어 모델에서 바뀌는 점, 현대 사후 학습의 일부가 된 과정을 소개합니다."
 next-chapter: "RLHF의 짧은 역사"
 next-url: "02-related-works"
 lectures:

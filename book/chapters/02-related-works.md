@@ -9,6 +9,7 @@ prev-chapter: "소개"
 prev-url: "01-introduction"
 page-title: RLHF의 짧은 역사
 search-title: "2장: RLHF의 짧은 역사"
+meta-description: "RLHF, 보상 모델링, 선호도 학습, 사후 학습 언어 모델로 이어진 주요 논문과 역사적 이정표를 정리합니다."
 next-chapter: "학습 개요"
 next-url: "03-training-overview"
 lectures:
@@ -29,7 +30,7 @@ RLHF와 관련 방법들은 매우 새롭습니다.
 선호도로부터의 학습에 관한 RL 문헌에는 상당한 추가 연구가 있습니다 [@wirth2017survey].
 더 철저한 목록을 위해서는 적절한 서베이 논문 [@kaufmann2023survey], [@casper2023open]을 참고하시기 바랍니다.
 
-![이 장에서 다루는 RLHF의 주요 발전 타임라인으로, 선호도로부터의 RL 초기 연구부터 대규모 언어 모델에서의 RLHF 채택까지.](images/rlhf_timeline.png){#fig:rlhf_timeline}
+![이 장에서 다루는 RLHF의 주요 발전 타임라인으로, 선호도로부터의 RL 초기 연구부터 대규모 언어 모델에서의 RLHF 채택까지.](images/rlhf_timeline.png){#fig:rlhf_timeline data-dark-src="images/rlhf_timeline-dark.png"}
 
 ## 기원에서 2018년까지: 선호도로부터의 RL
 
@@ -44,7 +45,7 @@ RLHF와 관련 방법들은 매우 새롭습니다.
 RLHF를 소개한 이 연구는 RL 에이전트가 처음부터 학습하여 인기 있는 비디오 게임을 해결할 수 있음을 보여준 DeepMind의 심층 Q-네트워크 (DQN) 기반 강화학습의 기초 연구 이후 곧 이어졌습니다.
 이 연구는 궤적 사이에서 선택하는 인간이 일부 도메인에서 환경과 직접 상호작용하는 것보다 더 효과적일 수 있음을 보여줍니다. 이것은 몇 가지 영리한 조건을 사용하지만, 그럼에도 인상적입니다.
 
-![Christiano et al. (2017)의 핵심 RLHF 루프: 보상 예측기는 궤적 세그먼트 비교로부터 비동기적으로 학습되며, 에이전트는 예측된 보상을 최대화합니다.](images/rlhf_schematic.png){#fig:rlhf_schematic width=66%}
+![Christiano et al. (2017)의 핵심 RLHF 루프: 보상 예측기는 궤적 세그먼트 비교로부터 비동기적으로 학습되며, 에이전트는 예측된 보상을 최대화합니다.](images/rlhf_schematic.png){#fig:rlhf_schematic width=66% data-dark-src="images/rlhf_schematic-dark.png"}
 
 이 방법은 더 직접적인 보상 모델링 [@ibarz2018reward]으로 확장되었으며, 초기 RLHF 연구 내에서 딥러닝의 채택은 1년 후 신경망 모델을 사용한 TAMER 확장으로 마무리되었습니다 [@warnell2018deep].
 

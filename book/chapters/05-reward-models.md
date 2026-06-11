@@ -9,6 +9,7 @@ prev-chapter: "지시 미세조정"
 prev-url: "04-instruction-tuning"
 page-title: 보상 모델링
 search-title: "5장: 보상 모델링"
+meta-description: "선호도 데이터로 보상 모델을 학습하고 RLHF 사후 학습 파이프라인의 학습 목표로 사용하는 방법을 설명합니다."
 next-chapter: "강화학습"
 next-url: "06-policy-gradients"
 lectures:
@@ -87,7 +88,7 @@ $$\mathcal{L}(\theta) = \log \left( 1 + e^{r_{\theta}(y_r \mid x) - r_{\theta}(y
 이들은 $\Delta = r_{\theta}(y_c \mid x) - r_{\theta}(y_r \mid x)$로 놓고 $\sigma(\Delta) = \frac{1}{1 + e^{-\Delta}}$를 사용하면 동등하며, 이는 $-\log\sigma(\Delta) = \log(1 + e^{-\Delta}) = \log\left(1 + e^{r_{\theta}(y_r \mid x) - r_{\theta}(y_c \mid x)}\right)$를 의미한다.
 두 형태 모두 RLHF 문헌에 등장한다.
 
-![선호도 보상 모델 훈련에는 선택된 완성과 거부된 완성의 쌍이 필요하다. 모델은 시퀀스 수준 표현, 종종 시퀀스 종료(EOS) 토큰의 은닉 상태로부터 각 완성에 대한 스칼라 점수를 계산하며, 대조 손실은 두 점수의 차이에만 의존한다.](images/pref_rm_training.png){#fig:pref_rm_training}
+![선호도 보상 모델 훈련에는 선택된 완성과 거부된 완성의 쌍이 필요하다. 모델은 시퀀스 수준 표현, 종종 시퀀스 종료(EOS) 토큰의 은닉 상태로부터 각 완성에 대한 스칼라 점수를 계산하며, 대조 손실은 두 점수의 차이에만 의존한다.](images/pref_rm_training.png){#fig:pref_rm_training data-dark-src="images/pref_rm_training-dark.png"}
 
 ## 기본 보상 모델 아키텍처
 
@@ -239,7 +240,7 @@ ORM의 훈련 데이터는 표준 선호도 조정과 유사한 방식으로 구
 이를 번역하면, 전체 시퀀스에 대해 하나의 로짓을 출력하는 전통적인 RM의 분류 헤드 대신 토큰별로 두 클래스(1은 올바름, 0은 잘못됨)를 예측할 수 있는 언어 모델링 헤드로 구현된다.
 형식적으로, [@lyu2025exploring]에 따르면 이는 토큰별 이진 교차 엔트로피 (binary cross-entropy) 손실이다:
 
-$$\mathcal{L}_{\text{CE}}(\theta) = -\mathbb{E}_{(s,r)\sim \mathcal{D}}[r\log p_\theta(s) + (1-r)\log(1-p_\theta(s))]$$ {#eq:orm_loss}
+$$\mathcal{L}_{\text{CE}}(\theta) = -\mathbb{E}_{(s,r)\sim \mathcal{D}}\left[r\log p_\theta(s) + (1-r)\log(1-p_\theta(s))\right]$$ {#eq:orm_loss}
 
 여기서 $r \in \{0,1\}$은 이진 레이블로 1은 주어진 프롬프트에 대한 올바른 답에 적용되고 0은 잘못된 답에 적용되며, $p_\theta(s)$는 훈련 중인 모델로부터의 정확도의 예측 확률에 비례하는 스칼라이다.
 코드에서 이 결과 레이블은 모든 완성 토큰에 복사되고, 프롬프트 토큰은 `-100`으로 마스킹되어 손실에 기여하지 않는다.
@@ -311,9 +312,9 @@ loss = F.binary_cross_entropy_with_logits(
 여기서 중요한 직관은 ORM이 시퀀스의 모든 토큰에서 정확도 확률을 출력한다는 것이다 (최종 답에 의해서만 판단됨—추론 오류는 ORM 훈련 과정에서 포착되지 않는다).
 업데이트와 손실이 결과 및 어텐션 맵핑에 따라 토큰별로 전파되므로 이는 잡음이 많은 과정일 수 있다.
 
-![추론 시, 결과 보상 모델은 토큰별 정확도 확률을 출력한다. 프롬프트 토큰은 마스킹되고 (예: label=-100), 각 완성 토큰은 모델이 응답이 올바른 답으로 이어진다고 믿는지 여부를 나타내는 확률을 받는다.](images/orm_inference.png){#fig:orm_inference}
+![추론 시, 결과 보상 모델은 토큰별 정확도 확률을 출력한다. 프롬프트 토큰은 마스킹되고 (예: label=-100), 각 완성 토큰은 모델이 응답이 올바른 답으로 이어진다고 믿는지 여부를 나타내는 확률을 받는다.](images/orm_inference.png){#fig:orm_inference data-dark-src="images/orm_inference-dark.png"}
 
-![결과 보상 모델 훈련은 검증자 또는 데이터셋의 오프라인 레이블을 사용한다 (예: 올바른 완성에는 모두 1). 각 완성 토큰은 결과 레이블에 대해 이진 교차 엔트로피로 훈련되며, 토큰별 확률은 검증, 필터링, 또는 재순위화를 위한 최종 점수로 집계된다.](images/orm_training.png){#fig:orm_training}
+![결과 보상 모델 훈련은 검증자 또는 데이터셋의 오프라인 레이블을 사용한다 (예: 올바른 완성에는 모두 1). 각 완성 토큰은 결과 레이블에 대해 이진 교차 엔트로피로 훈련되며, 토큰별 확률은 검증, 필터링, 또는 재순위화를 위한 최종 점수로 집계된다.](images/orm_training.png){#fig:orm_training data-dark-src="images/orm_training-dark.png"}
 
 이러한 모델들은 계속 사용되어 왔지만 오픈 소스 RLHF 도구에서는 지원이 적다.
 예를 들어, 동일한 유형의 ORM이 *Let's Verify Step by Step* [@lightman2023let]의 획기적인 연구에서 사용되었지만, 손실의 언어 모델링 예측 부분 없이 사용되었다.
@@ -350,7 +351,7 @@ labels = [[-100] * (len(completion) - 1) + [label] for completion, label in zip(
 이러한 예측은 일반적으로 잘못된 경우 -1, 중립인 경우 0, 올바른 경우 1이다.
 이러한 레이블은 모델이 올바른 경로에 있는지 여부가 아니라, 단계가 올바른지와 반드시 연결되지는 않는다.
 
-![과정 보상 모델은 단계 경계 (예: 줄바꿈 토큰)에서만 감독을 제공한다. 각 단계는 3-클래스 레이블을 받는다: 올바름 (+1), 중립 (0), 또는 잘못됨 (-1). 다른 모든 토큰은 훈련 중에 마스킹된다.](images/prm_training_inference.png){#fig:prm_training_inference}
+![과정 보상 모델은 단계 경계 (예: 줄바꿈 토큰)에서만 감독을 제공한다. 각 단계는 3-클래스 레이블을 받는다: 올바름 (+1), 중립 (0), 또는 잘못됨 (-1). 다른 모든 토큰은 훈련 중에 마스킹된다.](images/prm_training_inference.png){#fig:prm_training_inference data-dark-src="images/prm_training_inference-dark.png"}
 
 PRM의 예시 구성은 아래에 나와 있다.
 
@@ -439,7 +440,7 @@ loss = F.cross_entropy(logits[mask], labels[mask])
 ORM과 가치 함수는 동일한 헤드 아키텍처로 토큰별 출력을 생성하기 때문에 유사하게 보일 수 있지만, *예측하는 것*과 *타겟이 어디서 오는지*에서 다르다:
 
 - **ORM**은 즉각적인 토큰 로컬 수량을 예측한다: $p(\text{correct}_t)$ 또는 $r_t$. 타겟은 *오프라인 레이블* (토큰/시퀀스를 올바르거나 잘못된 것으로 표시하는 검증자 또는 데이터셋)에서 온다.
-- **가치 함수**는 *남은* 예상 반환을 예측한다: $V(s_t) = \mathbb{E}[\sum_{k \geq t} \gamma^{k-t} r_k \mid s_t]$. 타겟은 일반적으로 현재 정책 $\pi_\theta$ 하에서 *온-정책 (on-policy) 롤아웃으로부터 계산되고*, 정책이 변경됨에 따라 변한다 (기술적으로, 가치 함수는 오프-정책 (off-policy)일 수도 있지만, 이는 언어 모델링 연구에서는 확립되지 않았다).
+- **가치 함수**는 *남은* 예상 반환을 예측한다: $V(s_t) = \mathbb{E}\left[\sum_{k \geq t} \gamma^{k-t} r_k \mid s_t\right]$. 타겟은 일반적으로 현재 정책 $\pi_\theta$ 하에서 *온-정책 (on-policy) 롤아웃으로부터 계산되고*, 정책이 변경됨에 따라 변한다 (기술적으로, 가치 함수는 오프-정책 (off-policy)일 수도 있지만, 이는 언어 모델링 연구에서는 확립되지 않았다).
 
 밀도 있는 토큰 보상 $r_t = \mathbb{1}[\text{token is correct}]$를 정의하고 $\gamma = 1$을 사용한다면, ORM은 $r_t$ (또는 $p(r_t = 1)$)를 학습하는 반면 가치 헤드는 남은 합산 $\sum_{k \geq t} r_k$를 학습한다.
 이들은 동일한 기반 모델과 헤드 차원을 공유할 수 있지만, *의미론과 감독 파이프라인*이 다르다: ORM은 고정된 레이블로 오프라인에서 훈련되는 반면, 가치 함수는 온-정책으로 훈련되고 정책 그래디언트 (policy gradient)에 대한 이점 $A_t = \hat{R}_t - V_t$를 계산하는 데 사용된다.

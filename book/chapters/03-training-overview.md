@@ -9,6 +9,7 @@ prev-chapter: "RLHF의 짧은 역사"
 prev-url: "02-related-works"
 page-title: 학습 개요
 search-title: "3장: 학습 개요"
+meta-description: "지시 미세조정, RLHF, RLVR, 직접 정렬 방법을 포함한 현대 사후 학습 레시피의 큰 그림을 설명합니다."
 next-chapter: "지시 미세조정"
 next-url: "04-instruction-tuning"
 lectures:
@@ -46,7 +47,7 @@ $$\max_\pi \; \mathbb{E}_{\tau \sim p_{\pi}} \left[ \sum_{t=0}^{T-1} \gamma^t r(
 계속되는 태스크의 경우, 종종 $T\to\infty$로 설정하고 할인($\gamma<1$)에 의존하여 목적 함수를 잘 정의되게 유지합니다.
 이 식을 최적화하는 여러 방법들이 6장에서 논의됩니다.
 
-![표준 RL 루프](images/rl.png){#fig:rl width=320px .center}
+![표준 RL 루프](images/rl.png){#fig:rl width=320px .center data-dark-src="images/rl-dark.png"}
 
 표준 RL 루프의 그림이 @fig:rl에 나와 있습니다 (이를 @fig:rlhf의 RLHF 루프와 비교하세요).
 
@@ -65,7 +66,7 @@ $$\pi(a_t = \text{on} \mid s_t) = \begin{cases} 1 & \text{if } s_t < 70^{\circ}\
 
 - **전이**: 히터가 켜져 있으면 방이 따뜻해지고 꺼져 있으면 식습니다. 에이전트는 행동을 통해 이 동역학에 영향을 미치지만, 방이 얼마나 빨리 따뜻해지거나 식는지와 같은 기본 물리 법칙은 에이전트의 통제 밖에 있습니다.
 
-![@eq:rl_dynam의 궤적 분포의 각 항을 온도 조절기 RL 예시에 매핑.](images/thermostat_equation.png){#fig:thermostat-equation .center}
+![@eq:rl_dynam의 궤적 분포의 각 항을 온도 조절기 RL 예시에 매핑.](images/thermostat_equation.png){#fig:thermostat-equation .center data-dark-src="images/thermostat_equation-dark.png"}
 
 처음에 온도 조절기의 정책은 본질적으로 무작위입니다 -- 현재 온도를 전혀 고려하지 않고 히터를 켜고 끄며, 방 온도가 급격히 변동합니다.
 많은 시행착오 에피소드를 거치면서, 에이전트는 방이 차가울 때 히터를 켜고 따뜻할 때 끄는 것이 더 많은 보상으로 이어진다는 것을 발견하고, 점차 합리적인 정책으로 수렴합니다.
@@ -76,7 +77,7 @@ $$\pi(a_t = \text{on} \mid s_t) = \begin{cases} 1 & \text{if } s_t < 70^{\circ}\
 연속적인 동역학이 있는 더 풍부한 예시를 위해, 많은 RL 교과서, 강좌, 심지어 연구 논문에도 등장하는 고전적인 *CartPole* (역진자) 제어 태스크를 생각해 봅시다.
 온도 조절기가 단일 상태 변수와 이진 행동을 가졌던 반면, CartPole은 네 개의 연속적인 상태 변수와 물리 기반 전이를 포함하여 RL 알고리즘을 위한 표준 벤치마크가 됩니다.
 
-![상태 변수 ($x$, $\dot{x}$, $\theta$, $\dot{\theta}$)와 행동 ($\pm F$)을 보여주는 CartPole 환경.](images/cartpole.png){#fig:cartpole width=400px .center}
+![상태 변수 ($x$, $\dot{x}$, $\theta$, $\dot{\theta}$)와 행동 ($\pm F$)을 보여주는 CartPole 환경.](images/cartpole.png){#fig:cartpole width=400px .center data-dark-src="images/cartpole-dark.png"}
 
 - **상태 ($s_t$)**: 카트 위치/속도 및 막대 각도/각속도,
 
@@ -126,7 +127,7 @@ $$\max_\pi \; \mathbb{E}_{\tau \sim \pi} \left[r_\theta(s_t, a_t) \right].$$ {#e
 
 여러 면에서, 결과는 RLHF가 RL 최적화 도구와 문제 공식화에서 크게 영감을 받았지만, 실제 구현은 전통적인 RL과 매우 다릅니다.
 
-![표준 RLHF 루프](images/rlhf.png){#fig:rlhf}
+![표준 RLHF 루프](images/rlhf.png){#fig:rlhf data-dark-src="images/rlhf-dark.png"}
 
 ### 미세조정과 정규화
 

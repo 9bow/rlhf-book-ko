@@ -1,18 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko-KR">
 <head>
   <meta charset="utf-8" />
+  <!-- Set the theme before first paint to avoid a flash of the wrong theme. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme');
+        if (t !== 'light' && t !== 'dark') {
+          t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <script src="theme.js" defer></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="canonical" href="https://9bow.github.io/rlhf-book-ko/course" />
+  <meta name="description" content="RLHF, 보상 모델, 선호도 조정, RLVR, 현대 LLM 사후 학습을 다루는 무료 강좌입니다." />
 
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="RLHF Book" />
   <meta property="og:image" content="https://rlhfbook.com/assets/rlhf-book-share.png" />
   <meta property="og:image:width" content="1920" />
   <meta property="og:image:height" content="1080" />
-  <meta property="og:title" content="Course | RLHF Book by Nathan Lambert" />
-  <meta property="og:description" content="Course lectures and talks on RLHF and post-training." />
+  <meta property="og:title" content="RLHF 및 사후 학습 강좌 by Nathan Lambert" />
+  <meta property="og:description" content="RLHF, 보상 모델, 선호도 조정, RLVR, 현대 LLM 사후 학습을 다루는 무료 강좌입니다." />
   <meta property="og:url" content="https://9bow.github.io/rlhf-book-ko/course" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="RLHF 및 사후 학습 강좌 by Nathan Lambert" />
+  <meta name="twitter:description" content="RLHF, 보상 모델, 선호도 조정, RLVR, 현대 LLM 사후 학습을 다루는 무료 강좌입니다." />
+  <meta name="twitter:image" content="https://rlhfbook.com/assets/rlhf-book-share.png" />
 
-  <title>Course | RLHF Book by Nathan Lambert</title>
+  <title>RLHF 및 사후 학습 강좌 by Nathan Lambert</title>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "name": "RLHF 및 사후 학습 강좌",
+    "description": "RLHF, 보상 모델, 선호도 조정, RLVR, 현대 LLM 사후 학습을 다루는 무료 강좌입니다.",
+    "url": "https://9bow.github.io/rlhf-book-ko/course",
+    "provider": {
+      "@type": "Person",
+      "name": "Nathan Lambert"
+    },
+    "isAccessibleForFree": true,
+    "inLanguage": "ko-KR",
+    "about": [
+      "Reinforcement learning from human feedback",
+      "LLM post-training",
+      "Reward models",
+      "Preference tuning",
+      "RLVR"
+    ]
+  }
+  </script>
 
   <link rel="stylesheet" href="style.css" />
   <link href="/pagefind/pagefind-ui.css" rel="stylesheet">
@@ -209,6 +255,10 @@
       margin: 0;
     }
 
+    .course-entry.qa-entry {
+      background: #f7f7f7;
+    }
+
     .welcome-video {
       margin: 1.5em 0 2em;
       padding: 1.1em 1.3em;
@@ -233,6 +283,194 @@
       color: #666;
       margin: 0;
     }
+
+    .page-guide {
+      margin: 0 0 2em;
+      padding-left: 1.2em;
+      color: #333;
+    }
+
+    .page-guide li {
+      margin-bottom: 0.45em;
+    }
+
+    /* Compact Books & Courses grid */
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.7em;
+      margin-bottom: 1.75em;
+    }
+
+    .resource-card {
+      display: block;
+      border: 1px solid #e2e2e2;
+      border-radius: 0.35em;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(17, 17, 17, 0.05);
+      padding: 0.7em 0.85em;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .resource-card:hover {
+      border-color: #0645ad;
+      background: rgba(6, 69, 173, 0.03);
+    }
+
+    .resource-card .rc-kind {
+      display: inline-block;
+      font-size: 0.68em;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #0645ad;
+      background: rgba(6, 69, 173, 0.08);
+      padding: 0.12em 0.5em;
+      border-radius: 0.25em;
+      margin-bottom: 0.45em;
+    }
+
+    .resource-card .rc-kind.course {
+      color: #c0392b;
+      background: rgba(192, 57, 43, 0.08);
+    }
+
+    .resource-card .rc-title {
+      display: block;
+      font-weight: 600;
+      font-size: 0.92em;
+      line-height: 1.25;
+    }
+
+    .resource-card .rc-meta {
+      display: block;
+      font-size: 0.8em;
+      color: #666;
+      margin-top: 0.2em;
+    }
+
+    /* Concentrated talk list, grouped by chapter */
+    .talk-groups {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0 2em;
+      align-items: start;
+    }
+
+    .talk-group {
+      margin-bottom: 1.1em;
+    }
+
+    .talk-group h4 {
+      margin: 0 0 0.35em;
+      font-size: 0.82em;
+      color: #555;
+      border-bottom: 1px solid #e2e2e2;
+      padding-bottom: 0.2em;
+    }
+
+    .talk-group ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .talk-group li {
+      margin-bottom: 0.35em;
+      font-size: 0.9em;
+      line-height: 1.3;
+    }
+
+    .talk-group li a {
+      color: #0645ad;
+      text-decoration: none;
+    }
+
+    .talk-group li a:hover {
+      text-decoration: underline;
+    }
+
+    .talk-group .when {
+      color: #999;
+      font-size: 0.82em;
+      white-space: nowrap;
+    }
+
+    /* ---- Dark-mode overrides (light rules above are unchanged) ---- */
+    :root[data-theme="dark"] .slides-toc a,
+    :root[data-theme="dark"] .talk-group li a {
+      color: var(--color-link);
+    }
+    :root[data-theme="dark"] .slides-toc .toc-meta,
+    :root[data-theme="dark"] .talk-group .when {
+      color: var(--color-text-faint);
+    }
+    :root[data-theme="dark"] .slides-section h2,
+    :root[data-theme="dark"] .other-lectures-section h2 {
+      border-bottom-color: var(--color-link);
+    }
+    :root[data-theme="dark"] .other-lectures-section h3,
+    :root[data-theme="dark"] .page-guide {
+      color: var(--color-heading);
+    }
+    :root[data-theme="dark"] .talk-entry,
+    :root[data-theme="dark"] .course-entry,
+    :root[data-theme="dark"] .welcome-video,
+    :root[data-theme="dark"] .resource-card {
+      border-color: var(--color-border);
+      background: var(--color-bg-section);
+      box-shadow: 0 4px 12px var(--color-shadow);
+    }
+    :root[data-theme="dark"] .talk-info {
+      border-top-color: var(--color-border);
+    }
+    :root[data-theme="dark"] .talk-info-left .meta,
+    :root[data-theme="dark"] .course-entry .meta,
+    :root[data-theme="dark"] .welcome-video .meta,
+    :root[data-theme="dark"] .resource-card .rc-meta {
+      color: var(--color-text-muted);
+    }
+    :root[data-theme="dark"] .course-entry.qa-entry {
+      background: var(--color-bg-subtle);
+    }
+    :root[data-theme="dark"] .talk-actions .tag,
+    :root[data-theme="dark"] .resource-card .rc-kind {
+      background: rgba(96, 165, 250, 0.14);
+      color: var(--color-link);
+    }
+    :root[data-theme="dark"] .btn {
+      border-color: var(--color-link);
+      background: rgba(96, 165, 250, 0.14);
+      color: var(--color-link);
+    }
+    :root[data-theme="dark"] .btn:hover {
+      background: rgba(96, 165, 250, 0.24);
+    }
+    :root[data-theme="dark"] .btn-watch,
+    :root[data-theme="dark"] .resource-card .rc-kind.course {
+      border-color: #f87171;
+      background: rgba(248, 113, 113, 0.14);
+      color: #f87171;
+    }
+    :root[data-theme="dark"] .btn-watch:hover {
+      background: rgba(248, 113, 113, 0.24);
+    }
+    :root[data-theme="dark"] .btn-source {
+      border-color: var(--color-border-strong);
+      background: rgba(148, 163, 184, 0.14);
+      color: var(--color-text);
+    }
+    :root[data-theme="dark"] .btn-source:hover {
+      background: rgba(148, 163, 184, 0.24);
+    }
+    :root[data-theme="dark"] .resource-card:hover {
+      border-color: var(--color-link);
+      background: rgba(96, 165, 250, 0.08);
+    }
+    :root[data-theme="dark"] .talk-group h4 {
+      color: var(--color-text-muted);
+      border-bottom-color: var(--color-border);
+    }
   </style>
 
   <!-- Privacy-friendly analytics by Plausible -->
@@ -243,6 +481,10 @@
   </script>
 </head>
 <body>
+<button id="theme-toggle" class="theme-toggle" type="button" aria-label="다크 모드로 전환" title="다크 모드로 전환" aria-pressed="false">
+  <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+  <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+</button>
   <!-- Reusable SVG icon definitions -->
   <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
     <symbol id="icon-watch" viewBox="0 0 24 24" fill="currentColor">
@@ -261,102 +503,222 @@
 
   <header id="title-block-header">
     <h1 class="title"><a href="https://9bow.github.io/rlhf-book-ko/" style="color: inherit; text-decoration: none;">Reinforcement Learning from Human Feedback</a></h1>
-    <p class="subtitle">A short introduction to RLHF and post-training focused on language models.</p>
+    <p class="subtitle">언어 모델 중심의 RLHF 및 사후 학습 입문서</p>
     <p class="author">Nathan Lambert</p>
     <navigation-dropdown expanded="false"></navigation-dropdown>
   </header>
 
-  <h1>Course</h1>
+  <h1>강좌</h1>
 
   <p>
-    Course lectures and talks based on <a href="https://9bow.github.io/rlhf-book-ko">the RLHF Book</a>, built with <a href="https://github.com/natolambert/colloquium">Colloquium</a>.
-    Click into a deck to navigate through the slides, or open in full screen.
+    <a href="https://9bow.github.io/rlhf-book-ko">책</a>을 따라가는 전체 강좌와 추가 자료, 저자가 진행한 다른 강의를 모았습니다.
   </p>
 
   <div class="welcome-video">
     <div>
-      <h3>Welcome to the Course</h3>
-      <p class="meta">Introduction and overview of what you'll learn</p>
+      <h3>강좌 소개</h3>
+      <p class="meta">무엇을 배우게 되는지에 대한 소개와 개요</p>
     </div>
     <div class="talk-actions">
       <a href="https://www.youtube.com/watch?v=jQPiH-KB4B0&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y" class="btn btn-watch" target="_blank" rel="noopener noreferrer">
         <svg width="14" height="14"><use href="#icon-watch"/></svg>
-        Watch
+        보기
       </a>
     </div>
   </div>
 
-  <nav class="slides-toc">
-    <h2>Contents</h2>
-    <ul>
-      <li>
-        <a href="#lectures">Lectures</a>
-        <span class="toc-meta"> &mdash; course lectures in order</span>
-      </li>
-      <li>
-        <a href="#other-lectures">Other Lectures</a>
-        <span class="toc-meta"> &mdash; invited talks and presentations</span>
-      </li>
-    </ul>
-  </nav>
+  <ul class="page-guide">
+    <li><a href="#lectures"><strong>주요 자료</strong></a> &mdash; 책의 챕터 순서를 따라가는 핵심 강의 시리즈입니다. 녹화 영상, 슬라이드, PDF, 소스를 제공합니다.</li>
+    <li><a href="#extra-resources"><strong>추가 자료</strong></a> &mdash; 추천 도서, 외부 RL 강좌, 각 챕터와 함께 보면 좋은 Nathan의 발표를 모았습니다.</li>
+    <li><a href="#other-lectures"><strong>기타 초청 강의와 발표</strong></a> &mdash; 초청 강연 및 독립 발표 자료입니다.</li>
+  </ul>
 
   <section class="slides-section" id="lectures">
-    <h2>Lectures</h2>
+    <h2>주요 자료</h2>
 
     <div class="course-list">
       <div class="course-entry" id="lecture-1-overview">
         <div>
-          <h3>Lecture 1: Overview</h3>
-          <p class="meta">Chapters 1-3 &middot; Foundations of RLHF and post-training</p>
+          <h3>강의 1: 개요</h3>
+          <p class="meta">1–3장 &middot; RLHF와 사후 학습의 기초</p>
         </div>
         <div class="talk-actions">
-          <a href="https://www.youtube.com/watch?v=o6l6tJQgUg4&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=2" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> Watch</a>
+          <a href="https://www.youtube.com/watch?v=o6l6tJQgUg4&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=2" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> 보기</a>
           <a href="/teach/course/lec1-chap1-3/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
-          <a href="/teach/course/lec1-chap1-3/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> Slides</a>
-          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec1-chap1-3.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> Source</a>
+          <a href="/teach/course/lec1-chap1-3/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
+          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec1-chap1-3.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
         </div>
       </div>
       <div class="course-entry" id="lecture-2-ift-rm-rs">
         <div>
-          <h3>Lecture 2: IFT, Reward Models, &amp; Rejection Sampling</h3>
-          <p class="meta">Chapters 4, 5, 9 &middot; Start of the core optimization methods section</p>
+          <h3>강의 2: IFT, 보상 모델, 거부 샘플링</h3>
+          <p class="meta">4, 5, 9장 &middot; 핵심 최적화 방법 섹션의 시작</p>
         </div>
         <div class="talk-actions">
-          <a href="https://www.youtube.com/watch?v=4gIwiSPmQkU&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=3" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> Watch</a>
+          <a href="https://www.youtube.com/watch?v=4gIwiSPmQkU&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=3" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> 보기</a>
           <a href="/teach/course/lec2-chap4-5-9/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
-          <a href="/teach/course/lec2-chap4-5-9/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> Slides</a>
-          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec2-chap4-5-9.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> Source</a>
+          <a href="/teach/course/lec2-chap4-5-9/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
+          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec2-chap4-5-9.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
         </div>
       </div>
       <div class="course-entry" id="lecture-3-rl-theory">
         <div>
-          <h3>Lecture 3: RL Motivation &amp; Math</h3>
-          <p class="meta">Chapter 6, Part 1 &middot; Policy gradients math, intuitions, and theory</p>
+          <h3>강의 3: RL 동기와 수학</h3>
+          <p class="meta">6장 1부 &middot; 정책 그래디언트 수학, 직관, 이론</p>
         </div>
         <div class="talk-actions">
-          <a href="https://www.youtube.com/watch?v=K_Sj_-1BUMM&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=4" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> Watch</a>
+          <a href="https://www.youtube.com/watch?v=K_Sj_-1BUMM&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=4" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> 보기</a>
           <a href="/teach/course/lec3-chap6-p1/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
-          <a href="/teach/course/lec3-chap6-p1/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> Slides</a>
-          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec3-chap6-p1.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> Source</a>
+          <a href="/teach/course/lec3-chap6-p1/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
+          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec3-chap6-p1.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
         </div>
       </div>
       <div class="course-entry" id="lecture-4-rl-implementation">
         <div>
-          <h3>Lecture 4: RL Implementation &amp; Practice</h3>
-          <p class="meta">Chapter 6, Part 2 &middot; Code, loss aggregation, async training, and practical engineering</p>
+          <h3>강의 4: RL 구현과 실무</h3>
+          <p class="meta">6장 2부 &middot; 코드, 손실 집계, 비동기 학습, 실용적 엔지니어링</p>
         </div>
         <div class="talk-actions">
-          <a href="https://www.youtube.com/watch?v=i-AIMpZHgeg&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=5" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> Watch</a>
+          <a href="https://www.youtube.com/watch?v=i-AIMpZHgeg&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=5" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> 보기</a>
           <a href="/teach/course/lec4-chap6-p2/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
-          <a href="/teach/course/lec4-chap6-p2/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> Slides</a>
-          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec4-chap6-p2.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> Source</a>
+          <a href="/teach/course/lec4-chap6-p2/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
+          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec4-chap6-p2.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
+        </div>
+      </div>
+      <div class="course-entry qa-entry" id="qa-01">
+        <div>
+          <h3>Q&amp;A 1: 독자 질문, 1–4강</h3>
+        </div>
+        <div class="talk-actions">
+          <a href="https://www.youtube.com/watch?v=x-MqKBzoxkI&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=6" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> 보기</a>
+          <a href="/teach/course/qa-01/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
+          <a href="/teach/course/qa-01/" class="btn" target="_blank"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
+          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/qa-01.md?plain=1" class="btn btn-source" target="_blank"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
+        </div>
+      </div>
+      <div class="course-entry" id="lecture-5-reasoning">
+        <div>
+          <h3>강의 5: 추론 모델의 부상</h3>
+          <p class="meta">7장 &middot; RLVR, 추론 시간 스케일링, 2025년 추론 모델 흐름</p>
+        </div>
+        <div class="talk-actions">
+          <a href="https://www.youtube.com/watch?v=o4AB5xHIDdM&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=7" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> 보기</a>
+          <a href="/teach/course/lec5-chap7/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
+          <a href="/teach/course/lec5-chap7/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
+          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec5-chap7.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
+        </div>
+      </div>
+      <div class="course-entry" id="lecture-6-dpo">
+        <div>
+          <h3>강의 6: 직접 선호 최적화</h3>
+          <p class="meta">8장 &middot; DPO 단계별 도출, 변형 방법, 실무</p>
+        </div>
+        <div class="talk-actions">
+          <a href="/teach/course/lec6-chap8-dpo/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
+          <a href="/teach/course/lec6-chap8-dpo/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
+          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec6-chap8-dpo.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
+        </div>
+      </div>
+      <div class="course-entry qa-entry" id="conversation-01">
+        <div>
+          <h3>대화 1: 2026년 최전선 사후 학습 레시피 (Finbarr Timbers와 함께)</h3>
+        </div>
+        <div class="talk-actions">
+          <a href="/teach/course/conversation-01/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
+          <a href="/teach/course/conversation-01/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
+          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/conversation-01.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="other-lectures-section" id="extra-resources">
+    <h2>추가 자료</h2>
+
+    <p class="meta" style="margin-bottom: 1em;">강화학습과 언어 모델을 더 깊이 공부할 때 저자가 직접 활용한 외부 자료입니다. 특히 아래 도서들은 좋은 보완 자료입니다.</p>
+
+    <h3>도서와 강좌</h3>
+    <div class="resource-grid">
+      <a class="resource-card" href="https://amzn.to/4vfAM2E" target="_blank" rel="noopener noreferrer">
+        <span class="rc-kind">도서</span>
+        <span class="rc-title">Reinforcement Learning: An Introduction</span>
+        <span class="rc-meta">Sutton &amp; Barto &middot; 강화학습의 표준 교과서</span>
+      </a>
+      <a class="resource-card" href="https://amzn.to/4ef1DWP" target="_blank" rel="noopener noreferrer">
+        <span class="rc-kind">도서</span>
+        <span class="rc-title">Build a Large Language Model (From Scratch)</span>
+        <span class="rc-meta">Sebastian Raschka</span>
+      </a>
+      <a class="resource-card" href="https://amzn.to/4x14Kcu" target="_blank" rel="noopener noreferrer">
+        <span class="rc-kind">도서</span>
+        <span class="rc-title">Build a Reasoning Model (From Scratch)</span>
+        <span class="rc-meta">Sebastian Raschka</span>
+      </a>
+      <a class="resource-card" href="https://www.youtube.com/watch?v=SupFHGbytvA&list=PL_iWQOsE6TfVYGEGiAOMaOzzv41Jfm_Ps&index=1" target="_blank" rel="noopener noreferrer">
+        <span class="rc-kind course">강좌</span>
+        <span class="rc-title">CS285: Deep Reinforcement Learning (2023)</span>
+        <span class="rc-meta">UC Berkeley &middot; Sergey Levine</span>
+      </a>
+      <a class="resource-card" href="https://www.youtube.com/watch?v=2pWv7GOvuf0&list=PLzuuYNsE1EZAXYR4FJ75jcJseBmo4KQ9-" target="_blank" rel="noopener noreferrer">
+        <span class="rc-kind course">강좌</span>
+        <span class="rc-title">Introduction to Reinforcement Learning (2015)</span>
+        <span class="rc-meta">DeepMind / UCL &middot; David Silver</span>
+      </a>
+    </div>
+
+    <h3>Nathan의 추가 발표</h3>
+    <p class="meta" style="margin-bottom: 0.8em;">지난 몇 년간 사후 학습을 다루며 진행한 여러 발표를 관련 챕터별로 묶었습니다.</p>
+    <div class="talk-groups">
+      <div class="talk-col">
+        <div class="talk-group">
+          <h4>1장 &middot; 소개</h4>
+          <ul>
+            <li><a href="https://www.youtube.com/watch?v=AdLgPmcrXwQ" target="_blank" rel="noopener noreferrer">Aligning Open Language Models (Stanford CS25)</a> <span class="when">Apr 2024</span></li>
+          </ul>
+        </div>
+        <div class="talk-group">
+          <h4>3장 &middot; 학습 개요</h4>
+          <ul>
+            <li><a href="https://www.youtube.com/watch?v=6yIMb0K-aS4" target="_blank" rel="noopener noreferrer">How Language Model Post-Training Is Done Today</a> <span class="when">Jan 2025</span></li>
+            <li><a href="https://www.youtube.com/watch?v=uaZ3yRdYg8A" target="_blank" rel="noopener noreferrer">How We Built a Leading Reasoning Model (Olmo 3)</a> <span class="when">Dec 2025</span></li>
+          </ul>
+        </div>
+        <div class="talk-group">
+          <h4>6장 &middot; 강화학습</h4>
+          <ul>
+            <li><a href="https://www.youtube.com/watch?v=amrJDwMUFNs" target="_blank" rel="noopener noreferrer">GRPO's New Variants and Implementation Secrets</a> <span class="when">Mar 2025</span></li>
+          </ul>
+        </div>
+        <div class="talk-group">
+          <h4>10장 &middot; 선호도의 본질</h4>
+          <ul>
+            <li><a href="https://www.youtube.com/watch?v=Mu_-FWIuhDA" target="_blank" rel="noopener noreferrer">15 Minute History of Reinforcement Learning and Human Feedback</a> <span class="when">Dec 2023</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="talk-col">
+        <div class="talk-group">
+          <h4>7장 &middot; 추론과 추론 시간 스케일링</h4>
+          <ul>
+            <li><a href="https://www.youtube.com/watch?v=YXTYbr3hiFU" target="_blank" rel="noopener noreferrer">An Unexpected Reinforcement Learning Renaissance</a> <span class="when">Feb 2025</span></li>
+            <li><a href="https://www.youtube.com/watch?v=J1APR8Bo9dE" target="_blank" rel="noopener noreferrer">Early Stages of the Reinforcement Learning Era of Language Models</a> <span class="when">Mar 2025</span></li>
+            <li><a href="https://www.youtube.com/watch?v=zYeIqzULzr0" target="_blank" rel="noopener noreferrer">Experimenting with Reinforcement Learning with Verifiable Rewards (RLVR)</a> <span class="when">Apr 2025</span></li>
+          </ul>
+        </div>
+        <div class="talk-group">
+          <h4>8장 &middot; 직접 정렬 알고리즘</h4>
+          <ul>
+            <li><a href="https://www.youtube.com/watch?v=YJMCSVLRUNs" target="_blank" rel="noopener noreferrer">DPO Debate: Is RL Needed for RLHF?</a> <span class="when">Dec 2023</span></li>
+            <li><a href="https://www.youtube.com/watch?v=dnF463_Ar9I" target="_blank" rel="noopener noreferrer">Life After DPO (Stanford CS224N)</a> <span class="when">May 2024</span></li>
+            <li><a href="https://www.youtube.com/watch?v=rDF7eFPeVto" target="_blank" rel="noopener noreferrer">An Update on DPO vs PPO for LLM Alignment</a> <span class="when">Jul 2024</span></li>
+          </ul>
         </div>
       </div>
     </div>
   </section>
 
   <section class="other-lectures-section" id="other-lectures">
-    <h2>Other Lectures</h2>
+    <h2>기타 초청 강의와 발표</h2>
 
     <h3>2026</h3>
 
@@ -370,18 +732,18 @@
           <p class="meta">SALA 2026 &middot; Quito, Ecuador &middot; March 2026</p>
         </div>
         <div class="talk-actions">
-          <span class="tag">Invited Talk</span>
+          <span class="tag">초청 발표</span>
           <a href="/teach/SALA-2026/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
-          <a href="/teach/SALA-2026/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> Full Screen</a>
-          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/SALA-2026/talk.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> Source</a>
+          <a href="/teach/SALA-2026/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 전체 화면</a>
+          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/SALA-2026/talk.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
         </div>
       </div>
     </div>
   </section>
 
   <section id="citation" style="padding: 0 20px;">
-    <h4 style="text-align: left; font-weight: normal;">Citation</h4>
-    <p>If you found this useful for your research, please cite it!</p>
+    <h4 style="text-align: left; font-weight: normal;">인용</h4>
+    <p>이 자료가 연구에 유용했다면 인용해 주세요!</p>
     <pre style="text-align: left; font-size: small; color: #888;">@book{rlhf2026lambert,
   author = {Nathan Lambert},
   title = {Reinforcement Learning from Human Feedback},
