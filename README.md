@@ -75,7 +75,8 @@ rlhf-book/
 │   ├── policy_gradients/   # PPO, REINFORCE, GRPO, RLOO
 │   ├── reward_models/      # 선호도 RM, ORM, PRM 학습
 │   ├── direct_alignment/   # DPO 및 변형
-│   └── rejection_sampling/ # 최선-N 거부 샘플링
+│   ├── rejection_sampling/ # 최선-N 거부 샘플링
+│   └── distillation/       # 온-정책 증류(SDPO)
 ├── diagrams/               # 다이어그램 소스 파일
 │   ├── scripts/            # Python 생성 스크립트
 │   ├── tikz/               # LaTeX/TikZ 소스
@@ -98,12 +99,14 @@ rlhf-book/
 - 보상 모델 학습 (선호도 RM, ORM, PRM)
 - 직접 정렬 방법 (DPO 및 변형)
 - 거부 샘플링 (최선-N)
+- 온-정책 증류 (SDPO)
 
 > - Policy gradient methods (PPO, REINFORCE, GRPO, RLOO, etc.)
 > - Instruction tuning (SFT)
 > - Reward model training (preference RM, ORM, PRM)
 > - Direct alignment methods (DPO and variants)
 > - Rejection sampling (best-of-N)
+> - On-policy distillation (SDPO)
 
 설정 및 사용법은 [code/README.md](code/README.md)를 참고하세요.
 
@@ -166,11 +169,13 @@ cd diagrams && make all
 
 > ## License
 
-- 코드: [MIT](LICENSE-CODE)
-- 챕터: [CC-BY-NC-SA-4.0](LICENSE-CHAPTERS)
+- `book/chapters`: [CC-BY-NC-SA-4.0](LICENSE-CHAPTERS)
+- 그 외 전체(`code/`, `diagrams/`, `scripts/` 등): [MIT](LICENSE-CODE)
+- `book/images/`의 일부 이미지는 라이선스가 명시되지 않은 사진 또는 스크린샷일 수 있습니다.
 
-> - Code: [MIT](LICENSE-CODE)
-> - Chapters: [CC-BY-NC-SA-4.0](LICENSE-CHAPTERS)
+> - `book/chapters`: [CC-BY-NC-SA-4.0](LICENSE-CHAPTERS)
+> - everything else (`code/`, `diagrams/`, `scripts/`, etc.): [MIT](LICENSE-CODE)
+> - note that some images in `book/images/` are unlicensed photos or screenshots.
 
 ## 기여자
 
@@ -183,3 +188,84 @@ cd diagrams && make all
 모든 [기여자](https://github.com/natolambert/rlhf-book/graphs/contributors)를 확인하세요.
 
 > See all [contributors](https://github.com/natolambert/rlhf-book/graphs/contributors).
+
+참고: 저자가 더 이상 접근할 수 없는 Ai2 이메일에 커밋을 연결해 둔 실수 때문에, 커밋 히스토리에서 저자 기여 추적 대부분이 사라졌다고 합니다.
+
+> Note: *because I made the mistake of associating my commits with my Ai2 email, which I no longer have access to, the commit history lost most of my tracking, RIP!*
+
+### 번역
+
+> ### Translations
+
+독자들은 각자의 저장소에서 책의 비공식 번역을 유지하고 있습니다.
+이 번역들은 커뮤니티 프로젝트입니다. 공식 인쇄판 및 전문 번역과는 독립적이며, 이 책에 대한 출처 표시와 함께 동일한 CC-BY-NC-SA 라이선스로 공개됩니다.
+
+> Readers maintain unofficial translations of the book in their own repositories.
+> These are community projects — independent of the official print editions and their professional translations — released under the same CC-BY-NC-SA license with attribution back to this book:
+
+- 简体中文 (Simplified Chinese): [jweihe/RLHF-book-Chinese](https://github.com/jweihe/RLHF-book-Chinese)
+
+번역을 추가하려면 별도 저장소에 유지하고(번역본은 이 저장소에 병합하지 않습니다), 위 라이선스 조건을 따르며, 커뮤니티 번역임을 명확히 표시한 뒤 이 목록과 홈페이지 Ecosystem 섹션(`book/templates/html.html`)에 추가하는 PR을 열어 주세요.
+
+> To add yours: keep it in your own repo (translations are not merged here), follow the license terms above, label it clearly as a community translation, then open a PR adding it to this list and to the homepage Ecosystem section (`book/templates/html.html`).
+
+### AI 사용 정책
+
+> ### AI Use Policy
+
+저자는 이 책의 편집과 제작을 돕는 데 AI를 어떻게 사용했는지, 그리고 기여자에게 무엇을 기대하는지 명확히 문서화하고자 했습니다.
+이 책은 AI 모델이 지식 노동의 유용한 도구에서 필수 도구로 전환되던 흥미로운 시기에 작성되었습니다.
+
+> I wanted to clearly document how I used AI to aid in the editing and creation of this book (and my expectations for contributors).
+> This book was written at an interesting time, when AI models transitioned from useful to essential as tools for knowledge work.
+
+책의 핵심부는 언어 모델이 논픽션 글쓰기에 거의 쓸모없게 느껴지던 시기에 작성되었습니다. 대략 처음 10개 장이 여기에 해당하며, 저자가 사후 학습을 배워가며 남긴 개인 노트에서 출발했습니다.
+초안은 거의 전적으로 수작업이었고(오탈자까지 git 히스토리에 남아 있습니다), 다른 장과 부록의 상당 부분은 저자의 개인 뉴스레터인 [interconnects.ai](https://interconnects.ai/)의 콘텐츠를 직접 각색했습니다.
+이 글은 저자의 목소리가 강하게 남아 있으며, 직관 전달을 유지하기 위해 아주 가벼운 AI 편집만 사용했습니다.
+수학과 코드가 적은 장일수록 AI 사용도 적었습니다.
+
+> The core of this book was written when language models felt borderline useless for non-fiction writing; this is roughly the first 10 chapters of the book -- it was my personal notes as I learned post-training.
+> The first draft was almost entirely manual (typos and all are in the git history).
+> Much of the other chapters and the appendices were adapted directly from content on [interconnects.ai](https://interconnects.ai/), my personal newsletter.
+> This writing is very high-voice and uses the lightest of AI editing to maintain the communication of intuitions.
+> The less math and code in a chapter, the less I used AI.
+
+편집 과정의 기본 워크플로우는 인간 편집자가 제안한 수정 목록과 문맥을 Claude Code에 전달하고, 각 항목을 하나씩 적용하도록 요청하는 방식이었습니다.
+이 형식에서는 저자가 문맥을 읽고 수정 방향을 작성했습니다.
+단순한 오탈자, 명백한 오류, 또는 아주 짧은 문구 수정은 Claude가 직접 반영할 수 있었습니다.
+더 복잡한 문장 수정은 보통 저자가 직접 여러 문장과 추가 문구를 다시 작성해 만들었습니다.
+또한 저자는 Cursor에서 글을 쓴 뒤 GitHub 작업을 Claude에게 맡기는 경우도 많았습니다.
+
+> Through the editing, the default workflow I used was passing a list of suggested edits from a human editor to Claude Code with the context, and asking it to go one-by-one to apply various edits.
+> In this format, I'd read the context and write a fix.
+> In a case where the edit was a simple typo or blatant error or just a low number of words, Claude could directly make this edit.
+> More complex language edits were crafted by me, normally with me re-writing various sentences and additions.
+> I also often just write in Cursor and then ask Claude to handle GitHub for me.
+
+저자의 글을 꾸준히 읽어온 독자라면, 이 책과 Interconnects의 차이는 이 저장소에서는 저자가 제안한 편집을 AI 에이전트가 적용하도록 했다는 점이고, 블로그에서는 그런 작업을 모두 수작업으로 한다는 점입니다.
+이는 주로 규모와 복잡도 때문입니다.
+
+> If you follow my writing closely, the difference between this book and Interconnects is that I let AI agents apply edits I suggested for me in this repo, whereas on my blog I make a point of doing all of that work manually.
+> This is largely a function of scale and complexity.
+
+수학이 많은 장에서는 모델이 LaTeX 방정식과 기본 코드 조각을 조작하는 데 매우 유용했습니다.
+이 부분들은 AI 모델의 출력이 더 직접적으로 반영된 편입니다. 저자가 LaTeX를 모두 수작업으로 작성하면 상당한 시간이 걸렸기 때문입니다.
+그 뒤 수학과 코드는 저자가 직접, 그리고 GPT-Pro 모델을 통한 검토로 한 번 더 확인했습니다.
+
+> For the more math-heavy chapters, the models are unbelievably useful at manipulating LaTeX equations and basic code snippets.
+> These sections are more direct outputs from the AI models, as me writing the LaTeX manually would take substantial time.
+> Then, I would review the math and code an additional time manually and with the check of GPT-Pro models.
+
+AI 모델은 `diagrams/`와 `code/`에서 훨씬 더 광범위하게 사용되었습니다. 저자는 이를 책의 핵심 내용 주변에서 최신 모델을 가지고 실험해 보는 일종의 놀이로 보았습니다.
+
+> AI models were used much more extensively in `diagrams/` and `code/`, where I viewed these as a form of play with the latest models, around the substantial content of the book.
+
+실물 책은 추가적이고 상당한 수준의 카피 편집을 거쳐 기술 교과서에 더 가까운 표준 문체로 다듬어졌습니다.
+
+> The physical edition of the book went through additional, substantial copy editing that transitioned the voice to be more of a standard style for a technical textbook.
+
+책에 새로 추가되는 내용은 당연히 사람이 먼저 작성해야 하며, 이후 AI로 편집할 수 있습니다. 이는 위에서 설명한 저자의 워크플로우를 반영합니다.
+GitHub PR에 명백히 AI가 작성한 듯한 내용이 포함되어 있다면 거의 확실히 포함되지 않을 것입니다.
+
+> All new additions to the book should obviously be written by humans first, and then can be edited with AI, as this reflects my workflow above.
+> The presence of obvious AI-written content in a PR to GitHub will almost certainly result in it not being included.

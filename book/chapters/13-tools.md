@@ -5,7 +5,7 @@
   Full license: https://github.com/natolambert/rlhf-book/blob/main/LICENSE-CHAPTERS
 -->
 ---
-prev-chapter: "합성 데이터"
+prev-chapter: "합성 데이터와 증류"
 prev-url: "12-synthetic-data"
 page-title: 도구 사용 및 함수 호출
 search-title: "13장: 도구 사용 및 함수 호출"
@@ -75,7 +75,7 @@ print(str(compute_pi())[:52])
 이후 언어 모델을 프로그램 [@gao2023pal] 또는 도구 [@parisi2022talm]와 통합하는 연구도 등장했습니다.
 
 분야가 성숙해지면서, 이러한 모델들은 기반 언어 모델링의 방대한 개선 외에도 더 복잡한 능력을 갖추게 되었습니다.
-예를 들어 ToolFormer는 "계산기, Q&A 시스템, 두 가지 검색 엔진, 번역 시스템, 달력"을 사용할 수 있었습니다 [@schick2023toolformerlanguagemodelsteach].
+예를 들어 Toolformer는 "계산기, Q&A 시스템, 두 가지 검색 엔진, 번역 시스템, 달력"을 사용할 수 있었습니다 [@schick2023toolformerlanguagemodelsteach].
 얼마 후, Gorilla는 1645개의 API(PyTorch Hub, TensorFlow Hub v2, HuggingFace에서)를 사용하도록 훈련되었으며, 그 평가 도구인 APIBench는 인기 있는 Berkeley Function Calling Leaderboard의 기반이 되었습니다 [@patil2023gorilla].
 이러한 초기 모델들 이후, 호출되는 액션의 다양성은 크게 증가했습니다.
 

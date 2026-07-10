@@ -52,8 +52,9 @@ $p_i = e^{r_i}$인 무한 점수로 Bradley-Terry 모델을 재매개변수화�
 
 $$P(i > j) = \frac{e^{r_i}}{e^{r_i} + e^{r_j}} = \sigma(r_i-r_j).$$ {#eq:bradterry_unbounded}
 
+$\sigma(z) = \frac{1}{1 + e^{-z}}$는 로지스틱(sigmoid) 함수이므로, 선호도 확률은 점수 차이 $r_i - r_j$에만 의존한다.
 점수의 차이만이 중요하다: 모든 $r_k$에 동일한 상수 $c$를 더해도 $P(i > j)$는 변하지 않는다.
-이러한 형태들은 자연의 법칙이 아니라, RLHF에서 종종 잘 작동하는 인간 선호도의 유용한 근사치이다.
+이러한 형태들은 RLHF에서 종종 잘 작동하는 인간 선호도의 유용한 근사치이다.
 
 보상 모델을 훈련하려면 위의 관계를 만족하는 손실 함수 (loss function)를 공식화해야 한다.
 실제로 이는 언어 모델을 스칼라 점수를 출력하는 모델로 변환함으로써 수행되며, 종종 모델의 최종 은닉 상태 (hidden state)로부터 단일 보상 값을 생성하는 작은 선형 헤드 (linear head)를 통해 이루어진다.
@@ -66,20 +67,31 @@ $$P(y_1 > y_2 \mid x) = \frac{\exp\left(r_\theta(y_1 \mid x)\right)}{\exp\left(r
 선호된 완성을 $y_c$ (선택된 완성, chosen)로, 거부된 완성 (rejected completion)을 $y_r$로 나타낸다.
 
 결과 손실은 시그모이드 (sigmoid)를 사용하여 점수 차이를 확률로 변환하면서 보상 모델이 거부된 것보다 인간이 선호한 완성에 더 높은 점수를 부여하도록 장려한다.
-@eq:bradterryrm의 선호도 우도 (preference likelihood)가 출발점이다. 먼저 그 우도를 시그모이드 형태로 재작성하고, 마지막 단계에서만 보상 모델 훈련에 사용되는 동등한 음의 로그 우도 (NLL, negative log-likelihood) 손실로 변환한다:
+@eq:bradterryrm의 선호도 우도 (preference likelihood)가 출발점이다. 먼저 분자와 분모를 $\exp\left(r_\theta(y_c \mid x)\right)$로 나누어 그 우도를 시그모이드 형태로 재작성한다:
 
 $$
 \begin{aligned}
-\theta^* = \arg\max_\theta P(y_c > y_r \mid x) &= \arg\max_\theta \frac{\exp\left(r_\theta(y_c \mid x)\right)}{\exp\left(r_\theta(y_c \mid x)\right) + \exp\left(r_\theta(y_r \mid x)\right)} \\
-&= \arg\max_\theta \frac{\exp\left(r_\theta(y_c \mid x)\right)}{\exp\left(r_\theta(y_c \mid x)\right)\left(1 + \frac{\exp\left(r_\theta(y_r \mid x)\right)}{\exp\left(r_\theta(y_c \mid x)\right)}\right)} \\
-&= \arg\max_\theta \frac{1}{1 + \frac{\exp\left(r_\theta(y_r \mid x)\right)}{\exp\left(r_\theta(y_c \mid x)\right)}} \\ 
-&= \arg\max_\theta \frac{1}{1 + \exp\left(-(r_\theta(y_c \mid x) - r_\theta(y_r \mid x))\right)} \\
-&= \arg\max_\theta \sigma \left( r_\theta(y_c \mid x) - r_\theta(y_r \mid x) \right) \\
-&= \arg\min_\theta - \log \left( \sigma \left(r_\theta(y_c \mid x) - r_\theta(y_r \mid x)\right) \right)
+P(y_c > y_r \mid x)
+&= \frac{\exp\left(r_\theta(y_c \mid x)\right)}{\exp\left(r_\theta(y_c \mid x)\right) + \exp\left(r_\theta(y_r \mid x)\right)} \\
+&= \frac{\exp\left(r_\theta(y_c \mid x)\right)}{\exp\left(r_\theta(y_c \mid x)\right)\left(1 + \frac{\exp\left(r_\theta(y_r \mid x)\right)}{\exp\left(r_\theta(y_c \mid x)\right)}\right)} \\
+&= \frac{1}{1 + \frac{\exp\left(r_\theta(y_r \mid x)\right)}{\exp\left(r_\theta(y_c \mid x)\right)}} \\
+&= \frac{1}{1 + \exp\left(-(r_\theta(y_c \mid x) - r_\theta(y_r \mid x))\right)} \\
+&= \sigma \left( r_\theta(y_c \mid x) - r_\theta(y_r \mid x) \right).
+\end{aligned}
+$$ {#eq:bradterryrm_sigmoid}
+
+그다음 보상 모델은 선호도 데이터셋 $D$에 대한 최대우도법으로 적합되며, 관측된 선호도의 기대 로그우도를 최대화한다. 로그는 단조 함수이므로, 이는 기대 음의 로그우도를 최소화하는 것과 동등하다:
+
+$$
+\begin{aligned}
+\theta^* &= \arg\max_\theta \mathbb{E}_{(x, y_c, y_r) \sim D}\left[ \log P(y_c > y_r \mid x) \right] \\
+&= \arg\min_\theta \mathbb{E}_{(x, y_c, y_r) \sim D}\left[ -\log \sigma \left( r_\theta(y_c \mid x) - r_\theta(y_r \mid x) \right) \right].
 \end{aligned}
 $$ {#eq:bradterryrm_deriv}
 
-첫 번째 형태는 [@ouyang2022training] 및 다른 연구들에서와 같이 위에서 유도된 로그-시그모이드 표현이다:
+데이터셋에 대해 평균을 내기 *전에* 로그를 취한다는 점이 음의 로그우도 손실을 올바른 목적함수로 만든다. 기대 확률 $\mathbb{E}[P]$를 최대화하는 것은 기대 로그확률 $\mathbb{E}[\log P]$를 최대화하는 것과 같지 않다.
+
+예시별 손실은 [@ouyang2022training] 및 다른 연구들에서와 같이 위 기대값 안의 로그-시그모이드 표현이다:
 $$\mathcal{L}(\theta) = - \log \left( \sigma \left( r_{\theta}(y_c \mid x) - r_{\theta}(y_r \mid x) \right) \right)$$ {#eq:rewardmodeling1}
 
 두 번째는 [@askell2021general] 및 다른 연구들에서와 같이 소프트플러스 함수 $\log(1+e^x)$를 사용하여 표현된 수학적으로 동등한 형태이다:

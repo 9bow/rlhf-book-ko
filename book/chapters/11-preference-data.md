@@ -10,7 +10,7 @@ prev-url: "10-preferences"
 page-title: 선호도 데이터
 search-title: "11장: 선호도 데이터"
 meta-description: "선호도 데이터셋이 RLHF와 언어 모델 사후 학습에 맞게 설계, 수집, 필터링, 활용되는 방식을 설명합니다."
-next-chapter: "합성 데이터"
+next-chapter: "합성 데이터와 증류"
 next-url: "12-synthetic-data"
 ---
 
@@ -116,7 +116,7 @@ Midjourney의 인터페이스가 아래에 나와 있다:
 
 Table: 두 응답 A와 B 사이의 5점 리커트 척도 예시. {#tbl:likert5}
 
-언어 모델링을 위한 초기 RLHF 연구들은 두 응답 사이의 선호도 수준을 가진 8단계 리커트 척도를 사용한다 [@bai2022training].
+언어 모델링을 위한 초기 RLHF 연구들은 두 응답 사이의 선호도 수준을 가진 8점 리커트 척도를 사용한다 [@bai2022training].
 짝수 척도는 무승부의 가능성을 제거한다:
 
 

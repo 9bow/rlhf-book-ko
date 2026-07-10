@@ -508,11 +508,14 @@
     <navigation-dropdown expanded="false"></navigation-dropdown>
   </header>
 
+  <div data-pagefind-body data-pagefind-meta="title:강좌">
   <h1>강좌</h1>
 
   <p>
-    <a href="https://9bow.github.io/rlhf-book-ko">책</a>을 따라가는 전체 강좌와 추가 자료, 저자가 진행한 다른 강의를 모았습니다.
+    책을 따라가는 전체 강좌와 추가 자료, 저자가 진행한 다른 강의를 모았습니다.
   </p>
+
+  <p class="meta">슬라이드 덱은 대체로 Claude Opus로 초안을 만들고, 사람이 상당한 수정을 더해 완성합니다. 예외는 각 덱에 별도로 표시됩니다.</p>
 
   <div class="welcome-video">
     <div>
@@ -528,10 +531,36 @@
   </div>
 
   <ul class="page-guide">
+    <li><a href="#prerequisites"><strong>선수 지식</strong></a> &mdash; 시작 전에 알고 있으면 좋은 배경입니다.</li>
     <li><a href="#lectures"><strong>주요 자료</strong></a> &mdash; 책의 챕터 순서를 따라가는 핵심 강의 시리즈입니다. 녹화 영상, 슬라이드, PDF, 소스를 제공합니다.</li>
     <li><a href="#extra-resources"><strong>추가 자료</strong></a> &mdash; 추천 도서, 외부 RL 강좌, 각 챕터와 함께 보면 좋은 Nathan의 발표를 모았습니다.</li>
     <li><a href="#other-lectures"><strong>기타 초청 강의와 발표</strong></a> &mdash; 초청 강연 및 독립 발표 자료입니다.</li>
   </ul>
+
+  <section class="slides-section" id="prerequisites">
+    <h2>선수 지식</h2>
+
+    <p>이 강좌는 대략 AI 분야의 초기 박사과정 또는 석사과정 학생을 염두에 두고 있지만, 충분히 시간을 들여 학습할 의지가 있는 사람이라면 따라올 수 있도록 설계되어 있습니다.</p>
+
+    <p>시작하기 위해 강화학습이나 언어 모델링 배경지식이 반드시 필요한 것은 아닙니다. 열심히 공부하는 학습자라면 오늘날의 상위 LLM을 튜터로 활용해 낯선 수학, 코드, 용어를 풀어가며 전체 강좌를 따라갈 수 있습니다. 흥미가 가는 주제를 깊이 파고들고, 영상을 건너뛰거나 순서를 바꾸어 봐도 좋습니다.</p>
+
+    <p>전통적인 교과과정 경로를 선호한다면, 보통 언어 모델링/NLP의 기초와 기본 머신러닝(예: AI 입문, ML 입문 수업) 정도가 배경지식입니다.</p>
+
+    <div class="course-entry" id="prerequisite-review">
+      <div>
+        <h3>LLM 사후 학습을 위한 ML 기초</h3>
+        <p class="meta">언어 모델링, KL, 교차 엔트로피 등 사후 학습에 필요한 ML 선수 지식을 복습해 강좌에 적응하기 위한 자료</p>
+      </div>
+      <div class="talk-actions">
+        <a href="https://www.youtube.com/watch?v=MMDNaeIFVy8&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=2" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> 보기</a>
+        <a href="/teach/course/lec0-prereq-review/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
+        <a href="/teach/course/lec0-prereq-review/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
+        <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec0-prereq-review.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
+      </div>
+    </div>
+
+    <p class="meta"><a href="#extra-resources" style="display: inline-flex; align-items: center; gap: 0.4em;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>추가 학습 자료</a></p>
+  </section>
 
   <section class="slides-section" id="lectures">
     <h2>주요 자료</h2>
@@ -614,6 +643,7 @@
           <p class="meta">8장 &middot; DPO 단계별 도출, 변형 방법, 실무</p>
         </div>
         <div class="talk-actions">
+          <a href="https://www.youtube.com/watch?v=6g6b4gvO-y0&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=8" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> 보기</a>
           <a href="/teach/course/lec6-chap8-dpo/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
           <a href="/teach/course/lec6-chap8-dpo/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
           <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec6-chap8-dpo.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
@@ -624,9 +654,44 @@
           <h3>대화 1: 2026년 최전선 사후 학습 레시피 (Finbarr Timbers와 함께)</h3>
         </div>
         <div class="talk-actions">
+          <a href="https://www.youtube.com/watch?v=sbXEPxIazqY&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=9" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> 보기</a>
           <a href="/teach/course/conversation-01/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
           <a href="/teach/course/conversation-01/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
           <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/conversation-01.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
+        </div>
+      </div>
+      <div class="course-entry" id="lecture-7-synthetic-data">
+        <div>
+          <h3>강의 7: 합성 데이터와 현대 사후 학습 방법</h3>
+          <p class="meta">12장 &middot; 온-정책 증류, AI 피드백, 헌법적 AI, 루브릭</p>
+        </div>
+        <div class="talk-actions">
+          <a href="https://www.youtube.com/watch?v=6nyJ8y8ghsE&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=10" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> 보기</a>
+          <a href="/teach/course/lec7-chap12-synthetic-data/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
+          <a href="/teach/course/lec7-chap12-synthetic-data/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
+          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec7-chap12-synthetic-data.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
+        </div>
+      </div>
+      <div class="course-entry qa-entry" id="qa-02">
+        <div>
+          <h3>Q&amp;A 2: 독자 질문, 5–7강</h3>
+        </div>
+        <div class="talk-actions">
+          <a href="https://www.youtube.com/watch?v=gB-bYUECpzE&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=11" class="btn btn-watch" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-watch"/></svg> 보기</a>
+          <a href="/teach/course/qa-02/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
+          <a href="/teach/course/qa-02/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
+          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/qa-02.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
+        </div>
+      </div>
+      <div class="course-entry" id="lecture-8-preferences">
+        <div>
+          <h3>[초안] 강의 8: 선호도와 선호도 데이터</h3>
+          <p class="meta">10, 11장 &middot; 선호도의 역사, 선호도 데이터 엔진, 답하기 어려운 질문들</p>
+        </div>
+        <div class="talk-actions">
+          <a href="/teach/course/lec8-chap10-11-preferences/slides.pdf" class="btn" download><svg width="14" height="14"><use href="#icon-pdf"/></svg> PDF</a>
+          <a href="/teach/course/lec8-chap10-11-preferences/" class="btn" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-slides"/></svg> 슬라이드</a>
+          <a href="https://github.com/natolambert/rlhf-book/blob/main/teach/course/lec8-chap10-11-preferences.md?plain=1" class="btn btn-source" target="_blank" rel="noopener noreferrer"><svg width="14" height="14"><use href="#icon-github"/></svg> 소스</a>
         </div>
       </div>
     </div>
@@ -740,6 +805,7 @@
       </div>
     </div>
   </section>
+  </div><!-- /data-pagefind-body -->
 
   <section id="citation" style="padding: 0 20px;">
     <h4 style="text-align: left; font-weight: normal;">인용</h4>

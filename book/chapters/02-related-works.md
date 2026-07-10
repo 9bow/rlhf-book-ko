@@ -13,6 +13,8 @@ meta-description: "RLHF, 보상 모델링, 선호도 학습, 사후 학습 언�
 next-chapter: "학습 개요"
 next-url: "03-training-overview"
 lectures:
+  - video: "https://www.youtube.com/watch?v=MMDNaeIFVy8&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=2"
+    label: "강의 0: 선수 지식"
   - video: "https://www.youtube.com/watch?v=o6l6tJQgUg4&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=2"
     label: "강의 1: 개요 (1–3장)"
 ---

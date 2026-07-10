@@ -70,12 +70,12 @@ $$\Delta \theta \propto \Psi_t \, \nabla_\theta \log \pi_\theta(a_t \mid s_t)$$ 
 
 이제 이를 좀 더 형식화해 보자.
 강화학습 (RL) 알고리즘은 상태 $s \in \mathcal{S}$와 행동 $a \in \mathcal{A}$의 궤적에 걸쳐 미래의 할인된 보상을 최대화하도록 설계된다 (더 많은 표기법은 부록 A, 정의를 참조).
-에이전트의 목표, 흔히 *리턴*이라 불리는 것은 주어진 시간 $t$에서의 할인된 미래 보상의 합이다 ($\gamma\in [0,1]$은 근기 보상을 우선시하는 할인 계수):
+에이전트의 목표, 흔히 *리턴*이라 불리는 것은 주어진 시간 $t$에서 시작하는 할인된 보상의 합이다 ($\gamma\in [0,1]$은 근기 보상을 우선시하는 할인 계수):
 
-$$G_t = R_{t+1} + \gamma R_{t+2} + \cdots = \sum_{k=0}^\infty \gamma^k R_{t+k+1}.$$ {#eq:return_definition}
+$$G_t = r_t + \gamma r_{t+1} + \cdots = \sum_{k=0}^\infty \gamma^k r_{t+k}.$$ {#eq:return_definition}
 
-리턴 정의는 다음과 같이 추정할 수도 있다:
-$$G_{t} = \gamma{G_{t+1}} + R_{t+1}.$$ {#eq:recursive_return}
+리턴 정의는 다음과 같이 재귀적으로 쓸 수도 있다:
+$$G_{t} = r_t + \gamma G_{t+1}.$$ {#eq:recursive_return}
 
 이 리턴은 현재 상태가 주어졌을 때 추정된 미래 리턴인 가치 함수 $V(s)$를 학습하는 기초가 된다:
 
@@ -83,16 +83,18 @@ $$V(s) = \mathbb{E}\left[G_t \mid S_t = s \right].$$ {#eq:value_function}
 
 모든 정책 그래디언트 알고리즘은 기대 리턴을 최대화하도록 정책 $\pi_\theta(a\mid s)$를 최적화한다. 이 목적함수는 유도된 가치 함수 $V^{\pi_\theta}(s)$를 사용하여 표현될 수 있다.
 
-$d^{\pi_\theta}(s)$가 정책 $\pi_\theta(a \mid s)$에 의해 유도된 상태 방문 분포라 할 때, 우리가 최대화하는 목적함수는 다음과 같이 쓸 수 있다:
+$d_0(s)$를 초기 상태 분포라 하자. 우리가 최대화하는 에피소드 목적함수는 다음과 같이 쓸 수 있다:
 $$
 J(\theta)
 \;=\;
-\sum_{s} d^{\pi_\theta}(s) V^{\pi_\theta}(s),
+\sum_{s} d_0(s) V^{\pi_\theta}(s),
 $$ {#eq:policy_objective}
 
-유한 MDP에서 이는 모든 상태에 대한 합이지만, 실제로는 정확히 계산하지 않는다.
+유한 MDP에서 이는 가능한 시작 상태에 대한 합이지만, 실제로는 정확히 계산하지 않는다.
 대신, 현재 정책에서 롤아웃을 샘플링하여 데이터로부터 추정한다.
-RLHF에서 이는 일반적으로 데이터셋에서 프롬프트 $x_i$를 샘플링하고 완성 $y_i \sim \pi_\theta(\cdot\mid x_i)$를 생성한 후, 다음과 같은 경험적 평균을 취하는 것을 의미한다:
+RLHF에서 이는 일반적으로 데이터셋에서 프롬프트 $x_i$를 샘플링하고 완성 $y_i \sim \pi_\theta(\cdot\mid x_i)$를 생성하는 것을 의미한다.
+$R(x_i, y_i)$가 해당 프롬프트-완성 쌍에 부여된 스칼라 시퀀스 수준 보상이라고 하자. $\tau_i$가 대응되는 에피소드라면 이는 궤적 보상 $R(\tau_i)$이다.
+그다음 다음과 같은 경험적 평균을 취한다:
 
 $$
 \hat{J}(\theta) = \frac{1}{B}\sum_{i=1}^{B} R(x_i, y_i),
@@ -115,9 +117,10 @@ $$\theta \leftarrow \theta + \alpha \nabla_\theta J(\theta)$$ {#eq:policy_update
 
 ### 정책 그래디언트 유도
 
+$p_\theta(\tau)$를 초기 상태 분포 $d_0$, 정책 $\pi_\theta$, 환경 전이 동역학이 유도하는 궤적 분포라고 하자. 이는 아래 @eq:trajectory_probability 에서 전개된다.
 최대화하고자 하는 RL 목적함수를 다른 방식으로 표현하면 다음과 같다:
 $$
-J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta} \left[ R(\tau) \right],
+J(\theta) = \mathbb{E}_{\tau \sim p_\theta} \left[ R(\tau) \right],
 $$ {#eq:policy_objective_expectation}
 
 여기서 $\tau = (s_0, a_0, s_1, a_1, \ldots)$는 궤적이고 $R(\tau) = \sum_{t=0}^\infty r_t$는 궤적의 총 보상이다. 또는 모든 가능한 궤적에 대한 적분으로 기댓값을 쓸 수 있다:
@@ -125,9 +128,9 @@ $$
 J(\theta) = \int_\tau p_\theta (\tau) R(\tau) d\tau
 $$ {#eq:policy_objective_integral}
 
-궤적 확률을 다음과 같이 표현할 수 있음에 주목하라. 여기서 $\pi_\theta(a_t|s_t) p(s_{t+1}|s_t, a_t)$는 하나의 상태와 행동에서 다음 상태들의 그룹으로의 전이 확률이다:
+궤적 확률을 다음과 같이 표현할 수 있음에 주목하라. 여기서 $\pi_\theta(a_t|s_t) p(s_{t+1}|s_t, a_t)$는 정책 확률과 하나의 상태-행동 쌍에서 다음 상태로 가는 환경 전이 확률을 결합한 항이다:
 $$
-p_\theta (\tau) = p(s_0) \prod_{t=0}^\infty \pi_\theta(a_t|s_t) p(s_{t+1}|s_t, a_t),
+p_\theta (\tau) = d_0(s_0) \prod_{t=0}^\infty \pi_\theta(a_t|s_t) p(s_{t+1}|s_t, a_t),
 $$ {#eq:trajectory_probability}
 
 목적함수(@eq:policy_objective_expectation)에 대해 정책 파라미터 $\theta$에 관한 그래디언트를 취하면:
@@ -147,23 +150,23 @@ $$ {#eq:log_chain_rule}
 $$
 \begin{aligned}
 \nabla_\theta J(\theta) &= \int_\tau \nabla_\theta p_\theta (\tau) R(\tau) d\tau \\
-&= \int_\tau p_\theta (\tau) \nabla_\theta \log p_\theta (\tau) R(\tau) d\tau \\
-&= \mathbb{E}_{\tau \sim \pi_\theta} \left[ \nabla_\theta \log p_\theta (\tau) R(\tau) \right]
+&= \int_\tau p_\theta (\tau) R(\tau) \nabla_\theta \log p_\theta (\tau) d\tau \\
+&= \mathbb{E}_{\tau \sim p_\theta} \left[ R(\tau) \nabla_\theta \log p_\theta (\tau) \right]
 \end{aligned}
 $$ {#eq:policy_gradient_expectation}
 
 마지막 단계는 궤적 분포 $p_\theta(\tau)$ 하에서의 기댓값 정의를 사용한다: 임의의 함수 $f$에 대해, $\mathbb{E}_{\tau \sim p_\theta}[f(\tau)] = \int_\tau f(\tau)\,p_\theta(\tau)\,d\tau$ (이산적인 경우에는 합).
-기댓값으로 표현하면 Monte Carlo 롤아웃, 예를 들어 궤적 $\tau_i \sim \pi_\theta$에 대해 $\frac{1}{B}\sum_{i=1}^{B} f(\tau_i)$로 근사할 수 있어 유용하다.
+기댓값으로 표현하면 Monte Carlo 롤아웃, 예를 들어 현재 정책이 유도한 궤적 $\tau_i \sim p_\theta$에 대해 $\frac{1}{B}\sum_{i=1}^{B} f(\tau_i)$로 근사할 수 있어 유용하다.
 
 유도로 돌아와, 궤적의 로그 확률을 전개하면:
 
 $$
-\log p_\theta (\tau) = \log p(s_0) + \sum_{t=0}^\infty \log \pi_\theta(a_t|s_t) + \sum_{t=0}^\infty \log p(s_{t+1}|s_t, a_t)
+\log p_\theta (\tau) = \log d_0(s_0) + \sum_{t=0}^\infty \log \pi_\theta(a_t|s_t) + \sum_{t=0}^\infty \log p(s_{t+1}|s_t, a_t)
 $$ {#eq:trajectory_log_prob}
 
 위의 그래디언트를 취하면:
 
-- $\nabla_\theta \log p(s_0) = 0$ (초기 상태는 $\theta$에 의존하지 않음)
+- $\nabla_\theta \log d_0(s_0) = 0$ (초기 상태 분포는 $\theta$에 의존하지 않음)
 - $\nabla_\theta \log p(s_{t+1}|s_t, a_t) = 0$ (환경 전이 동역학은 $\theta$에 의존하지 않음)
 - $\nabla_\theta \log \pi_\theta(a_t|s_t)$만 살아남음
 
@@ -188,18 +191,18 @@ loss.backward()
 
 @eq:policy_gradient_expectation 에 이를 다시 대입하면:
 $$
-\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta} \left[ \sum_{t=0}^\infty \nabla_\theta \log \pi_\theta(a_t|s_t) R(\tau) \right]
+\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim p_\theta} \left[ \sum_{t=0}^\infty R(\tau) \nabla_\theta \log \pi_\theta(a_t|s_t) \right]
 $$ {#eq:policy_gradient_returns}
 
 종종 사람들은 더 일반적인 정책 그래디언트 공식화를 사용한다:
 $$
-g = \nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta} \left[ \sum_{t=0}^\infty \nabla_\theta \log \pi_\theta(a_t|s_t) \Psi_t \right]
+g = \nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim p_\theta} \left[ \sum_{t=0}^\infty \Psi_t \nabla_\theta \log \pi_\theta(a_t|s_t) \right]
 $$ {#eq:general_gradient}
 
 여기서 $\Psi_t$는 다음 중 하나가 될 수 있다 (보상은 종종 $\gamma$로 할인될 수도 있음). Schulman et al. 2015 [@schulman2015high]에서 채택된 분류법:
 
 1. $R(\tau) = \sum_{t=0}^{\infty} r_t$: 궤적의 총 보상.
-2. $\sum_{t'=t}^{\infty} r_{t'}$: 행동 $a_t$ 이후의 보상, 리턴 $G$라고도 함.
+2. $\sum_{t'=t}^{\infty} r_{t'}$: 행동 $a_t$ 이후의 보상, 시간 $t$에서의 리턴 $G_t$라고도 함.
 3. $\sum_{t'=t}^{\infty} r_{t'} - b(s_t)$: 이전 공식의 기준선 버전.
 4. $Q^{\pi}(s_t, a_t)$: 상태-행동 가치 함수.
 5. $A^{\pi}(s_t, a_t)$: 이점 함수, 정확히 계산될 경우 이론적으로 가능한 최저 분산을 산출.
@@ -219,9 +222,9 @@ $$A(s_t,a_t) = Q(s_t,a_t) - V(s_t) = r_t + \gamma V(s_{t+1}) - V(s_t)$$ {#eq:adv
 ### 기본 정책 그래디언트 (Vanilla Policy Gradient)
 
 기본 정책 그래디언트 구현은 정책 파라미터에 대해 미분하여 위의 $J(\theta)$ 표현식을 최적화한다.
-전체 리턴에 대한 간단한 버전은 다음과 같다:
+시간 $t$의 리턴에 대한 간단한 버전은 다음과 같다:
 
-$$\nabla_\theta J(\theta) = \mathbb{E}_\tau \left[ \sum_{t=0}^T \nabla_\theta \log \pi_\theta(a_t|s_t) G_t \right]$$ {#eq:vanilla_policy_gradient}
+$$\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim p_\theta} \left[ \sum_{t=0}^T G_t \nabla_\theta \log \pi_\theta(a_t|s_t) \right]$$ {#eq:vanilla_policy_gradient}
 
 기본 정책 그래디언트 알고리즘의 일반적인 문제는 그래디언트 업데이트의 높은 분산이며, 이는 여러 방법으로 완화될 수 있다.
 높은 분산은 리턴 $G$를 환경에서의 종종 소규모 롤아웃 집합으로부터 추정하는 것에서 비롯되는데, 이는 노이즈에 취약한 경향이 있다 (예를 들어 온도 $>0$에서 언어 모델로 생성하는 것의 확률론적 특성).
@@ -233,7 +236,7 @@ $$\nabla_\theta J(\theta) = \mathbb{E}_\tau \left[ \sum_{t=0}^T \nabla_\theta \l
 
 이 장에서 논의되는 많은 정책 그래디언트 알고리즘은 이점 공식화를 기반으로 한다:
 
-$$\nabla_\theta J(\theta) = \mathbb{E}_\tau \left[ \sum_{t=0}^T \nabla_\theta \log \pi_\theta(a_t|s_t) A^{\pi_\theta}(s_t, a_t) \right]$$ {#eq:advantage_policy_gradient}
+$$\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim p_\theta} \left[ \sum_{t=0}^T A^{\pi_\theta}(s_t, a_t) \nabla_\theta \log \pi_\theta(a_t|s_t) \right]$$ {#eq:advantage_policy_gradient}
 
 
 ### REINFORCE
@@ -259,9 +262,9 @@ $$ \Delta_\theta = \alpha(r - b)e $$ {#eq:REINFORCE_BASIC}
 $$
 \nabla_{\theta}\,J(\theta)
 \;=\;
-\mathbb{E}_{\tau \sim \pi_{\theta}}\!\left[
+\mathbb{E}_{\tau \sim p_{\theta}}\!\left[
     \sum_{t=0}^{T}
-    \nabla_{\theta} \log \pi_{\theta}(a_t \mid s_t)\,(G_t - b(s_t))
+    (G_t - b(s_t))\,\nabla_{\theta} \log \pi_{\theta}(a_t \mid s_t)
 \right],
 $$ {#eq:REINFORCE_with_baseline}
 
@@ -270,9 +273,9 @@ $$ {#eq:REINFORCE_with_baseline}
 $$
 \nabla_{\theta}\,J(\theta)
 \;=\;
-\mathbb{E}_{\tau \sim \pi_{\theta}}\!\left[
+\mathbb{E}_{\tau \sim p_{\theta}}\!\left[
     \sum_{t=0}^{T}
-    \nabla_{\theta} \log \pi_{\theta}(a_t \mid s_t)\,A_t
+    A_t\,\nabla_{\theta} \log \pi_{\theta}(a_t \mid s_t)
 \right],
 $$ {#eq:REINFORCE_with_advantage}
 
@@ -324,7 +327,7 @@ GRPO는 일반적으로 보상에서 차감하는 대신 손실에 별도의 토
 
 ### Proximal Policy Optimization (PPO, 근위 정책 최적화)
 
-Proximal Policy Optimization (PPO) [@schulman2017proximal]은 Deep RL의 성공(예: DOTA 2를 정복한 OpenAI의 Five [@berner2019dota] 및 방대한 양의 연구)의 기반이 되는 핵심 알고리즘 중 하나이다.
+Proximal Policy Optimization (PPO) [@schulman2017proximal]은 Deep RL의 성공(예: Dota 2를 정복한 OpenAI Five [@berner2019dota] 및 방대한 양의 연구)의 기반이 되는 핵심 알고리즘 중 하나이다.
 PPO가 이점과 정책 확률에 대해 최대화하는 목적함수는 다음과 같다:
 
 $$J(\theta) = \min\left(\frac{\pi_\theta(a|s)}{\pi_{\theta_{\text{old}}}(a|s)}A, \text{clip} \left( \frac{\pi_\theta(a|s)}{\pi_{\theta_{\text{old}}}(a|s)}, 1-\varepsilon, 1+\varepsilon \right) A \right).$$ {#eq:PPO_EQN}
@@ -333,12 +336,15 @@ $$J(\theta) = \min\left(\frac{\pi_\theta(a|s)}{\pi_{\theta_{\text{old}}}(a|s)}A,
 두 정책 간의 비율은 *중요도 샘플링*에서 나오는데, 이를 통해 새로운 정책에 대한 그래디언트를 추정하기 위해 이전 정책에서 수집된 데이터를 재사용할 수 있다.
 
 정책 그래디언트의 이점 공식화(@eq:advantage_policy_gradient)를 다시 상기하면:
-$$\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta} \left[ \sum_{t=0}^T \nabla_\theta \log \pi_\theta(a_t|s_t) A^{\pi_\theta}(s_t, a_t) \right].$$ {#eq:advantage_policy_gradient_recall}
+$$\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim p_\theta} \left[ \sum_{t=0}^T A^{\pi_\theta}(s_t, a_t) \nabla_\theta \log \pi_\theta(a_t|s_t) \right].$$ {#eq:advantage_policy_gradient_recall}
 
-이 기댓값은 $\pi_\theta$에서 샘플링된 궤적에 대해 계산되지만, 실제로는 고정된 정책 $\pi_{\theta_{\text{old}}}$에서 수집된 데이터 배치에 대해 여러 그래디언트 스텝을 취하고 싶다.
+이 기댓값은 $\pi_\theta$가 유도한 궤적 분포에서 샘플링된 궤적에 대해 계산되지만, 실제로는 고정된 정책 $\pi_{\theta_{\text{old}}}$에서 수집된 데이터 배치에 대해 여러 그래디언트 스텝을 취하고 싶다.
 이 분포 불일치를 보정하기 위해 중요도 가중치 $\frac{\pi_\theta(a|s)}{\pi_{\theta_{\text{old}}}(a|s)}$를 곱하는데, 이는 현재 정책 대비 데이터 수집 정책에서 샘플의 가능도가 얼마나 높거나 낮은지를 반영하여 샘플을 재가중한다.
 제약 없이 이 중요도 가중 목적함수를 최적화하면 비율이 1에서 크게 벗어날 때 파괴적으로 큰 정책 업데이트가 발생할 수 있다.
 PPO는 비율을 범위 $[1-\varepsilon, 1+\varepsilon]$으로 클리핑하여 단일 업데이트에서 정책이 너무 크게 변하지 않도록 보장함으로써 이를 해결한다.
+
+PPO와 그 주변 알고리즘으로 넘어가면 명시적인 그래디언트보다 *목적함수*를 다루는 경우가 많다는 점에 유의하자.
+이는 PPO 목적함수가 $\min$과 클리핑 연산을 포함하면 쉽게 해석되는 해석적 그래디언트를 갖지 않기 때문이다(@fig:ppo-obj 의 영역에 따라, 쓰는 방식에 따라 약 4개의 항이 생긴다). 따라서 목적함수를 쓰는 것이 이런 알고리즘을 전달하는 더 명확한 방식이다.
 
 완전성을 위해, PPO는 일반적으로 타임스텝에 걸친 *기대* 클리핑된 대리 목적함수로 작성된다:
 
@@ -388,9 +394,22 @@ PPO 목적함수는 샘플링된 행동의 확률을 변경하여 최대화된�
 "신뢰 영역"의 개념은 수치 최적화 문헌에서 유래하였지만 [@nocedal2006numerical], Deep RL 내에서는 PPO의 전신으로 인정받는 알고리즘 Trust Region Policy Optimization (TRPO)으로부터 대중화되었다 [@schulman2015trust].
 신뢰 영역은 PPO 목적함수의 max/min 연산에 의해 업데이트가 "클리핑"되지 않는 완전한 정책 그래디언트 스텝이 적용되는 영역이다.
 
-![가상의 이점에 대한 PPO 목적함수의 다양한 영역 시각화. "신뢰 영역"은 정책 비율 $\rho$가 $1\pm\varepsilon$ 내에 있는 영역으로 설명된다.](images/ppo-viz-4x.png){#fig:ppo-obj}
+![양의 이점과 음의 이점 모두에 대해 정책 비율 $\rho(\theta)$의 함수로 본 PPO 목적함수 $J(\theta)$ 시각화. 각 패널은 세 비율 영역에 대해 비클리핑 항, 클리핑 항, 결과 목적함수, 그래디언트를 표시한다.](images/ppo-clip-viz.png){#fig:ppo-obj}
 
-정책 비율과 이점은 몇 가지 다른 구성으로 발생할 수 있다. 경우를 두 그룹으로 나눈다: 긍정적 이점과 부정적 이점.
+정책 비율과 이점은 몇 가지 다른 구성으로 발생할 수 있으며, @fig:ppo-obj 는 이점 $A_t$의 부호와 정책 비율 $\rho(\theta)$가 속한 세 영역에 따라 이를 열거한다. 모든 영역의 결과는 두 가지 사실로 결정된다. 이점의 부호는 해당 행동을 더 가능하게 만들고 싶은지 덜 가능하게 만들고 싶은지를 정하고, $\min$ 연산은 비클리핑 항 $\rho(\theta) A_t$ 또는 그 클리핑된 대응항 중 하나를 선택한다.
+
+클리핑은 정책이 이미 샘플링된 행동을 원하는 방향으로 신뢰 영역의 경계를 넘어 충분히 이동시킨 두 영역에서만 그래디언트를 0으로 만든다:
+
+- **양의 이점이고 $\rho(\theta) > 1+\varepsilon$인 경우**: 해당 행동은 이미 $\pi_{\theta_{\text{old}}}$보다 $\pi_\theta$에서 상당히 더 가능해졌다. 목적함수는 $(1+\varepsilon)A_t$에서 포화되고, 그래디언트는 0이며, 더 이상 업데이트하지 않는다. 이미 충분히 강화된 행동을 과도하게 더 강화하지 않기 위함이다.
+- **음의 이점이고 $\rho(\theta) < 1-\varepsilon$인 경우**: 해당 행동은 이미 $\pi_\theta$에서 상당히 덜 가능해졌다. 목적함수는 $(1-\varepsilon)A_t$에서 포화되고, 그래디언트 역시 0이며, 더 이상 업데이트하지 않는다. 이미 억제된 행동을 과도하게 더 억제하지 않기 위함이다.
+
+그 밖의 모든 곳에서는 비클리핑 항 $\rho(\theta) A_t$가 활성화되어 PPO가 표준 정책 그래디언트 스텝을 수행한다. 즉 $A_t > 0$이면 해당 행동의 확률을 높이고, $A_t < 0$이면 낮춘다. @fig:ppo-obj 의 각 영역은 업데이트된 정책 $\pi_\theta$가 무엇을 하도록 요구받는지로 읽을 수 있다:
+
+- 양의 이점에서 기울어진 비클리핑 영역(초록색)은 샘플링된 행동의 확률을 **증가**시킨다.
+- 음의 이점에서 기울어진 비클리핑 영역(빨간색)은 그 확률을 **감소**시킨다.
+- 평평한 클리핑 영역(회색)은 그래디언트가 0이므로 정책을 **변경하지 않는다**.
+
+같은 영역을 항별로 쓰면 다음과 같다:
 
 **긍정적 이점 ($A_t > 0$)**
 

@@ -12,6 +12,9 @@ search-title: "8장: 직접 정렬 알고리즘"
 meta-description: "명시적 보상 모델이나 RL 루프 없이 선호도 목적을 최적화하는 DPO 같은 직접 정렬 알고리즘을 설명합니다."
 next-chapter: "거부 샘플링"
 next-url: "09-rejection-sampling"
+lectures:
+  - video: "https://www.youtube.com/watch?v=6g6b4gvO-y0&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=8"
+    label: "강의 6: 직접 선호 최적화"
 ---
 
 # 직접 정렬 알고리즘 (DAAs)
@@ -63,7 +66,7 @@ $$r(x, y) = \beta  \log \frac{\pi_r(y \mid x)}{\pi_{\text{ref}}(y \mid x)}$$ {#e
 
 @eq:dpo_reward의 보상으로, 무슨 일이 일어나고 있는지 더 해석하기 위해 손실의 그래디언트를 쓸 수 있다:
 
-$$\nabla_{\theta}\mathcal{L}_{\text{DPO}}(\pi_{\theta}; \pi_{\text{ref}}) = -\beta \mathbb{E}_{(x, y_c, y_r)\sim \mathcal{D}}\left[ w \cdot \left(\nabla_{\theta}\log \pi(y_c \mid x) - \nabla_{\theta}\log \pi(y_r \mid x)\right) \right]$$ {#eq:dpo_gradient}
+$$\nabla_{\theta}\mathcal{L}_{\text{DPO}}(\pi_{\theta}; \pi_{\text{ref}}) = -\beta \mathbb{E}_{(x, y_c, y_r)\sim \mathcal{D}}\left[ w \cdot \left(\nabla_{\theta}\log \pi_{\theta}(y_c \mid x) - \nabla_{\theta}\log \pi_{\theta}(y_r \mid x)\right) \right]$$ {#eq:dpo_gradient}
 
 여기서 $w = \sigma\!\left(r_{\theta}(x, y_r) - r_{\theta}(x, y_c)\right)$이다.
 
@@ -230,7 +233,7 @@ $$\nabla_{\theta}\mathcal{L}_{\text{DPO}}(\pi_{\theta};\pi_{\text{ref}}) = -\mat
 
 이를 전개하고 시그모이드와 로그에 대한 위의 표현식을 사용하면 앞서 소개된 그래디언트를 얻는다:
 
-$$ -\mathbb{E}_{(x,y_c,y_r)\sim\mathcal{D}}\left[\beta\sigma\left(\beta\log\frac{\pi_{\theta}(y_r|x)}{\pi_{\text{ref}}(y_r|x)} - \beta\log\frac{\pi_{\theta}(y_c|x)}{\pi_{\text{ref}}(y_c|x)}\right)\left[\nabla_{\theta}\log\pi(y_c|x)-\nabla_{\theta}\log\pi(y_r|x)\right]\right] $$ {#eq:dpo_grad_3}
+$$ -\mathbb{E}_{(x,y_c,y_r)\sim\mathcal{D}}\left[\beta\sigma\left(\beta\log\frac{\pi_{\theta}(y_r|x)}{\pi_{\text{ref}}(y_r|x)} - \beta\log\frac{\pi_{\theta}(y_c|x)}{\pi_{\text{ref}}(y_c|x)}\right)\left[\nabla_{\theta}\log\pi_{\theta}(y_c|x)-\nabla_{\theta}\log\pi_{\theta}(y_r|x)\right]\right] $$ {#eq:dpo_grad_3}
 
 ## 수치적 우려사항, 약점 및 대안
 

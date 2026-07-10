@@ -7,14 +7,17 @@
 ---
 prev-chapter: "선호도 데이터"
 prev-url: "11-preference-data"
-page-title: 합성 데이터
-search-title: "12장: 합성 데이터"
+page-title: 합성 데이터와 증류
+search-title: "12장: 합성 데이터와 증류"
 meta-description: "현대 사후 학습 전반에서 쓰이는 합성 데이터, 증류, Constitutional AI, AI 피드백 방법을 설명합니다."
 next-chapter: "도구 사용 및 함수 호출"
 next-url: "13-tools"
+lectures:
+  - video: "https://www.youtube.com/watch?v=6nyJ8y8ghsE&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=10"
+    label: "강의 7: 합성 데이터와 현대 사후 학습 방법"
 ---
 
-# 합성 데이터
+# 합성 데이터와 증류
 
 *인간 피드백* 기반 강화학습은 우리가 구축하는 모델에 인간의 영향력을 유지한다는 아이디어에 깊이 뿌리를 두고 있다.
 첫 번째 모델이 RLHF로 성공적으로 학습되었을 때, 인간 데이터는 이런 방식으로 모델을 개선할 수 있는 *유일한* 실행 가능한 방법이었다.
@@ -107,6 +110,8 @@ $$
 q(u_j = k \mid s, u_{<j})\log p(u_j = k \mid s, u_{<j}).
 $$ {#eq:word_kd}
 
+WORD-KD는 Hinton에서 영감을 받은 고전적인 교사-학생 지식 증류를 언어 모델에 적용한 것이다. 일반적으로 이는 학습 말뭉치에 이미 들어 있는 정적인 텍스트 조각 위에서 수행된다.
+
 이는 일반적인 교차 엔트로피 형태 $-\sum_z q(z)\log p(z)$를 갖는다.
 각 위치 $j$에서 교사 분포 $q$는 가능한 다음 토큰 $k \in \mathcal{V}$ 각각에 확률을 부여하고, 학생은 교사가 가능성이 높다고 보는 토큰에 낮은 확률을 둘 때 페널티를 받는다.
 
@@ -122,6 +127,8 @@ $$
 = -\sum_{j=1}^{|\hat{u}|}\log p(\hat{u}_j \mid s, \hat{u}_{<j}).
 \end{aligned}
 $$ {#eq:sequence_kd}
+
+SEQ-KD는 교사 모델이 학생에게 신호가 되는 토큰을 생성한다는 점에서 현대적 방법으로 한 걸음 다가간다. 이는 뒤에서 볼 온-정책 증류 스타일을 열기 위한 핵심 단계이며, 가능한 모든 시퀀스에 대한 계산을 가능하게 만들기 위해 필요하다.
 
 현대 모델에서 널리 쓰이는 KD 변형으로 넘어가면서, 우리는 이 학습 방식을 *오프라인* KD라고 부를 것이다.
 학생 모델 학습에 사용할 생성물이 사전에 만들어져 있기 때문이다.
@@ -250,7 +257,8 @@ $$ {#eq:opd_kl_advantage}
 
 ### 현대 OPD 변형
 
-이 설정은 더 확장되어 여러 교사 모델이 하나의 최종 모델을 가르치도록 만들 수도 있다.
+이 설정은 더 확장되어 여러 교사 모델이 하나의 최종 모델을 가르치도록 만들 수도 있고, 모델이 실수를 식별하도록 돕는 추가 정보를 생성 안에 삽입할 수도 있다.
+먼저 여러 교사를 하나의 학습 실행에 통합하는 방법을 다룬다.
 이 교사들은 수학이나 코드 같은 도메인에 특화된 전문가 모델일 수도 있고, 이전의 중간 학습 체크포인트일 수도 있다.
 각 교사에 대해 학습 배치의 프롬프트 또는 과제 유형별 기여 가중치를 선택할 수 있으며, 이를 통해 다중 교사 온-정책 증류(Multi-Teacher On-Policy Distillation, MOPD)를 만들 수 있다 [@mimo2025flash].
 여러 교사에 대해 $\pi_{T_k}$를 교사 $k$, $w_k(s)$를 역방향 KL 손실 안에서의 프롬프트 의존 혼합 가중치($\sum_k w_k(s) = 1$)라고 하자:
@@ -269,7 +277,39 @@ OPD를 이 책의 다른 영역과 결합하는 방법도 많다.
 예를 들어 역방향 KL을 GRPO의 그룹 수준 정규화 같은 다른 이점 계산 방식과 함께 사용하면 더 복잡한 보상 셰이핑이 가능하다.
 KD 방법은 사후 학습 방법 중에서도 특이하게 학생과 교사가 같은 토크나이저를 공유해야 하는 경우가 많다.
 감독 신호가 다른 LLM에서 온 토큰별 피드백일 수 있기 때문이다.
-온-정책 자기 증류(On-Policy Self-Distillation, OPSD) 같은 확장 접근법은 언어 모델이 완성문을 스스로 또는 외부 도구로 검증하게 하여 특권 정보를 가진 교사처럼 행동하게 만들고, 이를 통해 자기 자신의 더 약한 버전을 학습시킨다 [@zhao2026selfdistilled].
+
+온-정책 자기 증류(On-Policy Self-Distillation, OPSD) 같은 확장 접근법은 언어 모델이 완성문을 스스로 또는 외부 도구로 검증하게 하여 특권 정보를 가진 교사처럼 행동하게 만들고, 이를 통해 명시적으로 더 강한 교사 없이 자기 자신의 성능을 개선한다 [@zhao2026selfdistilled] (OPSD 학습 개요는 @fig:sdpo 에 보인다).
+예를 들어 Cursor는 Kimi K2.5에서 미세조정한 Composer 2.5 코딩 모델을 학습시키기 위해 RL 궤적에 대한 표적화된 텍스트 피드백 형태의 자기 증류를 사용했다 [@cursor2026composer25].
+아래는 단순화한 직관이다. 실제로는 코드 정답성 같은 다른 손실 함수와 결합된다.
+이 설정에서 Cursor는 흔한 버그 목록을 가진 판단 프롬프트로 모델이 RL 궤적을 검토하게 한다.
+버그를 만나면 판단 모델은 RL 안에서 생성된 시퀀스를 수정한다. 즉 모델이 미래에 배울 수 있도록 힌트를 삽입한 뒤, 증류 손실을 계속 적용한다.
+이는 먼저 표준 언어 모델 생성으로 RL 완성문을 만들고, 그다음 판정 모델을 실행해 선택적으로 힌트 토큰을 삽입한 뒤, 마지막으로 새 완성문에 대한 로그확률을 생성해 지식 증류 손실을 적용하는 루프를 뜻한다.
+모델의 토큰 공간에 들어간 힌트만으로도 모델은 자기 출력을 고칠 수 있으며, 절대 성능 프론티어를 개선할 때에도 그렇다(이러한 힌트, 흔히 *특권 정보*라고 부르는 정보를 어떻게 구조화하고 사용할지에 대한 의미 있는 연구가 진행 중이다 [@penaloza2026privileged]).
+
+따라서 온-정책 증류는 여러 기술을 하나의 범용 모델에 결합하거나 특화된 배포에서 프론티어를 밀어 올리는 데 유용한 핵심 사후 학습 방법으로 남는다.
+
+![롤아웃이 어디에서 나오고 감독 신호가 어떻게 흐르는지에 따라 세 가지 증류 체제를 비교한다. **시퀀스 KD**(왼쪽): 교사가 오프라인으로 출력을 생성하고, 학생은 교차 엔트로피(CE) 손실로 이를 맞추도록 학습된다. **온-정책 증류(OPD)**(가운데): 학생이 온-정책으로 롤아웃을 생성하고(예: RL 프레임워크 안에서), 별도 교사가 방문한 각 토큰을 점수화하여 토큰별 KL 발산(KL)으로 학생을 학습시킨다. **온-정책 자기 증류(OPSD)**(오른쪽): 하나의 모델이 두 역할을 모두 수행한다. 문맥에 추가된 특권 정보(힌트)가 교사 궤적을 만들고, 힌트 없는 생성은 별도 교사 모델 없이 KL 손실로 그쪽을 향해 증류된다.](images/distillation_directionality_tikz.png){#fig:distillation-directionality data-dark-src="images/distillation_directionality_tikz-dark.png"}
+
+![문자열 뒤집기 과제에서의 온-정책 자기 증류(OPSD). 하나의 정책 $\pi_\theta$가 학생이 샘플링한 동일 완성 $y$ 위에서 두 번 forward된다. 하나는 질문과 올바른 형제 데모(노란색)를 조건으로 하는 **교사** pass이고, 다른 하나는 질문만 조건으로 하는 **학생** pass(초록색)이다. 교사에는 stop-gradient를 적용하고, 두 pass 사이의 토큰별 역방향 KL이 질문만 받은 정책을 데모 조건 자기 자신 쪽으로 끌어당긴다. 강조된 열은 잘못 샘플링된 토큰이며 두 분포가 가장 크게 갈라지는 지점이다.](images/sdpo_tikz.png){#fig:sdpo data-dark-src="images/sdpo_tikz-dark.png"}
+
+### 제안 실험
+
+동반 코드 `code/distillation/`은 @fig:sdpo 에 나타난 온-정책 자기 증류 설정인 SDPO [@hubotter2026reinforcement]를 구현한다(동시대 OPSD 논문 [@zhao2026selfdistilled]도 밀접하게 관련된다). 하나의 정책이 데모 조건 교사와 질문만 받은 학생 역할을 모두 수행하며, 토큰별 역방향 KL로 학습된다.
+이 예제는 작은 문자열 뒤집기 과제에서 실행되어 단일 GPU에서도 온-정책 증류 루프를 처음부터 끝까지 관찰할 수 있을 만큼 가볍다.
+
+1. **SDPO 문자열 뒤집기 예제를 실행한다.**
+
+   ```bash
+   cd code/
+   uv run python -m distillation.train --config distillation/configs/sdpo.yaml
+   ```
+
+   루프 안에서 출력되는 교사/학생 롤아웃 샘플과 함께 `reward`, `loss`, `skipped`를 관찰하라.
+   `skipped` 수는 샘플링된 그룹 안에 올바른 롤아웃이 하나도 없었던 폴링 프롬프트 수다. 학생이 개선되면 건너뛰는 프롬프트가 줄고 `reward`는 1에 가까워진다.
+
+2. **온-정책 조절값을 바꿔 본다.**
+   `distillation/configs/sdpo.yaml`을 복사해 과제를 고정한 채 `num_rollouts`, `kl_top_k`, `prompts_per_step`를 바꿔 가며 실험하라.
+   프롬프트당 롤아웃 수가 많을수록 올바른 형제 데모를 찾기 쉬워져 `skipped`가 낮아지지만, step당 생성 비용은 늘어난다. `kl_top_k`는 역방향 KL이 교사 분포의 어느 정도까지 맞출지와 계산량 사이의 균형을 조절한다.
 
 ## AI 피드백
 
@@ -297,7 +337,7 @@ AI 피드백 데이터가 인간 데이터를 능가하는 정확한 영역과 �
 RLAIF의 일부 초기 연구는 AI 피드백이 인간 데이터를 완전히 대체할 수 있다고 주장하며, 특히 채팅 작업만으로 평가할 때 효과적인 대체제로 홍보한다 [@lee2023rlaif] [@cui2023ultrafeedback] [@yuan2025selfrewardinglanguagemodels].
 ChatGPT 이후 RLHF를 연구하는 초기 문헌은 다양한 영역에서 도움이 되는 어시스턴트로 행동하는 모델의 "정렬"에 초점을 맞춘 좁은 평가 스위트를 가지고 있었다 (17장에서 더 논의됨).
 후기 연구는 더 미묘한 그림을 제시하며, 일부 추론 작업을 포함하는 더 넓은 평가 세트에서의 최적 균형점이 정확하게 레이블링하기 어려운 도전적인 데이터 포인트들을 인간에게 라우팅하면서 대부분의 데이터는 AI 피드백으로 보내는 것을 포함한다 [@miranda2024hybrid] [@xu2025rlthf].
-RLHF의 더 넓은 영역에서 인간과 AI 피드백 데이터 사이의 균형을 집중적으로 다룬 연구는 많지 않다. 다만 RLHF가 일반적으로 이 광범위한 평가 스위트를 개선할 수 있음을 보여주는 기술 보고서는 많다. 예를 들어 DPO를 사용하는 Ai2의 Tülu 3 [@lambert2024t] 및 OLMo 3 [@teamolmo2025olmo3], HuggingFace의 SmolLM 3 [@bakouch2025smollm3]가 있다. 온라인 RLHF 파이프라인을 사용하는 사례로는 Scale AI의 인간 선호도 데이터와 LLM 기반 피드백을 혼합하는 Nvidia의 HelpSteer 계열 연구 [@wang2024helpsteer] [@wang2024helpsteer2] [@wang2024helpsteer2p] [@wang2025helpsteer3], Nemotron Nano 3 [@nvidia2025nemotron3nano], Nemotron-Cascade [@wang2025nemotron], Llama-Nemotron 추론 모델 [@bercovich2025llamanemotron] 등이 있다.
+RLHF의 더 넓은 영역에서 인간과 AI 피드백 데이터 사이의 균형을 집중적으로 다룬 연구는 많지 않다. 다만 RLHF가 일반적으로 이 광범위한 평가 스위트를 개선할 수 있음을 보여주는 기술 보고서는 많다. 예를 들어 DPO를 사용하는 Ai2의 Tülu 3 [@lambert2024t] 및 Olmo 3 [@teamolmo2025olmo3], Hugging Face의 SmolLM 3 [@bakouch2025smollm3]가 있다. 온라인 RLHF 파이프라인을 사용하는 사례로는 Scale AI의 인간 선호도 데이터와 LLM 기반 피드백을 혼합하는 NVIDIA의 HelpSteer 계열 연구 [@wang2024helpsteer] [@wang2024helpsteer2] [@wang2024helpsteer2p] [@wang2025helpsteer3], Nemotron Nano 3 [@nvidia2025nemotron3nano], Nemotron-Cascade [@wang2025nemotron], Llama-Nemotron 추론 모델 [@bercovich2025llamanemotron] 등이 있다.
 
 전반적으로, AI 피드백 및 관련 방법이 분야에 명백히 매우 유용하지만, 인간 데이터가 이러한 저렴한 대안들로 완전히 대체되지 않은 것은 분명하다.
 많은 가설이 존재하지만, 인간 데이터가 실제 제품 환경에서 모델을 더 세밀하게 제어하게 해 주는지, 또는 17장에서 다루는 캐릭터 학습처럼 모델의 성격을 정밀하게 제어하는 새로운 학습 방법에서 어떤 역할을 하는지는 아직 충분히 연구되지 않았다.

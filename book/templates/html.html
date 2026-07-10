@@ -106,6 +106,7 @@ $endfor$
 
 <!-- custom js nav -->
 <script src="nav.js" defer></script>
+<script src="header-anchors.js" defer></script>
 <script src="table-scroll.js" defer></script>
 <script src="copy-code.js" defer></script>
 <script src="theme.js" defer></script>
@@ -145,18 +146,110 @@ $if(abstract)$
 $endif$
 </header>
 $endif$
-  <div style="display: flex; align-items: center; justify-content: space-between; gap: 1em; flex-wrap: wrap; margin: 1.5em 20px 0; padding: 0.8em 1.2em; border: 1px solid var(--color-border); border-radius: 0.35em; background: var(--color-bg-section); box-shadow: 0 4px 12px var(--color-shadow);">
+  <h3 id="ecosystem" style="padding: 0 20px; margin-top: 1.5em;">RLHF Book 생태계</h3>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 1em; flex-wrap: wrap; margin: 0.5em 20px 0; padding: 0.8em 1.2em; border: 1px solid var(--color-border); border-radius: 0.35em; background: var(--color-bg-section); box-shadow: 0 4px 12px var(--color-shadow);">
     <div>
       <h3 style="margin: 0 0 0.15em 0; font-size: 1.05em;">강좌 소개</h3>
-      <p style="font-size: 0.88em; color: var(--color-text-muted); margin: 0;">RLHF Book 개요 및 소개 영상</p>
+      <p style="font-size: 0.88em; color: var(--color-text-muted); margin: 0;">책 개요와 강좌 소개</p>
     </div>
-    <a href="https://www.youtube.com/watch?v=jQPiH-KB4B0&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 0.4em; font-size: 0.85em; padding: 0.35em 0.7em; border-radius: 0.3em; border: 1px solid #c0392b; background: rgba(192,57,43,0.1); color: #c0392b; text-decoration: none; white-space: nowrap;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    <div style="display: flex; align-items: center; gap: 0.5em;">
+      <a href="https://www.youtube.com/watch?v=jQPiH-KB4B0&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 0.4em; font-size: 0.85em; padding: 0.35em 0.7em; border-radius: 0.3em; border: 1px solid #c0392b; background: rgba(192,57,43,0.1); color: #c0392b; text-decoration: none; white-space: nowrap;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        보기
+      </a>
+      <a href="https://9bow.github.io/rlhf-book-ko/course" class="home-card-btn home-card-btn-grey" aria-label="강좌 페이지로 이동" title="강좌 페이지">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </div>
+  <style>
+    .home-card-btn {
+      display: inline-flex; align-items: center; gap: 0.4em;
+      font-size: 0.85em; padding: 0.35em 0.7em; border-radius: 0.3em;
+      text-decoration: none; white-space: nowrap; border: 1px solid;
+    }
+    .home-card-btn-code { border-color: #24292f; background: #24292f; }
+    .home-card-btn-view { border-color: #2563eb; background: rgba(37,99,235,0.1); }
+    .home-card-btn-grey { border-color: var(--color-border); background: transparent; }
+    .home-card-btn-code:link, .home-card-btn-code:visited { color: #fff; }
+    .home-card-btn-view:link, .home-card-btn-view:visited { color: #2563eb; }
+    .home-card-btn-grey:link, .home-card-btn-grey:visited { color: var(--color-text-muted); }
+    :root[data-theme="dark"] .home-card-btn-code { border-color: #6e7681; background: #30363d; }
+    :root[data-theme="dark"] .home-card-btn-view { border-color: #60a5fa; background: rgba(96,165,250,0.14); }
+    :root[data-theme="dark"] .home-card-btn-code:link, :root[data-theme="dark"] .home-card-btn-code:visited { color: #fff; }
+    :root[data-theme="dark"] .home-card-btn-view:link, :root[data-theme="dark"] .home-card-btn-view:visited { color: #60a5fa; }
+  </style>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 1em; flex-wrap: wrap; margin: 0.8em 20px 0; padding: 0.8em 1.2em; border: 1px solid var(--color-border); border-radius: 0.35em; background: var(--color-bg-section); box-shadow: 0 4px 12px var(--color-shadow);">
+    <div>
+      <h3 style="margin: 0 0 0.15em 0; font-size: 1.05em;">코드 실행하기</h3>
+      <p style="font-size: 0.88em; color: var(--color-text-muted); margin: 0;">이 책의 알고리즘을 위한 코드베이스</p>
+    </div>
+    <a href="https://github.com/natolambert/rlhf-book/tree/main/code" target="_blank" rel="noopener noreferrer" class="home-card-btn home-card-btn-code">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      코드
+    </a>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 1em; flex-wrap: wrap; margin: 0.8em 20px 0; padding: 0.8em 1.2em; border: 1px solid var(--color-border); border-radius: 0.35em; background: var(--color-bg-section); box-shadow: 0 4px 12px var(--color-shadow);">
+    <div>
+      <h3 style="margin: 0 0 0.15em 0; font-size: 1.05em;">RLHF된 모델 완성 예시</h3>
+      <p style="font-size: 0.88em; color: var(--color-text-muted); margin: 0;">사후 학습 단계별 모델 완성 비교</p>
+    </div>
+    <a href="https://9bow.github.io/rlhf-book-ko/library" target="_blank" rel="noopener noreferrer" class="home-card-btn home-card-btn-view">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       보기
     </a>
   </div>
-  <section id="changelog" style="padding: 0 20px;">
-    <h3>업데이트 내역</h3>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 1em; flex-wrap: wrap; margin: 0.8em 20px 0; padding: 0.8em 1.2em; border: 1px solid var(--color-border); border-radius: 0.35em; background: var(--color-bg-section); box-shadow: 0 4px 12px var(--color-shadow);">
+    <div>
+      <h3 style="margin: 0 0 0.15em 0; font-size: 1.05em;">커뮤니티 참여</h3>
+      <p style="font-size: 0.88em; color: var(--color-text-muted); margin: 0;">Discord에서 책에 관해 토론하기</p>
+    </div>
+    <a href="https://discord.gg/yz5AwK4gBR" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 0.4em; font-size: 0.85em; padding: 0.35em 0.7em; border-radius: 0.3em; border: 1px solid #5865F2; background: rgba(88,101,242,0.1); color: #5865F2; text-decoration: none; white-space: nowrap;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.369a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.211.375-.444.864-.608 1.249a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.036A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.371-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.099.245.198.372.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.331c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.211 0 2.176 1.096 2.157 2.42 0 1.332-.955 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.211 0 2.176 1.096 2.157 2.42 0 1.332-.946 2.418-2.157 2.418z"/></svg>
+      참여
+    </a>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 1em; flex-wrap: wrap; margin: 0.8em 20px 0; padding: 0.8em 1.2em; border: 1px solid var(--color-border); border-radius: 0.35em; background: var(--color-bg-section); box-shadow: 0 4px 12px var(--color-shadow);">
+    <div>
+      <h3 style="margin: 0 0 0.15em 0; font-size: 1.05em;">커뮤니티 번역</h3>
+      <p style="font-size: 0.88em; color: var(--color-text-muted); margin: 0;">공식 인쇄판과 독립적으로 독자들이 관리하는 비공식 번역</p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 0.5em; flex-wrap: wrap;">
+      <a href="https://github.com/jweihe/RLHF-book-Chinese" target="_blank" rel="noopener noreferrer" class="home-card-btn home-card-btn-grey">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        简体中文 (Simplified Chinese)
+      </a>
+      <!-- 繁體中文 (zh-TW) by Twinkle AI pending, see issue #472 -->
+    </div>
+  </div>
+  <section id="acknowledgements" style="padding: 0 20px; margin-top: 2em;">
+    <h3>감사의 말</h3>
+    <p>이 프로젝트에 직접 도움을 주신 다음 분들께 감사드립니다: Costa Huang, Ross Taylor, Hamish Ivison, John Schulman, Valentina Pyatkin, Daniel Han, Shane Gu, Joanne Jang, LJ Miranda, Sharan Maiya, Andrew Carr, Cameron R. Wolfe, 그리고 저의 RL 분야 동료들(물론 Claude도 포함).</p>
+    <p>또한 이 프로젝트 개선에 도움을 주신 <a href="https://github.com/natolambert/rlhf-book/graphs/contributors">GitHub 기여자</a> 여러분께도 감사드립니다.</p>
+  </section>
+  <style>
+    #changelog summary {
+      list-style: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+    }
+    #changelog summary::-webkit-details-marker { display: none; }
+    #changelog summary h3 { display: inline; margin: 0; }
+    #changelog .changelog-caret {
+      color: var(--color-text-muted);
+      transition: transform 0.15s ease;
+    }
+    #changelog details[open] .changelog-caret { transform: rotate(90deg); }
+    #acknowledgements > h3 { margin-top: 0.4em; }
+  </style>
+  <section id="changelog" style="padding: 0 20px; margin-top: 2em;">
+    <details>
+    <summary>
+      <h3>업데이트 내역</h3>
+      <svg class="changelog-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+    </summary>
     <p><em>마지막 빌드: $date$</em></p>
     <p><strong>2026년 4월</strong>: 인쇄를 위한 최종 편집 — Manning 판본 개선 사항 반영, 방정식 및 용어 명확화, 전 챕터 오탈자/문법 수정, 제품 챕터 확장. 책이 인쇄 단계에 들어가 향후 내용 변경이 줄어들 예정입니다.</p>
     <p><strong>2026년 3월</strong>: <a href="https://9bow.github.io/rlhf-book-ko/course">강좌 페이지</a> 출시(강의 영상 포함); PDF 구문 강조; 제품 챕터 확장(17장).</p>
@@ -169,11 +262,12 @@ $endif$
     <p><strong>2025년 4월</strong>: v0 완성; 과최적화, 미해결 문제 등; 평가 섹션; RLHF × 제품 연구, 웹사이트 개선, 추론 섹션.</p>
     <p><strong>2025년 3월</strong>: 정책 그래디언트 섹션 개선; DPO 완성, 대규모 정리; DPO 챕터 시작, 소개 개선.</p>
     <p><strong>2025년 2월</strong>: SEO 개선, IFT 챕터 추가; RM 내용 추가, 선호도 데이터, 정책 그래디언트 완성; PPO 및 GAE; 변경 이력 추가, 소개 개편.</p>
-  </section>
-  <section id="acknowledgements" style="padding: 20px;">
-    <h3>감사의 말</h3>
-    <p>이 프로젝트에 직접 도움을 주신 다음 분들께 감사드립니다: Costa Huang, Ross Taylor, Hamish Ivison, John Schulman, Valentina Pyatkin, Daniel Han, Shane Gu, Joanne Jang, LJ Miranda, Sharan Maiya, Andrew Carr, Cameron R. Wolfe, 그리고 저의 RL 분야 동료들(물론 Claude도 포함).</p>
-    <p>또한 이 프로젝트 개선에 도움을 주신 <a href="https://github.com/natolambert/rlhf-book/graphs/contributors">GitHub 기여자</a> 여러분께도 감사드립니다.</p>
+    <p><strong>2025년 1월</strong>: 정책 그래디언트(REINFORCE, PPO, GRPO), 과최적화 콘텐츠, 블로그에서 가져온 토론 내용, 내비게이션과 코드 표시 개선.</p>
+    <p><strong>2024년 12월</strong>: 선호도 장 작성, 정리와 추가 작업 계속.</p>
+    <p><strong>2024년 10월</strong>: 정규화, 선호도, 보상 모델링 장과 그림 및 형식 정리.</p>
+    <p><strong>2024년 8월</strong>: 첫 장 초안 작성(거부 샘플링, 참고문헌), 자동 사이트 빌드 설정.</p>
+    <p><strong>2024년 5월</strong>: rlhfbook.com 도메인 구매, 프로젝트 시작.</p>
+    </details>
   </section>
   <section id="citation" style="padding: 0 20px;">
     <h3>인용</h3>

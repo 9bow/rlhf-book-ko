@@ -63,7 +63,7 @@ class NavigationDropdown extends HTMLElement {
         <ol start="10">
           <li><a href="https://9bow.github.io/rlhf-book-ko/c/10-preferences">선호도의 본질</a></li>
           <li><a href="https://9bow.github.io/rlhf-book-ko/c/11-preference-data">선호도 데이터</a></li>
-          <li><a href="https://9bow.github.io/rlhf-book-ko/c/12-synthetic-data">합성 데이터</a></li>
+          <li><a href="https://9bow.github.io/rlhf-book-ko/c/12-synthetic-data">합성 데이터와 증류</a> [<a href="https://github.com/natolambert/rlhf-book/tree/main/code/distillation">code</a>]</li>
         </ol>
       </div>
 

@@ -13,6 +13,8 @@ meta-description: "지시 미세조정, RLHF, RLVR, 직접 정렬 방법을 포�
 next-chapter: "지시 미세조정"
 next-url: "04-instruction-tuning"
 lectures:
+  - video: "https://www.youtube.com/watch?v=MMDNaeIFVy8&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=2"
+    label: "강의 0: 선수 지식"
   - video: "https://www.youtube.com/watch?v=o6l6tJQgUg4&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=2"
     label: "강의 1: 개요 (1–3장)"
 ---

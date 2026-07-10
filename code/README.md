@@ -29,6 +29,7 @@ If you are running these with a coding assistant, launch long training/eval comm
 | Chapter 6: Policy Gradients | GRPO on `spell_backward` | `uv run python -m policy_gradients.train --config policy_gradients/configs/grpo.yaml` | `avg_correctness`, `avg_format`, `avg_binary`, and whether groups contain contrast |
 | Chapter 8: Direct Alignment | DPO on UltraFeedback | `uv run python -m direct_alignment.train --loss dpo --max_samples 1000` | `accuracy`, `margins`, `chosen_rewards`, `rejected_rewards`, sample generations |
 | Chapter 9: Rejection Sampling | GSM8K reward selection versus random controls | `uv run python -m rejection_sampling.train --config rejection_sampling/configs/top_per_prompt.yaml` | Final exact-match accuracy against the matched random baseline |
+| Chapter 12: Synthetic Data | SDPO / on-policy self-distillation on string-reversal | `uv run python -m distillation.train --config distillation/configs/sdpo.yaml` | `reward`, `loss`, `skipped`, and the in-loop teacher/student rollout samples |
 
 Good first sweeps:
 
@@ -37,8 +38,9 @@ Good first sweeps:
 - **Direct alignment**: hold the dataset fixed and compare `dpo.yaml`, `ipo.yaml`, and `dpo_norm.yaml`; read IPO through margins/accuracy, not raw loss scale.
 - **Reward models**: vary `--samples`, `--lr`, and `--model-id` before changing the model architecture.
 - **Rejection sampling**: keep generation/scoring settings identical while comparing `top_*` configs to their `random_*` controls.
+- **Distillation**: copy `distillation/configs/sdpo.yaml` and vary `num_rollouts`, `kl_top_k`, and `prompts_per_step`, watching how `skipped` and `reward` respond as the self-distillation loop converges.
 
-The book chapters now include suggested exercises at the end of Chapters 4, 5, 6, 8, and 9.
+The book chapters now include suggested exercises at the end of Chapters 4, 5, 6, 8, 9, and 12.
 
 ## Attribution
 
@@ -286,6 +288,37 @@ uv run python -m rejection_sampling.train \
 On the reference 1k-train / 200-test GSM8K slice, `top_k_overall` beat its
 matched random baseline, while `top_per_prompt` and `random_per_prompt` were
 effectively tied.
+
+## On-Policy Distillation
+
+Train with SDPO (Self-Distillation Policy Optimization), an on-policy distillation
+method for reasoning tasks. The model acts as its own teacher: it samples rollouts on a
+[Reasoning Gym](https://github.com/open-thought/reasoning-gym) task (default
+`spell_backward`, a string-reversal problem), then a demonstration-conditioned copy of
+the same model — given a correct sibling rollout from the same group — supplies better
+next-token targets that are distilled back into the student via a top-K KL. Prompts
+whose rollout group has no correct sample are skipped, so every update has a
+demonstration to learn from.
+See `distillation/README.md` for the full walk-through.
+
+```bash
+# SDPO on the Reasoning Gym string-reversal task
+uv run python -m distillation.train --config distillation/configs/sdpo.yaml
+```
+
+### Training Results
+
+![SDPO Training Results](images/wandb_distillation.png)
+
+The reference run trained `Qwen/Qwen3-1.7B` on `spell_backward` in under 20 hours on a
+single 24 GB consumer GPU: `reward` climbs from ~0.55 to ~0.8 while the distillation
+`loss` and `grad_norm` trend down.
+
+### Example Run
+
+| Algorithm | Description | Example Run |
+|-----------|-------------|-------------|
+| SDPO | Self-Distillation Policy Optimization on Reasoning Gym ([Hübotter et al., 2026](https://arxiv.org/abs/2601.20802)) | _pending maintainer run_ |
 
 ## Configuration
 
