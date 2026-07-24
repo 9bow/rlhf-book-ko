@@ -12,6 +12,9 @@ search-title: "10장: 선호도의 본질"
 meta-description: "인간 선호도, 선호도 학습, 그리고 RLHF가 명세하기 어려운 행동을 최적화할 수 있는 이유를 개념적으로 설명합니다."
 next-chapter: "선호도 데이터"
 next-url: "11-preference-data"
+lectures:
+  - video: "https://www.youtube.com/watch?v=Y2tv5vuaxFs&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=13"
+    label: '강의 8: "선호도"와 선호도 데이터'
 ---
 
 # 선호도의 본질

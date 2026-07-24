@@ -47,6 +47,15 @@ $endif$
 $if(keywords)$
   <meta name="keywords" content="$for(keywords)$$keywords$$sep$, $endfor$" />
 $endif$
+
+  <!-- Google Scholar/Highwire Press 인용 메타데이터입니다.
+       한국어판의 제목과 PDF URL을 사용하되 원저자 정보는 유지합니다.
+       이 태그는 canonical index.html에만 출력됩니다. -->
+  <meta name="citation_title" content="$if(title)$$title$$else$인간 피드백 기반 강화학습$endif$" />
+  <meta name="citation_author" content="Lambert, Nathan" />
+  <meta name="citation_publication_date" content="2025" />
+  <meta name="citation_pdf_url" content="https://9bow.github.io/rlhf-book-ko/book.pdf" />
+
   <!-- <title>$if(title-prefix)$$title-prefix$ – $endif$$pagetitle$</title> -->
    <!-- SEO and Open Graph titles -->
   <title>$if(seo-title)$$seo-title$$else$RLHF Book: Reinforcement Learning from Human Feedback and LLM Post-Training$endif$</title>

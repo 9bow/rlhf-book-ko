@@ -12,6 +12,9 @@ search-title: "11장: 선호도 데이터"
 meta-description: "선호도 데이터셋이 RLHF와 언어 모델 사후 학습에 맞게 설계, 수집, 필터링, 활용되는 방식을 설명합니다."
 next-chapter: "합성 데이터와 증류"
 next-url: "12-synthetic-data"
+lectures:
+  - video: "https://www.youtube.com/watch?v=Y2tv5vuaxFs&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=13"
+    label: '강의 8: "선호도"와 선호도 데이터'
 ---
 
 # 선호도 데이터
@@ -209,7 +212,7 @@ AI 생태계에서 신뢰성이 있다면, 최고의 데이터 기업들은 공�
 
 계약이 체결되면, 데이터 구매자와 데이터 제공업체는 구매한 작업에 대한 지침에 합의한다.
 데이터에 대한 광범위한 세부 사항, 예외 케이스, 우선순위를 담은 정교한 문서들이 있다.
-인기 있는 데이터 지침의 예시는 [OpenAI가 InstructGPT를 위해 공개한 것](https://docs.google.com/document/d/1MJCqDNjzD04UbcnVZ-LmeXJ04-TKEICDAepXyMCBUb8/edit#heading=h.21o5xkowgmpj)이다 [@ouyang2022training].
+인기 있는 데이터 지침의 예시는 [OpenAI가 InstructGPT를 위해 공개한 것](assets/instructgpt-instructions.pdf)이다 [@ouyang2022training].
 
 관심 있는 데이터 영역에 따라, 데이터가 레이블링되거나 큐레이션될 수 있는 타임라인이 다르다.
 수학적 추론이나 코딩과 같은 수요가 높은 영역은 몇 주 전부터 일정을 잡아야 한다.
