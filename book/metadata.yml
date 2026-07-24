@@ -35,6 +35,7 @@ numbersections: true
 header-includes:
   - |
     ```{=latex}
+    \newfontfamily\hangulfonttt{Apple SD Gothic Neo}
     % Add new page before chapters start
     \pretocmd{\section}{\newpage}{}{}  
     % more stable tables in pdf
