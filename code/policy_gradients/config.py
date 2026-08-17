@@ -4,7 +4,7 @@
 # Source: https://github.com/zafstojano/policy-gradients
 # License: Apache 2.0
 
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, model_validator
@@ -32,7 +32,7 @@ class Config(BaseModel):
         data: Dataset configuration
         loss: Loss function (reinforce, rloo, ppo, grpo, drgrpo, gspo, cispo, sapo,
             dapo, maxrl)
-        model_name: HuggingFace model identifier
+        model_name: Hugging Face model identifier
 
         # Clipping (GRPO, DrGRPO, GSPO, CISPO, PPO, DAPO)
         clip_eps_lo: Lower clipping bound for policy ratio
@@ -72,6 +72,7 @@ class Config(BaseModel):
         batch_acc: Gradient accumulation steps
         max_norm: Gradient clipping norm
         seed: Random seed
+        device: Device selection (auto, cuda, cpu)
         model_device_id: GPU for policy model
 
         # Logging
@@ -128,6 +129,7 @@ class Config(BaseModel):
     batch_acc: int = 4
     max_norm: float = 1.0
     seed: int = 42
+    device: Literal["auto", "cuda", "cpu"] = "auto"
     model_device_id: int = 0
 
     # Logging

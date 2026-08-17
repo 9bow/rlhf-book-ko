@@ -18,6 +18,7 @@ EPUB_COVER_IMAGE = book/assets/rlhf-book-cover.png # EPUB-specific cover image
 MATH_FORMULAS = --mathjax # --webtex, is default for PDF/ebook. Consider resetting if issues.
 EPUB_MATH_FORMULAS = --mathml # Use MathML for EPUB format for better e-reader compatibility
 KINDLE_MATH_FILTER = --lua-filter book/scripts/kindle-math.lua
+EBOOK_CITATION_FILTER = --lua-filter book/scripts/epub-citations.lua
 BIBLIOGRAPHY = --bibliography=book/chapters/bib.bib --citeproc --csl=book/templates/ieee.csl
 DATE_ARG = --metadata date="$(shell date +'%d %B %Y')"
 
@@ -46,15 +47,15 @@ ARGS = $(TOC) $(MATH_FORMULAS) $(METADATA_ARGS) $(FILTER_ARGS) $(DEBUG_ARGS) $(B
 EPUB_ARGS_BASE = $(TOC) $(EPUB_MATH_FORMULAS) $(METADATA_ARGS) $(FILTER_ARGS) $(DEBUG_ARGS) $(BIBLIOGRAPHY) $(DATE_ARG)
 KINDLE_ARGS_BASE = $(TOC) $(METADATA_ARGS) $(FILTER_ARGS) $(DEBUG_ARGS) $(BIBLIOGRAPHY) $(DATE_ARG) $(KINDLE_MATH_FILTER)
 HTML_JSONLD_FILTER = --lua-filter book/scripts/jsonld.lua
-	
+
 PANDOC_COMMAND = pandoc
 
 # Per-format options
 
 DOCX_ARGS = --standalone --reference-doc book/templates/docx.docx
-EPUB_ARGS = --template book/templates/epub.html --epub-cover-image $(EPUB_COVER_IMAGE)
+EPUB_ARGS = --template book/templates/epub.html --epub-cover-image $(EPUB_COVER_IMAGE) $(EBOOK_CITATION_FILTER)
 HTML_ARGS = $(HTML_JSONLD_FILTER) --template book/templates/html.html --standalone --to html5 --listings --wrap=none
-PDF_ARGS = --template book/templates/pdf.tex --pdf-engine xelatex -V CJKmainfont="Apple SD Gothic Neo" -V mainfont="Apple SD Gothic Neo"
+PDF_ARGS = --template book/templates/pdf.tex --pdf-engine pdflatex
 LATEX_ARGS = --template book/templates/pdf.tex --pdf-engine pdflatex
 NESTED_HTML_TEMPLATE = book/templates/chapter.html
 ARXIV_ZIP = $(BUILD)/arxiv.zip
@@ -66,7 +67,7 @@ JS_FILES = $(shell find book/templates -name '*.js')  # Restrict JS discovery to
 
 BASE_DEPENDENCIES = $(MAKEFILE) $(CHAPTERS) $(METADATA) $(IMAGES) $(TEMPLATES)
 DOCX_DEPENDENCIES = $(BASE_DEPENDENCIES)
-EPUB_DEPENDENCIES = $(BASE_DEPENDENCIES)
+EPUB_DEPENDENCIES = $(BASE_DEPENDENCIES) book/scripts/epub-citations.lua
 HTML_DEPENDENCIES = $(BASE_DEPENDENCIES) book/scripts/jsonld.lua
 PDF_DEPENDENCIES = $(BASE_DEPENDENCIES)
 
@@ -92,11 +93,11 @@ ECHO_BUILT = @echo "$@ was built\n"
 # Basic actions
 ####################################################################################################
 
-.PHONY: all book clean epub html pdf docx nested_html latex kindle rl-cheatsheet pagefind teach serve
+.PHONY: all book clean epub html pdf docx nested_html latex kindle validate-ebooks rl-cheatsheet pagefind teach serve
 
 all:	book
 
-book:	epub kindle html pdf docx rl-cheatsheet
+book:	epub kindle html pdf docx rl-cheatsheet validate-ebooks
 
 clean:
 	$(RMDIR_CMD) $(BUILD)
@@ -113,7 +114,7 @@ $(info JS files found: $(JS_FILES))
 epub:	$(BUILD)/epub/$(OUTPUT_FILENAME).epub
 
 html:	nested_html $(BUILD)/html/$(OUTPUT_FILENAME_HTML).html $(BUILD)/html/library.html $(BUILD)/html/course.html $(BUILD)/html/llms.txt $(BUILD)/html/llms-full.txt $(BUILD)/html/sitemap.xml $(BUILD)/html/robots.txt
-	
+
 pdf:	$(BUILD)/pdf/$(OUTPUT_FILENAME).pdf
 
 docx:	$(BUILD)/docx/$(OUTPUT_FILENAME).docx
@@ -134,12 +135,17 @@ $(BUILD)/kindle/$(OUTPUT_FILENAME).kindle.epub: $(EPUB_DEPENDENCIES) book/script
 	$(CONTENT) | $(CONTENT_FILTERS) | $(PANDOC_COMMAND) $(KINDLE_ARGS_BASE) $(EPUB_ARGS) --css book/templates/kindle-math.css --resource-path=.:book -o $@
 	$(ECHO_BUILT)
 
+validate-ebooks: epub kindle
+	uv run python book/scripts/validate_ebooks.py \
+		$(BUILD)/epub/$(OUTPUT_FILENAME).epub \
+		$(BUILD)/kindle/$(OUTPUT_FILENAME).kindle.epub
+
 $(BUILD)/docx/$(OUTPUT_FILENAME).docx:	$(DOCX_DEPENDENCIES)
 	$(ECHO_BUILDING)
 	$(MKDIR_CMD) $(BUILD)/docx
 	$(CONTENT) | $(CONTENT_FILTERS) | $(PANDOC_COMMAND) $(ARGS) $(DOCX_ARGS) --resource-path=book -o $@
 	$(ECHO_BUILT)
-	
+
 $(BUILD)/html/$(OUTPUT_FILENAME_HTML).html:	$(HTML_DEPENDENCIES)
 	$(ECHO_BUILDING)
 	$(MKDIR_CMD) $(BUILD)/html
@@ -176,7 +182,7 @@ $(BUILD)/html/course.html: book/templates/course.html $(FOOTER_PARTIAL)
 	$(INLINE_FOOTER) book/templates/course.html > $@
 
 LLMS_SOURCES = book/scripts/generate_llms.py $(CHAPTERS)
-SITEMAP_SOURCES = book/scripts/generate_sitemap.py book/scripts/generate_llms.py $(CHAPTERS) book/templates/course.html book/templates/library.html book/rl-cheatsheet/index.html $(wildcard teach/*/talk.md) $(wildcard teach/*/slides.md) $(wildcard teach/course/*.md)
+SITEMAP_SOURCES = book/scripts/generate_sitemap.py book/scripts/generate_llms.py $(CHAPTERS) book/templates/course.html book/templates/library.html book/rl-cheatsheet/index.html $(wildcard teach/*/talk.md) $(wildcard teach/*/slides.md) $(filter-out %-plan.md,$(wildcard teach/course/*.md)) $(filter-out %-plan.md,$(wildcard teach/extras/*.md))
 
 $(BUILD)/html/llms.txt: $(LLMS_SOURCES)
 	$(MKDIR_CMD) $(BUILD)/html
@@ -209,7 +215,7 @@ CHAPTER_HTMLS = $(patsubst book/chapters/%.md,$(NESTED_HTML_DIR)/%.html,$(CHAPTE
 # Rule to build each HTML file from each Markdown file
 $(NESTED_HTML_DIR)/%.html: book/chapters/%.md $(HTML_DEPENDENCIES)
 	$(MKDIR_CMD) $(NESTED_HTML_DIR)
-	$(PANDOC_COMMAND) $(ARGS) $(HTML_JSONLD_FILTER) --metadata canonical-url="https://9bow.github.io/rlhf-book-ko/c/$*" --template $(NESTED_HTML_TEMPLATE) --standalone --to html5 --wrap=none --resource-path=book -o $@ $< --mathjax
+	$(PANDOC_COMMAND) $(ARGS) $(HTML_JSONLD_FILTER) --metadata canonical-url="https://rlhfbook.com/c/$*" --template $(NESTED_HTML_TEMPLATE) --standalone --to html5 --wrap=none --resource-path=book -o $@ $< --mathjax
 	@echo "Built HTML for $<"
 
 # Aggregate target for nested chapter HTML files
@@ -330,35 +336,117 @@ serve: html files
 # Find talk directories by looking for talk.md or slides.md source files
 TEACH_TALK_SOURCES = $(wildcard teach/*/talk.md) $(wildcard teach/*/slides.md)
 TEACH_DIRS = $(sort $(patsubst teach/%/,%,$(dir $(TEACH_TALK_SOURCES))))
-COURSE_LECTURE_SOURCES = $(wildcard teach/course/*.md)
+COURSE_LECTURE_SOURCES = $(filter-out %-plan.md,$(wildcard teach/course/*.md))
 COURSE_LECTURE_NAMES = $(basename $(notdir $(COURSE_LECTURE_SOURCES)))
+EXTRA_LECTURE_SOURCES = $(filter-out %-plan.md,$(wildcard teach/extras/*.md))
+EXTRA_LECTURE_NAMES = $(basename $(notdir $(EXTRA_LECTURE_SOURCES)))
 
 # Map from dir name to its .md source file (prefer talk.md over slides.md)
 teach_source = $(firstword $(wildcard teach/$(1)/talk.md teach/$(1)/slides.md))
 COLLOQUIUM = uv run --extra teach colloquium
 
-teach: $(foreach d,$(TEACH_DIRS),teach-$(d)) course-lectures
+# Deck builds are content-addressed so CI can cache them: each successful
+# build writes a stamp hashing the deck's inputs (source .md, local assets
+# and refs.bib -- the whole talk directory for standalone talks -- plus
+# uv.lock for the colloquium pin, and this Makefile for recipe changes).
+# When the stamp matches and the outputs exist, the deck is skipped. On a
+# stamp miss the cached outputs are deleted before rebuilding so a silent
+# export failure or removed asset can never ship stale files. CI caches
+# $(BUILD)/html/teach together with $(TEACH_STAMP_DIR); mtimes are useless
+# after checkout/cache-restore, hence hashes instead of make deps.
+TEACH_STAMP_DIR = $(BUILD)/.teach-stamps
+# teach_hash(files, find-paths): stable content hash of a deck's inputs.
+teach_hash = { shasum -a 256 $(1) uv.lock Makefile; find $(2) -type f -exec shasum -a 256 {} + 2>/dev/null | LC_ALL=C sort; } | shasum -a 256 | cut -d' ' -f1
 
-course-lectures: $(foreach l,$(COURSE_LECTURE_NAMES),course-lecture-$(l))
+teach: $(foreach d,$(TEACH_DIRS),teach-$(d)) course-lectures extras-lectures
+	@# Prune outputs for talks that no longer exist (a restored cache may carry them)
+	@for d in $(BUILD)/html/teach/*/; do \
+		[ -d "$$d" ] || continue; n=$$(basename "$$d"); \
+		case " $(TEACH_DIRS) course extras assets " in \
+			*" $$n "*) ;; \
+			*) echo "Pruning stale teach/$$n"; rm -rf "$$d";; \
+		esac; \
+	done
+
+course-lectures: $(foreach l,$(COURSE_LECTURE_NAMES),course-lecture-$(l)) teach-assets
+	@# Prune outputs for lectures that no longer exist (a restored cache may carry them)
+	@for d in $(BUILD)/html/teach/course/*/; do \
+		[ -d "$$d" ] || continue; n=$$(basename "$$d"); \
+		case " $(COURSE_LECTURE_NAMES) " in \
+			*" $$n "*) ;; \
+			*) echo "Pruning stale teach/course/$$n"; rm -rf "$$d";; \
+		esac; \
+	done
+
+extras-lectures: $(foreach l,$(EXTRA_LECTURE_NAMES),extras-lecture-$(l))
+	@# Prune outputs for extras that no longer exist (a restored cache may carry them)
+	@for d in $(BUILD)/html/teach/extras/*/; do \
+		[ -d "$$d" ] || continue; n=$$(basename "$$d"); \
+		case " $(EXTRA_LECTURE_NAMES) " in \
+			*" $$n "*) ;; \
+			*) echo "Pruning stale teach/extras/$$n"; rm -rf "$$d";; \
+		esac; \
+	done
+
+# Static files (externally produced slide PDFs, etc.) served at /teach/assets/
+teach-assets:
+	@# Replace rather than merge: the output lives inside the cached tree, so
+	@# assets deleted from teach/assets/ would otherwise be republished forever.
+	@rm -rf $(BUILD)/html/teach/assets
+	@mkdir -p $(BUILD)/html/teach/assets
+	cp -r teach/assets/. $(BUILD)/html/teach/assets/
+	@echo "Copied teach/assets"
 
 teach-%:
-	@mkdir -p $(BUILD)/html/teach/$*
-	$(COLLOQUIUM) build $(call teach_source,$*) -o $(BUILD)/html/teach/$*/
-	@# Rename output to index.html so the directory URL works
-	@cd $(BUILD)/html/teach/$* && for f in *.html; do [ "$$f" != "index.html" ] && mv "$$f" index.html; done || true
-	@# Export PDF
-	$(COLLOQUIUM) export $(call teach_source,$*) -o $(BUILD)/html/teach/$*/slides.pdf
-	@# Copy talk assets (images) if present
-	@test -d teach/$*/assets && cp -r teach/$*/assets $(BUILD)/html/teach/$*/ || true
-	@echo "Built teach/$*"
+	@mkdir -p $(BUILD)/html/teach/$* $(TEACH_STAMP_DIR)
+	@out=$(BUILD)/html/teach/$*; stamp=$(TEACH_STAMP_DIR)/talk-$*.sha; \
+	cur=$$($(call teach_hash,$(call teach_source,$*),teach/$*)); \
+	if [ "$$(cat $$stamp 2>/dev/null)" = "$$cur" ] && [ -s $$out/index.html ] && [ -s $$out/slides.pdf ]; then \
+		echo "Cached teach/$* (inputs unchanged)"; \
+	else \
+		rm -f $$stamp $$out/index.html $$out/slides.pdf; rm -rf $$out/assets; \
+		{ $(COLLOQUIUM) build $(call teach_source,$*) -o $$out/ && \
+		  ( cd $$out && for f in *.html; do [ "$$f" != "index.html" ] && mv "$$f" index.html || true; done ) && \
+		  [ -s $$out/index.html ] && \
+		  $(COLLOQUIUM) export $(call teach_source,$*) -o $$out/slides.pdf && \
+		  [ -s $$out/slides.pdf ] && \
+		  { [ ! -d teach/$*/assets ] || cp -r teach/$*/assets $$out/; } && \
+		  echo "$$cur" > $$stamp && \
+		  echo "Built teach/$*"; } || { echo "FAILED teach/$* (missing output or export error)" >&2; exit 1; }; \
+	fi
 
 course-lecture-%:
-	@mkdir -p $(BUILD)/html/teach/course/$*
-	$(COLLOQUIUM) build teach/course/$*.md -o $(BUILD)/html/teach/course/$*/
-	@# Rename output to index.html so the directory URL works
-	@cd $(BUILD)/html/teach/course/$* && for f in *.html; do [ "$$f" != "index.html" ] && mv "$$f" index.html; done || true
-	@# Export PDF
-	$(COLLOQUIUM) export teach/course/$*.md -o $(BUILD)/html/teach/course/$*/slides.pdf
-	@# Copy course assets if present
-	@test -d teach/course/assets && cp -r teach/course/assets $(BUILD)/html/teach/course/$*/ || true
-	@echo "Built teach/course/$*"
+	@mkdir -p $(BUILD)/html/teach/course/$* $(TEACH_STAMP_DIR)
+	@out=$(BUILD)/html/teach/course/$*; stamp=$(TEACH_STAMP_DIR)/course-$*.sha; \
+	cur=$$($(call teach_hash,teach/course/$*.md,teach/course/assets teach/course/refs.bib)); \
+	if [ "$$(cat $$stamp 2>/dev/null)" = "$$cur" ] && [ -s $$out/index.html ] && [ -s $$out/slides.pdf ]; then \
+		echo "Cached teach/course/$* (inputs unchanged)"; \
+	else \
+		rm -f $$stamp $$out/index.html $$out/slides.pdf; rm -rf $$out/assets; \
+		{ $(COLLOQUIUM) build teach/course/$*.md -o $$out/ && \
+		  ( cd $$out && for f in *.html; do [ "$$f" != "index.html" ] && mv "$$f" index.html || true; done ) && \
+		  [ -s $$out/index.html ] && \
+		  $(COLLOQUIUM) export teach/course/$*.md -o $$out/slides.pdf && \
+		  [ -s $$out/slides.pdf ] && \
+		  { [ ! -d teach/course/assets ] || cp -r teach/course/assets $$out/; } && \
+		  echo "$$cur" > $$stamp && \
+		  echo "Built teach/course/$*"; } || { echo "FAILED teach/course/$* (missing output or export error)" >&2; exit 1; }; \
+	fi
+
+extras-lecture-%:
+	@mkdir -p $(BUILD)/html/teach/extras/$* $(TEACH_STAMP_DIR)
+	@out=$(BUILD)/html/teach/extras/$*; stamp=$(TEACH_STAMP_DIR)/extras-$*.sha; \
+	cur=$$($(call teach_hash,teach/extras/$*.md,teach/extras/assets teach/extras/refs.bib)); \
+	if [ "$$(cat $$stamp 2>/dev/null)" = "$$cur" ] && [ -s $$out/index.html ] && [ -s $$out/slides.pdf ]; then \
+		echo "Cached teach/extras/$* (inputs unchanged)"; \
+	else \
+		rm -f $$stamp $$out/index.html $$out/slides.pdf; rm -rf $$out/assets; \
+		{ $(COLLOQUIUM) build teach/extras/$*.md -o $$out/ && \
+		  ( cd $$out && for f in *.html; do [ "$$f" != "index.html" ] && mv "$$f" index.html || true; done ) && \
+		  [ -s $$out/index.html ] && \
+		  $(COLLOQUIUM) export teach/extras/$*.md -o $$out/slides.pdf && \
+		  [ -s $$out/slides.pdf ] && \
+		  { [ ! -d teach/extras/assets ] || cp -r teach/extras/assets $$out/; } && \
+		  echo "$$cur" > $$stamp && \
+		  echo "Built teach/extras/$*"; } || { echo "FAILED teach/extras/$* (missing output or export error)" >&2; exit 1; }; \
+	fi

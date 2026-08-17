@@ -32,7 +32,7 @@ custom_css: |
 <p class="colloquium-title-name">Nathan Lambert</p>
 </div>
 
-<p class="colloquium-title-note">Course on RLHF and post-training. Chapter 6, Part 1</p>
+<p class="colloquium-title-note">Post-training course. Chapter 6, Part 1</p>
 
 ---
 
@@ -47,35 +47,35 @@ tone: muted
 compact: true
 content: |
   1. Introduction
-  2. Key Related Works
-  3. Training Overview
+  2. Key related works
+  3. Training overview
 ```
 
 |||
 
 ```box
-title: Core Training Pipeline
+title: Core training pipeline
 tone: accent
 compact: true
 content: |
-  4. Instruction Tuning
-  5. Reward Models
-  6. **Reinforcement Learning**
+  4. Instruction tuning
+  5. Reward models
+  6. **Reinforcement learning**
   7. Reasoning
-  8. Direct Alignment
-  9. Rejection Sampling
+  8. Direct alignment
+  9. Rejection sampling
 ```
 
 |||
 
 ```box
-title: Data & Preferences
+title: Data & preferences
 tone: muted
 compact: true
 content: |
-  10. What are Preferences
-  11. Preference Data
-  12. Synthetic Data & CAI
+  10. What are preferences
+  11. Preference data
+  12. Synthetic data & CAI
 ```
 
 ===
@@ -83,15 +83,15 @@ content: |
 <!-- row-columns: 32/36/32 -->
 
 ```box
-title: Practical Considerations
+title: Practical considerations
 tone: muted
 compact: true
 content: |
-  13. Tool Use
+  13. Tool use
   14. Over-optimization
   15. Regularization
   16. Evaluation
-  17. Product & Character
+  17. Product & character
 ```
 
 |||
@@ -102,14 +102,14 @@ tone: surface
 compact: true
 content: |
   - A. Definitions
-  - B. Style & Information
-  - C. Practical Issues
+  - B. Style & information
+  - C. Practical issues
 ```
 
 |||
 
 ```box
-title: Course Home
+title: Course home
 tone: surface
 compact: true
 content: |
@@ -150,7 +150,7 @@ RLHF optimization view.
 This lecture covers the **math and theory** of RL for language models. The next lecture covers implementation.
 
 ```box
-title: Lecture 3 Outline
+title: Lecture 3 outline
 tone: accent
 content: |
   1. **Motivation** — why RL training matters
@@ -764,7 +764,7 @@ In some implementations, "old logprobs" refers to the generation-time logprobs �
 
 <!-- cite-right: williams1992simple -->
 
-REINFORCE is the simplest instantiation of the policy gradient. 
+REINFORCE is the simplest instantiation of the policy gradient.
 
 It is the **Monte Carlo form of policy gradient**: sample trajectories, compute their returns, and use those sampled returns to weight the log-prob gradients.
 
@@ -776,7 +776,7 @@ It is the **Monte Carlo form of policy gradient**: sample trajectories, compute 
 
 <!-- cite-right: williams1992simple -->
 
-REINFORCE is the simplest instantiation of the policy gradient. 
+REINFORCE is the simplest instantiation of the policy gradient.
 
 It is the **Monte Carlo form of policy gradient**: sample trajectories, compute their returns, and use those sampled returns to weight the log-prob gradients.
 
@@ -796,7 +796,7 @@ Three components:
 
 <!-- cite-right: williams1992simple -->
 
-REINFORCE is the simplest instantiation of the policy gradient. 
+REINFORCE is the simplest instantiation of the policy gradient.
 
 It is the **Monte Carlo form of policy gradient**: sample trajectories, compute their returns, and use those sampled returns to weight the log-prob gradients.
 
@@ -924,7 +924,7 @@ Both are the foundation for everything that follows:
 
 ## If REINFORCE is so simple, why PPO?
 
-All the algorithms in this lecture are **on-policy**: they generate fresh rollouts from the current policy each batch, then update on those rollouts. 
+All the algorithms in this lecture are **on-policy**: they generate fresh rollouts from the current policy each batch, then update on those rollouts.
 This is in contrast to off-policy RL methods (e.g. DQN) that store and replay old experience.
 
 
@@ -932,7 +932,7 @@ This is in contrast to off-policy RL methods (e.g. DQN) that store and replay ol
 
 ## If REINFORCE is so simple, why PPO?
 
-All the algorithms in this lecture are **on-policy**: they generate fresh rollouts from the current policy each batch, then update on those rollouts. 
+All the algorithms in this lecture are **on-policy**: they generate fresh rollouts from the current policy each batch, then update on those rollouts.
 This is in contrast to off-policy RL methods (e.g. DQN) that store and replay old experience.
 
 The problem: vanilla policy gradient is sensitive to step size. Too large an update and the policy can collapse; too small and training is painfully slow. TRPO [@schulman2015trust] solved this with a hard trust-region constraint, but required expensive second-order optimization.
@@ -942,7 +942,7 @@ The problem: vanilla policy gradient is sensitive to step size. Too large an upd
 
 ## If REINFORCE is so simple, why PPO?
 
-All the algorithms in this lecture are **on-policy**: they generate fresh rollouts from the current policy each batch, then update on those rollouts. 
+All the algorithms in this lecture are **on-policy**: they generate fresh rollouts from the current policy each batch, then update on those rollouts.
 This is in contrast to off-policy RL methods (e.g. DQN) that store and replay old experience.
 
 The problem: vanilla policy gradient is sensitive to step size. Too large an update and the policy can collapse; too small and training is painfully slow. TRPO [@schulman2015trust] solved this with a hard trust-region constraint, but required expensive second-order optimization.
@@ -953,7 +953,7 @@ Proximal Policy Optimization **(PPO)** [@schulman2017proximal] gets TRPO-like st
 
 ## What can we do with more conservative gradients?
 
-Extract more signal from the batch! 
+Extract more signal from the batch!
 This introduces new problems:
 
 - How do we constrain the updates over multiple gradient updates?
@@ -961,7 +961,7 @@ This introduces new problems:
 
 ---
 
-## PPO core idea 1: constrained updates
+## PPO core idea 1: Constrained updates
 
 <!-- cite-right: schulman2017proximal -->
 
@@ -1018,13 +1018,13 @@ $$J(\theta) = \mathbb{E}_t\!\left[\min\!\left(\rho_t(\theta) \hat{A}_t,\; \text{
 
 The action is better than average at that state — we want to **increase** its likelihood. Three sub-cases:
 
-1. $\rho_t < 1 - \varepsilon$: Action is **less likely** under new policy.  
+1. $\rho_t < 1 - \varepsilon$: Action is **less likely** under new policy.
   Objective: $\rho_t \hat{A}_t$ — **normal gradient**, push probability up
 
-2. $1 - \varepsilon \leq \rho_t \leq 1 + \varepsilon$: Action is **roughly equally likely**.  
+2. $1 - \varepsilon \leq \rho_t \leq 1 + \varepsilon$: Action is **roughly equally likely**.
   Objective: $\rho_t \hat{A}_t$ — **normal gradient**, push probability up
 
-3. $\rho_t > 1 + \varepsilon$: Action is **already more likely** under new policy.  
+3. $\rho_t > 1 + \varepsilon$: Action is **already more likely** under new policy.
   Objective: $(1+\varepsilon)\hat{A}_t$ — gradient is **zero**, no update needed (**CLIPPED**)
 
 Note: on the first gradient step, $\rho_t = 1$ (policy hasn't changed yet), so the ratio starts near 1 and cases 1/3 only arise on subsequent steps.
@@ -1039,13 +1039,13 @@ $$J(\theta) = \mathbb{E}_t\!\left[\min\!\left(\rho_t(\theta) \hat{A}_t,\; \text{
 
 The action was worse than average at that state — we want to **decrease** its likelihood. Three sub-cases:
 
-1. $\rho_t < 1 - \varepsilon$: Action is **already less likely** under new policy.  
+1. $\rho_t < 1 - \varepsilon$: Action is **already less likely** under new policy.
   Objective: $(1-\varepsilon)\hat{A}_t$ — gradient is **zero**, no update needed (**CLIPPED**)
 
-2. $1 - \varepsilon \leq \rho_t \leq 1 + \varepsilon$: Action is **roughly equally likely**.  
+2. $1 - \varepsilon \leq \rho_t \leq 1 + \varepsilon$: Action is **roughly equally likely**.
   Objective: $\rho_t \hat{A}_t$ — **normal gradient**, push probability down
 
-3. $\rho_t > 1 + \varepsilon$: Action is **more likely** under new policy.  
+3. $\rho_t > 1 + \varepsilon$: Action is **more likely** under new policy.
   Objective: $\rho_t \hat{A}_t$ — **normal gradient**, push probability down
 
 Note: on the first gradient step, $\rho_t = 1$ (policy hasn't changed yet), so the ratio starts near 1 and cases 1/3 only arise on subsequent steps.

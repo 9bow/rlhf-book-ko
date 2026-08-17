@@ -12,6 +12,9 @@ search-title: "16장: 평가"
 meta-description: "RLHF, 사후 학습, 보상 모델, 개방형 생성, 모델 행동을 측정하기 위한 평가 방법을 설명합니다."
 next-chapter: "모델 캐릭터와 제품"
 next-url: "17-product"
+lectures:
+  - video: "https://www.youtube.com/watch?v=dFafQmClYq4&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=19"
+    label: "강의 12: 프런티어 모델 평가의 진화"
 ---
 
 # 평가
@@ -192,6 +195,14 @@ Answer the above question and REMEMBER to finish your response with the exact ph
 
 이것은, 특히 모델들이 생각 토큰과 답변 토큰을 구분하는 특수 형식을 사용할 때, 평가 체계에 가장 최근의 주요 업데이트를 필요로 하게 만들었다.
 평가는 사고의 연쇄 프롬프팅을 통해 생성적인 방식으로 응답하도록 모델들을 테스트하는 방향으로 나아가고 있다.
+
+### 에이전트 평가의 복잡성
+
+모델이 에이전트로 발전하면서 평가 패러다임도 점점 복잡해지고 있다. 이제 시스템 프롬프트와 추론 소프트웨어, 그리고 이를 매개하는 하네스(harness)가 추가 계층으로 들어오며, 해당 소프트웨어를 실행하는 인프라도 평가에 관여한다. 하네스는 압축, 도구, 자격 증명 등 컨텍스트를 관리하기 위한 프롬프트와 스킬을 포함한 루프다.
+
+에이전트 평가에서는 대개 샌드박스에서 모델을 실행해야 한다. 샌드박스는 과제 해결에 필요한 파일 등 구체적인 정보와 재현성을 보장하는 명시적 규칙(예: 정해진 도구 정의)을 갖춘 세계다. 이 때문에 모델 추론용 GPU뿐 아니라 더 많은 CPU도 필요해져 운영 복잡성이 높아진다. 자세한 내용은 Florian Brand의 [발표](https://www.youtube.com/watch?v=CGjuKIppZSs), @fig:eval-components 그림의 시스템 다이어그램, 또는 이 시대의 대표 평가인 Terminal-Bench의 원 논문 [@tbench2025]과 더 어려운 Terminal-Bench 2.0 [@tbench2026]을 참고할 수 있다.
+
+![현대 에이전트 평가를 실행하는 구성 요소. 모든 상자가 최종 점수에 영향을 준다. Florian Brand의 "LLM benchmarks in the era of agents" 발표를 바탕으로 재구성했다.](images/eval_components_tikz.png){#fig:eval-components .center data-dark-src="images/eval_components_tikz-dark.png"}
 
 ## 외부 평가 비교가 신뢰하기 어려운 이유
 

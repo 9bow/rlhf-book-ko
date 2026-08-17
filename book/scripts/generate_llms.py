@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-SITE_URL = "https://9bow.github.io/rlhf-book-ko"
+SITE_URL = "https://rlhfbook.com"
 PUBLIC_EXCLUDES = {"README.md", "appendix-00-references.md"}
 
 
@@ -83,47 +83,46 @@ def llms_txt(chapters: list[Chapter]) -> str:
         for chapter in chapters
     )
 
-    return f"""# RLHF Book 한국어판
+    return f"""# RLHF Book
 
-> 인간 피드백 기반 강화학습(RLHF), 보상 모델, 선호도 조정, RLVR, 언어 모델 사후 학습을 다루는 무료 온라인 책과 강좌입니다.
+> A free online book and course on reinforcement learning from human feedback (RLHF), reward models, preference tuning, RLVR, and post-training language models.
 
-Nathan Lambert의 RLHF Book은 지시 미세조정과 선호도 데이터부터 보상 모델링, 정책 최적화, 직접 정렬, 추론 훈련, 평가, 제품 동작까지 현대 언어 모델이 어떻게 사후 학습되는지를 설명합니다.
+The RLHF Book by Nathan Lambert explains how modern language models are post-trained, from instruction tuning and preference data to reward modeling, policy optimization, direct alignment, reasoning training, evaluation, and product behavior.
 
-정식 웹 페이지는 아래 챕터 링크를 사용하세요. `llms-full.txt`는 공개 챕터 소스에서 생성한 단일 Markdown 컨텍스트 파일입니다.
+Use the chapter links for canonical web pages. Use `llms-full.txt` for a single concatenated Markdown context file generated from the public chapter sources.
 
-## 핵심 자료
+## Core Resources
 
-- [전체 텍스트 LLM 컨텍스트]({SITE_URL}/llms-full.txt): 참고문헌 빌드 유틸리티 페이지를 제외한 공개 챕터 Markdown을 이어 붙인 파일입니다.
-- [책 홈페이지]({SITE_URL}/): RLHF Book 한국어판의 정식 웹 버전입니다.
-- [강좌]({SITE_URL}/course): RLHF와 사후 학습에 관한 무료 강의 및 강좌 자료입니다.
-- [모델 라이브러리]({SITE_URL}/library): 지도 미세조정, RLHF, DPO 및 관련 사후 학습 단계의 모델 완성을 비교합니다.
-- [RL 치트시트]({SITE_URL}/rl-cheatsheet): PPO, GRPO, RLOO, REINFORCE, DPO 및 관련 RLHF 방법을 한 페이지로 정리한 참고 자료입니다.
+- [Full-text LLM context]({SITE_URL}/llms-full.txt): Concatenated Markdown for all public book chapters, excluding the references build utility page.
+- [Book homepage]({SITE_URL}/): The canonical web version of the RLHF Book.
+- [Course]({SITE_URL}/course): Free lectures and course material on RLHF and post-training.
+- [Model library]({SITE_URL}/library): Model completion comparisons across supervised finetuning, RLHF, DPO, and related post-training stages.
+- [RL cheatsheet]({SITE_URL}/rl-cheatsheet): One-page reference for PPO, GRPO, RLOO, REINFORCE, DPO, and related RLHF methods.
 
-## 챕터
+## Chapters
 
 {chapter_links}
 
-## 기타
+## Optional
 
-- [PDF]({SITE_URL}/book.pdf): 인쇄 가능한 책 빌드입니다.
-- [EPUB]({SITE_URL}/book.epub): 전자책 빌드입니다.
-- [한국어판 GitHub 소스](https://github.com/9bow/rlhf-book-ko): 번역본 소스 저장소입니다.
-- [원문 GitHub 소스](https://github.com/natolambert/rlhf-book): 책과 강좌의 원문 소스 저장소입니다.
-- [ArXiv 논문](https://arxiv.org/abs/2504.12501): RLHF Book의 논문 버전입니다.
-- [Manning 도서 페이지](https://www.manning.com/books/the-rlhf-book): The RLHF Book의 출판사 페이지입니다.
+- [PDF]({SITE_URL}/book.pdf): Printable book build.
+- [EPUB]({SITE_URL}/book.epub): Ebook build.
+- [GitHub source](https://github.com/natolambert/rlhf-book): Source repository for the book and course.
+- [ArXiv paper](https://arxiv.org/abs/2504.12501): Paper version of the RLHF Book.
+- [Manning book page](https://www.manning.com/books/reinforcement-learning-from-human-feedback): Publisher page for Reinforcement Learning from Human Feedback.
 """
 
 
 def llms_full_txt(chapters: list[Chapter]) -> str:
     parts = [
-        "# RLHF Book 한국어판 전체 텍스트",
+        "# RLHF Book Full Text",
         "",
-        "> 공개 RLHF Book 한국어판 챕터의 Markdown 소스를 이어 붙인 파일입니다.",
+        "> Concatenated Markdown source for the public RLHF Book chapters.",
         "",
-        f"정식 사이트: {SITE_URL}/",
-        f"챕터 수: {len(chapters)}",
+        f"Canonical site: {SITE_URL}/",
+        f"Chapter count: {len(chapters)}",
         "",
-        "참고문헌 빌드 유틸리티 페이지는 제외되어 있습니다. 인용은 책 소스의 citation key를 사용합니다.",
+        "The references build utility page is excluded. Citations use the book source citation keys.",
     ]
 
     for chapter in chapters:

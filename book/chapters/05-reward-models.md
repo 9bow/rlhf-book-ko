@@ -102,14 +102,14 @@ $$\mathcal{L}(\theta) = \log \left( 1 + e^{r_{\theta}(y_r \mid x) - r_{\theta}(y
 
 ![선호도 보상 모델 훈련에는 선택된 완성과 거부된 완성의 쌍이 필요하다. 모델은 시퀀스 수준 표현, 종종 시퀀스 종료(EOS) 토큰의 은닉 상태로부터 각 완성에 대한 스칼라 점수를 계산하며, 대조 손실은 두 점수의 차이에만 의존한다.](images/pref_rm_training.png){#fig:pref_rm_training data-dark-src="images/pref_rm_training-dark.png"}
 
-## 기본 보상 모델 아키텍처
+### 기본 보상 모델 아키텍처
 
 보상 모델이 구현되는 가장 일반적인 방법은 Transformers의 `AutoModelForSequenceClassification`과 유사한 추상화를 통해서이다. 이는 언어 모델에 작은 선형 헤드를 추가하여 훈련 또는 추론 시 프롬프트-완성 쌍에 대한 스칼라 보상 점수를 생성한다.
 추론 시, 모델은 *텍스트 조각이 선택될 상대적 확률*을 모델의 단일 로짓 (logit)으로 출력한다.
 
 최종 임베딩 (embedding)에서 직접 선형 레이어를 취하는 것과 같은 다른 구현 옵션도 있지만, 오픈 툴링에서는 덜 일반적이다.
 
-## 구현 예시
+### 구현 예시
 
 보상 모델링 손실을 구현하는 것은 매우 간단하다.
 구현의 더 큰 도전은 별도의 데이터 로더와 추론 파이프라인을 설정하는 것이다.
@@ -243,13 +243,21 @@ ORM의 훈련 데이터는 표준 선호도 조정과 유사한 방식으로 구
 여기서는 문제 진술 또는 프롬프트 $x$와 두 개의 완성 $y_1$, $y_2$가 있다.
 여기서 사용되는 귀납적 편향 (inductive bias)은 하나의 완성이 문제에 대한 올바른 해결책이고 다른 하나는 잘못된 것이어야 한다는 것으로, $(y_c, y_{ic})$를 생성한다.
 
-사용되는 모델의 아키텍처는 단일 로짓을 출력할 수 있는 모델에 선형 레이어가 추가된 표준 보상 모델과 매우 유사하다 (RM의 경우)—ORM의 경우, 이어지는 훈련 목적함수가 약간 다르다 [@cobbe2021gsm8k]:
+결과 보상 모델은 사후 학습 문헌에서 비교적 특수한 영역이며, 핵심 논문마다 구현 세부 사항이 조금씩 다르다. 핵심은 완성이 최종적으로 정답에 도달할 가능성을 토큰별 신호로 학습하는 것이지만, 학습 방식과 아키텍처는 시간이 지나며 달라졌다.
+
+사용되는 모델의 아키텍처는 단일 로짓을 출력할 수 있는 모델에 선형 레이어가 추가된 표준 보상 모델과 매우 유사하다 (RM의 경우)—ORM의 경우, 이어지는 훈련 목적함수가 약간 다르다. GSM8K 논문 [@cobbe2021gsm8k]은 먼저 전체 생성 해법에 조건부로 단일 스칼라를 예측하는 검증자와, 해법의 각 토큰 뒤에 스칼라를 예측하는 검증자를 구분하고 후자를 기본으로 선택했다:
+
+> 기본적으로는 후자를 선택하여, 각 토큰 뒤에 예측을 수행하는 검증자를 학습한다.
+
+이는 ORM이 Bradley-Terry 모델과 달라지는 지점이다. ORM은 각 토큰에서 예측하며, 저자들은 이 토큰별 정보가 최종 결과만 예측하는 대신 추론 전반을 판단하도록 돕는 보조 신호가 될 수 있다고 설명한다.
 
 > [우리는] 모델이 모델 완성을 올바르거나 잘못된 것으로 레이블하는 것을 학습하는, 원래의 언어 모델링 목적함수에 추가한 공동 목적함수로 검증자(verifier)를 훈련시킨다.
 > 아키텍처적으로, 이는 우리의 검증자가 언어 모델임을 의미하며, 토큰별로 예측을 출력하는 작은 스칼라 헤드를 가진다.
 > 우리는 이 스칼라 헤드를 언어 모델의 최종 역임베딩 (unembedding) 레이어가 출력하는 로짓에 작동하는 단일 편향 파라미터와 단일 이득 파라미터로 구현한다.
 
-이를 번역하면, 전체 시퀀스에 대해 하나의 로짓을 출력하는 전통적인 RM의 분류 헤드 대신 토큰별로 두 클래스(1은 올바름, 0은 잘못됨)를 예측할 수 있는 언어 모델링 헤드로 구현된다.
+이를 번역하면, 전체 시퀀스에 대해 하나의 로짓을 출력하는 전통적인 RM의 분류 헤드 대신 매 토큰에 스칼라 로짓을 출력하는 작은 헤드를 사용한다. 원래 GSM8K 논문은 이 ORM을 다음 토큰 언어 모델링 손실과 함께 학습했지만, 이것이 이후의 기본 관행으로 이어지지는 않았다.
+
+`outcome reward model`이라는 표현은 2022년에 결과 감독 ORM과 과정 보상 모델을 비교한 연구 [@uesato2022solving]에서 등장했다. 이 연구 계열에는 별도 스칼라 헤드 대신 LLM 토크나이저의 `correct`·`incorrect` 토큰을 단계 수준 신호로 쓰는 구현도 있다.
 형식적으로, [@lyu2025exploring]에 따르면 이는 토큰별 이진 교차 엔트로피 (binary cross-entropy) 손실이다:
 
 $$\mathcal{L}_{\text{CE}}(\theta) = -\mathbb{E}_{(s,r)\sim \mathcal{D}}\left[r\log p_\theta(s) + (1-r)\log(1-p_\theta(s))\right]$$ {#eq:orm_loss}
@@ -302,6 +310,8 @@ class OutcomeRewardModel(nn.Module):
             loss = F.binary_cross_entropy_with_logits(
                 logits[mask], labels[mask].float()
             )
+        else:
+            loss = logits.sum() * 0
         return loss, logits
 ```
 
@@ -355,7 +365,7 @@ $$\mathcal{L}_{\text{PRM}}(\theta) = - \mathbb{E}_{(x, s) \sim \mathcal{D}} \lef
 separator_ids = tokenizer.encode(step_separator, add_special_tokens=False)
 completions_ids = [completion + separator_ids for completion in completions_ids]
 
-# Create the label 
+# Create the label
 labels = [[-100] * (len(completion) - 1) + [label] for completion, label in zip(completions_ids, labels)]
 ```
 

@@ -5,7 +5,7 @@
 Educational implementations of reward model training for [RLHF Book](https://rlhfbook.com).
 See **Chapter 5: Reward Models** for mathematical derivations and intuitions.
 
-> **⚠️ IN DEVELOPMENT**: These implementations are experimental. Preference RM now includes a config-driven example with validation logging and LR scheduling, but ORM/PRM configs, datasets, and evaluation still need refinement. Contributions welcome!
+> **⚠️ IN DEVELOPMENT**: These implementations are experimental. All three reward models now include config-driven training with validation logging, but datasets and evaluation still need refinement. Contributions welcome!
 
 ## Algorithms
 
@@ -19,9 +19,9 @@ See **Chapter 5: Reward Models** for mathematical derivations and intuitions.
 
 | Algorithm | wandb | Status |
 |-----------|-------|--------|
-| **ORM** | [run](https://wandb.ai/rlhf-book/core/runs/xm8mlcpl) | Experimental |
-| **Preference RM** | [run](https://wandb.ai/rlhf-book/core/runs/6sninll5) | Experimental |
-| **PRM** | [run](https://wandb.ai/rlhf-book/core/runs/abhkbn4q) | Experimental |
+| **ORM** | [run](https://wandb.ai/rlhf-book/core/runs/3gkoqb7f) | Experimental |
+| **Preference RM** | [run](https://wandb.ai/rlhf-book/core/runs/1g3y9bcc) | Experimental |
+| **PRM** | [run](https://wandb.ai/rlhf-book/core/runs/iv4d966d) | Experimental |
 
 ## Quick Start
 
@@ -30,25 +30,23 @@ cd code/
 uv sync
 
 # Train ORM
-WANDB_PROJECT=rlhf-book uv run python -m reward_models.train_orm --samples 400 --epochs 2
+WANDB_PROJECT=rlhf-book uv run python -m reward_models.train_orm \
+    --config reward_models/configs/orm.yaml
 
 # Train Preference RM (Bradley-Terry)
 WANDB_PROJECT=rlhf-book uv run python -m reward_models.train_preference_rm \
     --config reward_models/configs/preference_rm.yaml
 
-# Or override config values for a smaller run
-WANDB_PROJECT=rlhf-book uv run python -m reward_models.train_preference_rm \
-    --config reward_models/configs/preference_rm.yaml \
-    --samples 2000 --epochs 1
-
 # Train PRM
-WANDB_PROJECT=rlhf-book uv run python -m reward_models.train_prm --samples 500 --epochs 2
+WANDB_PROJECT=rlhf-book uv run python -m reward_models.train_prm \
+    --config reward_models/configs/prm.yaml
 ```
 
-## Preference RM Configuration
+## Reward Model Configuration
 
-The Preference RM script supports config-driven training via
-`reward_models/configs/preference_rm.yaml`.
+The ORM, PRM, and Preference RM scripts use `reward_models/configs/orm.yaml`,
+`reward_models/configs/prm.yaml`, and `reward_models/configs/preference_rm.yaml`,
+respectively. For smaller runs, copy the YAML file and edit the copy.
 
 The default config trains Qwen3-0.6B on 5k UltraFeedback preference pairs with:
 
@@ -72,6 +70,5 @@ Reward models are commonly trained for around one epoch to reduce overfitting. T
 
 ## TODOs for Community Contributions
 
-- [ ] Add config files, validation splits, and validation logging for PRM and ORM
 - [ ] Evaluate on standard benchmarks (RewardBench)
 - [ ] Add data augmentation and curriculum learning

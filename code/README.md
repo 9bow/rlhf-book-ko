@@ -24,19 +24,19 @@ If you are running these with a coding assistant, launch long training/eval comm
 | Chapter | Starting experiment | Command | What to inspect |
 |---------|---------------------|---------|-----------------|
 | Chapter 4: Instruction Tuning | SFT OLMo-2-1B base on No Robots | `uv run python -m instruction_tuning.train --config instruction_tuning/configs/sft_olmo2_1b.yaml` | Loss curve and the in-loop sample panels — the base model rambles at step 0; after a few hundred steps it answers and stops. |
-| Chapter 5: Reward Models | Bradley-Terry RM on UltraFeedback | `uv run python -m reward_models.train_preference_rm --samples 2000 --epochs 1` | Chosen/rejected reward margin, training loss, demo scoring |
-| Chapter 5: Reward Models | ORM on GSM8K | `uv run python -m reward_models.train_orm --samples 400 --epochs 2` | Whether correct final answers score above perturbed answers |
+| Chapter 5: Reward Models | Bradley-Terry RM on UltraFeedback | `uv run python -m reward_models.train_preference_rm --config reward_models/configs/preference_rm.yaml` | Chosen/rejected reward margin, training loss, demo scoring |
+| Chapter 5: Reward Models | ORM on GSM8K | `uv run python -m reward_models.train_orm --config reward_models/configs/orm.yaml` | Whether correct final answers score above perturbed answers |
 | Chapter 6: Policy Gradients | GRPO on `spell_backward` | `uv run python -m policy_gradients.train --config policy_gradients/configs/grpo.yaml` | `avg_correctness`, `avg_format`, `avg_binary`, and whether groups contain contrast |
 | Chapter 8: Direct Alignment | DPO on UltraFeedback | `uv run python -m direct_alignment.train --loss dpo --max_samples 1000` | `accuracy`, `margins`, `chosen_rewards`, `rejected_rewards`, sample generations |
 | Chapter 9: Rejection Sampling | GSM8K reward selection versus random controls | `uv run python -m rejection_sampling.train --config rejection_sampling/configs/top_per_prompt.yaml` | Final exact-match accuracy against the matched random baseline |
-| Chapter 12: Synthetic Data | SDPO / on-policy self-distillation on string-reversal | `uv run python -m distillation.train --config distillation/configs/sdpo.yaml` | `reward`, `loss`, `skipped`, and the in-loop teacher/student rollout samples |
+| Chapter 12: Synthetic Data | SDPO / on-policy self-distillation on string-reversal | `uv run python -m distillation.train --config distillation/configs/sdpo.yaml` | `reward`, `loss`, `skipped`, and the in-loop completion sample panels |
 
 Good first sweeps:
 
 - **Instruction tuning**: keep `sft_olmo2_1b.yaml` fixed and vary `lr` (5e-6 vs 1e-5), `num_epochs`, or `max_samples` to see how quickly the base→assistant transition emerges.
 - **Policy gradients**: copy `policy_gradients/configs/grpo.yaml` and vary `num_rollouts`, `temperature`, `format_weight`, and `data.size`.
 - **Direct alignment**: hold the dataset fixed and compare `dpo.yaml`, `ipo.yaml`, and `dpo_norm.yaml`; read IPO through margins/accuracy, not raw loss scale.
-- **Reward models**: vary `--samples`, `--lr`, and `--model-id` before changing the model architecture.
+- **Reward models**: copy the relevant YAML config and vary `samples`, `lr`, and `model_id` before changing the model architecture.
 - **Rejection sampling**: keep generation/scoring settings identical while comparing `top_*` configs to their `random_*` controls.
 - **Distillation**: copy `distillation/configs/sdpo.yaml` and vary `num_rollouts`, `kl_top_k`, and `prompts_per_step`, watching how `skipped` and `reward` respond as the self-distillation loop converges.
 
@@ -53,7 +53,7 @@ This code is built on the excellent work of community contributors:
 **License**: Apache 2.0
 
 A clean, educational implementation of policy gradient methods for reinforcement learning.
-Implements REINFORCE, RLOO, PPO, GRPO, Dr. GRPO, GSPO, CISPO, SAPO, and DAPO with mathematical formulations
+Implements REINFORCE, RLOO, PPO, GRPO, Dr. GRPO, GSPO, CISPO, SAPO, DAPO, and MaxRL with mathematical formulations
 matching the book's Chapter 6 (Policy Gradient Methods). Other details:
 
 - SAPO algorithm based on [casinca/llm-quest](https://github.com/casinca/llm-quest) by [@casinca](https://github.com/casinca), Apache 2.0
@@ -180,13 +180,13 @@ Train reward models on various datasets:
 
 ```bash
 # Standard Preference RM (Chapter 5) - Bradley-Terry on UltraFeedback
-uv run python -m reward_models.train_preference_rm
+uv run python -m reward_models.train_preference_rm --config reward_models/configs/preference_rm.yaml
 
 # Outcome Reward Model (Chapter 5) - trains on GSM8K
-uv run python -m reward_models.train_orm
+uv run python -m reward_models.train_orm --config reward_models/configs/orm.yaml
 
 # Process Reward Model (Chapter 5) - trains on PRM800K
-uv run python -m reward_models.train_prm
+uv run python -m reward_models.train_prm --config reward_models/configs/prm.yaml
 ```
 
 ### Preference RM (Bradley-Terry)
@@ -236,6 +236,7 @@ uv run python -m direct_alignment.train --loss dpo --max_samples 1000
 | Algorithm | Config | Description |
 |-----------|--------|-------------|
 | DPO | `dpo.yaml` | Direct Preference Optimization (Rafailov et al., 2023) |
+| DPO-Norm | `dpo_norm.yaml` | DPO with average response log-probabilities |
 | cDPO | N/A (use `--loss cdpo`) | Conservative DPO with label smoothing |
 | IPO | `ipo.yaml` | Identity Preference Optimization (Azar et al., 2023) |
 | SimPO | `simpo.yaml` | Simple PO - length-normalized, no ref model (Meng et al., 2024) |
@@ -297,8 +298,8 @@ method for reasoning tasks. The model acts as its own teacher: it samples rollou
 `spell_backward`, a string-reversal problem), then a demonstration-conditioned copy of
 the same model — given a correct sibling rollout from the same group — supplies better
 next-token targets that are distilled back into the student via a top-K KL. Prompts
-whose rollout group has no correct sample are skipped, so every update has a
-demonstration to learn from.
+whose rollout group has no correct sample are skipped and replaced, so every update
+has a full batch of demonstrations to learn from.
 See `distillation/README.md` for the full walk-through.
 
 ```bash
@@ -310,7 +311,7 @@ uv run python -m distillation.train --config distillation/configs/sdpo.yaml
 
 ![SDPO Training Results](images/wandb_distillation.png)
 
-The reference run trained `Qwen/Qwen3-1.7B` on `spell_backward` in under 20 hours on a
+The plotted local run trained `Qwen/Qwen3-1.7B` on `spell_backward` in under 20 hours on a
 single 24 GB consumer GPU: `reward` climbs from ~0.55 to ~0.8 while the distillation
 `loss` and `grad_norm` trend down.
 
@@ -324,7 +325,7 @@ single 24 GB consumer GPU: `reward` climbs from ~0.55 to ~0.8 while the distilla
 
 ### Weights & Biases Logging
 
-Training runs are logged to Weights & Biases. Configure via environment variables:
+Training runs can be logged to Weights & Biases. Configure via environment variables:
 
 ```bash
 # Required: Your wandb API key
@@ -354,7 +355,7 @@ export WANDB_MODE="disabled"
 ### Other environment variables
 
 ```bash
-# HuggingFace access (for gated models)
+# Hugging Face access (for gated models)
 export HF_TOKEN="your-token"
 ```
 
@@ -401,20 +402,36 @@ These examples correspond to:
 - **Chapter 6**: Policy Gradient Methods (REINFORCE, PPO, GRPO, etc.)
 - **Chapter 8**: Direct Alignment (DPO, IPO, SimPO, KTO, etc.)
 - **Chapter 9**: Rejection Sampling
+- **Chapter 12**: Synthetic Data & Distillation (SDPO)
 
 See [rlhfbook.com](https://rlhfbook.com) for the full text.
 
 ## Citation
 
-To cite this book, please use the following format:
+For the web and arXiv version, use the citation exported by arXiv:
 
 ```bibtex
-@book{rlhf2025,
+@misc{lambert2025reinforcementlearninghumanfeedback,
+  title         = {Reinforcement Learning from Human Feedback},
+  author        = {Nathan Lambert},
+  year          = {2025},
+  eprint        = {2504.12501},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url           = {https://arxiv.org/abs/2504.12501},
+}
+```
+
+For the Manning edition:
+
+```bibtex
+@book{lambert2026reinforcement,
   author       = {Nathan Lambert},
-  title        = {Reinforcement Learning from Human Feedback},
-  year         = {2025},
-  publisher    = {Online},
-  url          = {https://rlhfbook.com},
+  title        = {Reinforcement Learning from Human Feedback: Alignment and post-training of {LLMs}},
+  year         = {2026},
+  publisher    = {Manning Publications},
+  isbn         = {9781633434301},
+  url          = {https://www.manning.com/books/reinforcement-learning-from-human-feedback},
 }
 ```
 

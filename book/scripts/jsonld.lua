@@ -20,11 +20,11 @@ end
 
 function Meta(meta)
   local lang = meta_text(meta, "lang", "en-US")
-  local canonical_url = meta_text(meta, "canonical-url", "https://9bow.github.io/rlhf-book-ko/")
+  local canonical_url = meta_text(meta, "canonical-url", "https://rlhfbook.com/")
   local default_site_description =
-    "RLHF, 선호도 조정, 보상 모델, RLVR, 언어 모델 사후 학습을 다루는 무료 온라인 책과 강좌입니다."
+    "A free online book and course on RLHF, preference tuning, reward models, RLVR, and post-training language models."
   local default_chapter_description =
-    "인간 피드백 기반 강화학습과 언어 모델 사후 학습을 다루는 RLHF Book 한국어판의 한 챕터입니다."
+    "A chapter from the RLHF Book, a free guide to reinforcement learning from human feedback and post-training language models."
 
   local book_description = meta_text(meta, "description", default_site_description)
   local chapter_title = meta_text(meta, "page-title", meta_text(meta, "title", "RLHF Book"))
@@ -33,8 +33,8 @@ function Meta(meta)
   meta["book-jsonld"] = json_block({
     ["@context"] = "https://schema.org",
     ["@type"] = "Book",
-    name = "인간 피드백 기반 강화학습",
-    alternateName = "RLHF Book 한국어판",
+    name = "Reinforcement Learning from Human Feedback",
+    alternateName = "The RLHF Book",
     description = book_description,
     author = {
       ["@type"] = "Person",
@@ -44,12 +44,11 @@ function Meta(meta)
     image = "https://rlhfbook.com/assets/rlhf-book-cover.png",
     inLanguage = lang,
     isAccessibleForFree = true,
-    keywords = "RLHF, 사후 학습, 언어 모델, 보상 모델, 선호도 조정, DPO, RLVR",
+    keywords = "RLHF, post-training, language models, reward models, preference tuning, DPO, RLVR",
     sameAs = {
-      "https://github.com/9bow/rlhf-book-ko",
       "https://github.com/natolambert/rlhf-book",
       "https://arxiv.org/abs/2504.12501",
-      "https://www.manning.com/books/the-rlhf-book",
+      "https://www.manning.com/books/reinforcement-learning-from-human-feedback",
     },
   })
 
@@ -66,8 +65,8 @@ function Meta(meta)
     },
     isPartOf = {
       ["@type"] = "Book",
-      name = "인간 피드백 기반 강화학습",
-      url = "https://9bow.github.io/rlhf-book-ko/",
+      name = "Reinforcement Learning from Human Feedback",
+      url = "https://rlhfbook.com/",
     },
     inLanguage = lang,
   })
@@ -79,8 +78,8 @@ function Meta(meta)
       {
         ["@type"] = "ListItem",
         position = 1,
-        name = "RLHF Book 한국어판",
-        item = "https://9bow.github.io/rlhf-book-ko/",
+        name = "RLHF Book",
+        item = "https://rlhfbook.com/",
       },
       {
         ["@type"] = "ListItem",

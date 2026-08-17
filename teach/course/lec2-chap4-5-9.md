@@ -32,7 +32,7 @@ custom_css: |
 <p class="colloquium-title-name">Nathan Lambert</p>
 </div>
 
-<p class="colloquium-title-note">Course on RLHF and post-training. Chapters 4, 5 & 9 </p>
+<p class="colloquium-title-note">Post-training course. Chapters 4, 5 & 9 </p>
 
 ---
 
@@ -47,35 +47,35 @@ tone: muted
 compact: true
 content: |
   1. Introduction
-  2. Key Related Works
-  3. Training Overview
+  2. Key related works
+  3. Training overview
 ```
 
 |||
 
 ```box
-title: Core Training Pipeline
+title: Core training pipeline
 tone: accent
 compact: true
 content: |
-  4. **Instruction Tuning**
-  5. **Reward Models**
-  6. Reinforcement Learning
+  4. **Instruction tuning**
+  5. **Reward models**
+  6. Reinforcement learning
   7. Reasoning
-  8. Direct Alignment
-  9. **Rejection Sampling**
+  8. Direct alignment
+  9. **Rejection sampling**
 ```
 
 |||
 
 ```box
-title: Data & Preferences
+title: Data & preferences
 tone: muted
 compact: true
 content: |
-  10. What are Preferences
-  11. Preference Data
-  12. Synthetic Data & CAI
+  10. What are preferences
+  11. Preference data
+  12. Synthetic data & CAI
 ```
 
 ===
@@ -83,15 +83,15 @@ content: |
 <!-- row-columns: 32/36/32 -->
 
 ```box
-title: Practical Considerations
+title: Practical considerations
 tone: muted
 compact: true
 content: |
-  13. Tool Use
+  13. Tool use
   14. Over-optimization
   15. Regularization
   16. Evaluation
-  17. Product & Character
+  17. Product & character
 ```
 
 |||
@@ -102,14 +102,14 @@ tone: surface
 compact: true
 content: |
   - A. Definitions
-  - B. Style & Information
-  - C. Practical Issues
+  - B. Style & information
+  - C. Practical issues
 ```
 
 |||
 
 ```box
-title: Course Home
+title: Course home
 tone: surface
 compact: true
 content: |
@@ -131,7 +131,7 @@ The core lectures will be on RL, but we need to build foundations first.
 These chapters are the simpler tools for getting started in RLHF & post-training.
 The core lectures will be on RL, but we need to build foundations first.
 
-Plus, these chapters form a natural pipeline — **the simplest complete path from a pretrained model to a preference-tuned one (with a reward model)**. 
+Plus, these chapters form a natural pipeline — **the simplest complete path from a pretrained model to a preference-tuned one (with a reward model)**.
 A natural step before full RLHF:
 
 1. **Instruction tuning** teaches the model to follow instructions (the format)
@@ -194,7 +194,7 @@ Instruction tuning emerged from two parallel research threads:
 
 ## Chat templates: The structure of instruction tuning
 
-The model needs a structured format to manage **who is speaking** and **what to generate**. 
+The model needs a structured format to manage **who is speaking** and **what to generate**.
 Early chat templates defined three roles:
 
 - **System**: background instructions (persona, constraints)
@@ -281,7 +281,7 @@ messages:
 
 ## Chat templates under the hood: Jinja code
 
-Chat templates are implemented as **Jinja code snippets** stored in the tokenizer config. 
+Chat templates are implemented as **Jinja code snippets** stored in the tokenizer config.
 This is the raw code that converts a list of Python dicts into the token sequence the model sees:
 
 ```jinja
@@ -295,7 +295,7 @@ This is the raw code that converts a list of Python dicts into the token sequenc
 {% endif %}
 ```
 
-The full template also enforces role alternation (`user`/`assistant`/`user`/...) and handles the optional `system` message. 
+The full template also enforces role alternation (`user`/`assistant`/`user`/...) and handles the optional `system` message.
 Applied in code via `tokenizer.apply_chat_template(messages)`.
 For example, see [`Olmo-3-7B-Instruct`'s](https://huggingface.co/allenai/Olmo-3-7B-Instruct/blob/main/chat_template.jinja).
 
@@ -510,7 +510,7 @@ Recent work has of course scaled up various RL training stages :D!
 3. Generate completions with another (or same) strong LM
 4. Result: easily 10x more training data
 
-**Quality of responses** is the simpler part — strong models (e.g. GPT-4o, Llama 3.1 405B) generate good completions to most instructions.  
+**Quality of responses** is the simpler part — strong models (e.g. GPT-4o, Llama 3.1 405B) generate good completions to most instructions.
 
 **Human data** is still needed for out-of-distribution or novel tasks. At the time of recording, this is "knowledge work" tasks like healthcare/law.
 
@@ -647,8 +647,8 @@ messages:
 
 <!-- cite-right: BradleyTerry -->
 
-A **probability model** is a mathematical form that we assume matches how real judgments work — then we fit its parameters to data. 
-The canonical reward model uses the **Bradley-Terry model** (1952). 
+A **probability model** is a mathematical form that we assume matches how real judgments work — then we fit its parameters to data.
+The canonical reward model uses the **Bradley-Terry model** (1952).
 
 ---
 
@@ -656,8 +656,8 @@ The canonical reward model uses the **Bradley-Terry model** (1952).
 
 <!-- cite-right: BradleyTerry -->
 
-A **probability model** is a mathematical form that we assume matches how real judgments work — then we fit its parameters to data. 
-The canonical reward model uses the **Bradley-Terry model** (1952). 
+A **probability model** is a mathematical form that we assume matches how real judgments work — then we fit its parameters to data.
+The canonical reward model uses the **Bradley-Terry model** (1952).
 Given two items $i$ and $j$, the probability that a judge prefers $i$ over $j$:
 
 $$P(i > j) = \frac{p_i}{p_i + p_j}$$
@@ -1093,7 +1093,7 @@ The RM evaluation landscape has expanded rapidly:
 - **Agentic:** Agent-RewardBench
 - **Multimodal:** MJ-Bench, Multimodal RewardBench, VL RewardBench
 
-The bulk of early RM research focused on establishing benchmarks and identifying behavior modes. 
+The bulk of early RM research focused on establishing benchmarks and identifying behavior modes.
 Training innovations (aspect-conditioned models, high-quality human datasets, scaling experiments) are still an active area.
 
 ---
@@ -1241,7 +1241,7 @@ Putting it all together — a simple path from pretrained model to preference-tu
 3. **Train a reward model** on preference data → learns to score quality
 4. **Rejection sampling** → generate many completions, keep the best, fine-tune
 
-This is a strong baseline. 
+This is a strong baseline.
 
 Next lectures will cover more advanced optimization methods: PPO, which optimizes a policy against a learned reward signal, and Direct Preference Optimization (DPO, and its family of algorithms), which optimizes directly from preference pairs rather than filtering training data.
 
@@ -1258,35 +1258,35 @@ tone: muted
 compact: true
 content: |
   1. Introduction
-  2. Key Related Works
-  3. Training Overview
+  2. Key related works
+  3. Training overview
 ```
 
 |||
 
 ```box
-title: Core Training Pipeline
+title: Core training pipeline
 tone: accent
 compact: true
 content: |
-  4. **Instruction Tuning**
-  5. **Reward Models**
-  6. Reinforcement Learning
+  4. **Instruction tuning**
+  5. **Reward models**
+  6. Reinforcement learning
   7. Reasoning
-  8. Direct Alignment
-  9. **Rejection Sampling**
+  8. Direct alignment
+  9. **Rejection sampling**
 ```
 
 |||
 
 ```box
-title: Data & Preferences
+title: Data & preferences
 tone: muted
 compact: true
 content: |
-  10. What are Preferences
-  11. Preference Data
-  12. Synthetic Data & CAI
+  10. What are preferences
+  11. Preference data
+  12. Synthetic data & CAI
 ```
 
 ===
@@ -1294,15 +1294,15 @@ content: |
 <!-- row-columns: 32/36/32 -->
 
 ```box
-title: Practical Considerations
+title: Practical considerations
 tone: muted
 compact: true
 content: |
-  13. Tool Use
+  13. Tool use
   14. Over-optimization
   15. Regularization
   16. Evaluation
-  17. Product & Character
+  17. Product & character
 ```
 
 |||
@@ -1313,14 +1313,14 @@ tone: surface
 compact: true
 content: |
   - A. Definitions
-  - B. Style & Information
-  - C. Practical Issues
+  - B. Style & information
+  - C. Practical issues
 ```
 
 |||
 
 ```box
-title: Course Home
+title: Course home
 tone: surface
 compact: true
 content: |

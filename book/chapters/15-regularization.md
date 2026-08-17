@@ -12,6 +12,9 @@ search-title: "15장: 정규화"
 meta-description: "RLHF와 사후 학습 업데이트가 기본 모델을 망가뜨리지 않고 유용하게 유지되도록 하는 정규화 방법을 설명합니다."
 next-chapter: "평가"
 next-url: "16-evaluation"
+lectures:
+  - video: "https://www.youtube.com/watch?v=IwpYxANrpUs&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=15"
+    label: "강의 10: RL의 정규화, RL이 일반화하는 이유, SFT가 망각하는 이유"
 ---
 
 # 정규화

@@ -12,6 +12,9 @@ search-title: "13장: 도구 사용 및 함수 호출"
 meta-description: "더 유능한 언어 모델 제품과 에이전트를 만들기 위한 사후 학습 목표로서 도구 사용과 함수 호출을 설명합니다."
 next-chapter: "과최적화"
 next-url: "14-over-optimization"
+lectures:
+  - video: "https://www.youtube.com/watch?v=GMry2DzC304&list=PLL1tdVxB1CpVpEtMHxwuR4uI4Lxjw00_y&index=17"
+    label: "강의 11: 도구 사용, 함수 호출, 그리고 에이전트로 가는 길"
 ---
 
 # 도구 사용 및 함수 호출
@@ -154,7 +157,7 @@ You are a function-calling AI model. You are provided with function signatures w
 <user>
 ...
 </user>
-``` 
+```
 언어 모델이 생성하는 동안, 위 예시를 따른다면 Star Wars를 검색하기 위해 `search_movies("Star Wars")` 토큰을 생성할 것입니다.
 이것은 종종 특수 형식 토큰 안에 인코딩되며, 시퀀스에 삽입되는 다음 토큰에는 도구 출력이 포함됩니다.
 이를 통해 모델은 많은 단순 독립형 모델보다 더 도전적인 작업을 수행하는 방법을 학습할 수 있습니다.

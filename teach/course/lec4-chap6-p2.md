@@ -32,7 +32,7 @@ custom_css: |
 <p class="colloquium-title-name">Nathan Lambert</p>
 </div>
 
-<p class="colloquium-title-note">Course on RLHF and post-training. Chapter 6, Part 2</p>
+<p class="colloquium-title-note">Post-training course. Chapter 6, Part 2</p>
 
 ---
 
@@ -47,35 +47,35 @@ tone: muted
 compact: true
 content: |
   1. Introduction
-  2. Key Related Works
-  3. Training Overview
+  2. Key related works
+  3. Training overview
 ```
 
 |||
 
 ```box
-title: Core Training Pipeline
+title: Core training pipeline
 tone: accent
 compact: true
 content: |
-  4. Instruction Tuning
-  5. Reward Models
-  6. **Reinforcement Learning**
+  4. Instruction tuning
+  5. Reward models
+  6. **Reinforcement learning**
   7. Reasoning
-  8. Direct Alignment
-  9. Rejection Sampling
+  8. Direct alignment
+  9. Rejection sampling
 ```
 
 |||
 
 ```box
-title: Data & Preferences
+title: Data & preferences
 tone: muted
 compact: true
 content: |
-  10. What are Preferences
-  11. Preference Data
-  12. Synthetic Data & CAI
+  10. What are preferences
+  11. Preference data
+  12. Synthetic data & CAI
 ```
 
 ===
@@ -83,15 +83,15 @@ content: |
 <!-- row-columns: 32/36/32 -->
 
 ```box
-title: Practical Considerations
+title: Practical considerations
 tone: muted
 compact: true
 content: |
-  13. Tool Use
+  13. Tool use
   14. Over-optimization
   15. Regularization
   16. Evaluation
-  17. Product & Character
+  17. Product & character
 ```
 
 |||
@@ -102,14 +102,14 @@ tone: surface
 compact: true
 content: |
   - A. Definitions
-  - B. Style & Information
-  - C. Practical Issues
+  - B. Style & information
+  - C. Practical issues
 ```
 
 |||
 
 ```box
-title: Course Home
+title: Course home
 tone: surface
 compact: true
 content: |
@@ -144,7 +144,7 @@ The hardest bugs aren't math errors — they're silent implementation mistakes: 
 ## What this lecture covers
 
 ```box
-title: Lecture 4 Outline
+title: Lecture 4 outline
 tone: accent
 content: |
   1. **Policy gradient code** — log-probs, the REINFORCE loss, RLOO baseline
@@ -163,7 +163,7 @@ content: |
 
 ---
 
-## Recall: the policy gradient
+## Recall: The policy gradient
 
 The objective and its gradient:
 
@@ -175,9 +175,9 @@ The gradient says: for each token, compute the direction that makes it more like
 
 ---
 
-## Recall: the policy gradient algorithms
+## Recall: The policy gradient algorithms
 
-All methods minimize the same family of **loss** (note the leading minus signs) — they differ in $\Psi_t$ and how updates are bounded:
+All methods minimize the same family of **losses** (note the leading minus signs) — they differ in $\Psi_t$ and how updates are bounded:
 
 <div class="text-sm">
 
@@ -196,7 +196,7 @@ Where $\rho_t = \frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_\text{old}}(a_t \mid
 
 ---
 
-## Recall: why losses are sums of log-probs
+## Recall: Why losses are sums of log-probs
 
 From lecture 3, the policy gradient derivation showed:
 
@@ -294,7 +294,7 @@ advantages = rlhf_reward - baseline        # (B, K)
 advantages = advantages.reshape(-1)        # (B*K,)
 ```
 
-The rest follows standard policy gradient — multiply advantages by log-probs. 
+The rest follows standard policy gradient — multiply advantages by log-probs.
 
 Note: the data loader must generate $K$ completions per prompt and group them together. The per-prompt baseline helps reduce variance. Standard REINFORCE computes the baseline across all the states in the batch.
 
@@ -302,11 +302,11 @@ Note: the data loader must generate $K$ completions per prompt and group them to
 
 <!-- layout: section-break -->
 
-## Proximal Policy Optimization (PPO)
+## Proximal policy optimization (PPO)
 
 ---
 
-## Recall: Proximal Policy Optimization (PPO)
+## Recall: Proximal policy optimization (PPO)
 
 The clipped surrogate loss (minimized):
 
@@ -332,7 +332,7 @@ PPO adds significant complexity over REINFORCE/RLOO:
 
 The cost: **four models in memory** (policy, value, reference, RM), fragile value function initialization, and more hyperparameters to tune.
 
-PPO in the late 2010s and early 2020s was by far the most developed and understood RL algorithm, used widely across RL domains. 
+PPO in the late 2010s and early 2020s was by far the most developed and understood RL algorithm, used widely across RL domains.
 In tasks other than language models, PPO was far superior to REINFORCE in performance.
 
 ---
@@ -567,7 +567,7 @@ The value function $V_\phi$ needs to produce reasonable estimates from the start
 - **Initialize from SFT model + random head**: cheaper but early training unstable
 - **Cold-start issues**: if initial value estimates are bad, GAE advantages are noisy → early training can be chaotic
 
-Tülu 3 [@lambert2024t] initializes from the reward model. 
+Tülu 3 [@lambert2024t] initializes from the reward model.
 
 *Detail:* Many RL for LLM setups do "value function warmup" where they take training steps over data with measured rewards to help the value function initialize, so it is stable before taking policy steps.
 
@@ -652,11 +652,11 @@ For a 7B model with fp16:
 
 <!-- layout: section-break -->
 
-## Group Relative Policy Optimization (GRPO) & Friends
+## Group relative policy optimization (GRPO) & friends
 
 ---
 
-## Recall: Group Relative Policy Optimization (GRPO)
+## Recall: Group relative policy optimization (GRPO)
 
 <!-- cite-right: shao2024deepseekmath -->
 
@@ -880,17 +880,17 @@ A process management library (e.g., Ray) coordinates data flow between them. Mod
 
 ---
 
-## More Resources on RL Implementations
+## More resources on RL implementations
 
 - A [video](https://www.youtube.com/watch?v=amrJDwMUFNs) I recorded looking at codebases implementing GRPO, DAPO, Dr. GRPO, and other papers.
 - ~24min in, [talk](https://youtu.be/uaZ3yRdYg8A?si=iSGw56BFNQMWNjtr&t=1487) on scaling RL for Olmo 3.
-- Finbarr Timber's [blog post](https://finbarr.ca/making-rl-fast/) on making RL fast.
+- Finbarr Timbers's [blog post](https://finbarr.ca/making-rl-fast/) on making RL fast.
 
 ---
 
 ## Open-source RL codebases
 
-- **TRL** [@vonwerra2022trl] — HuggingFace ecosystem, PPO/GRPO/DPO. Best starting point for getting started
+- **TRL** [@vonwerra2022trl] — Hugging Face ecosystem, PPO/GRPO/DPO. Best starting point for getting started
 - **Open Instruct** [@ivison2024unpacking] — Allen AI, multi-algorithm. Best for research and reproduction
 - **veRL** — Very popular in the RLVR era.
 - **OpenRLHF** — Started for RLHF work, popular with RLVR, etc. too.
@@ -1067,7 +1067,7 @@ seq_2_losses = [1, 1, 1, 1, 1, 1, 1, 1, 1, 10]  # 10 tokens, mean = 1.9
 
 Illustrative ranges — thresholds vary by model size, task, and algorithm:
 
-| WandB panel | Healthy | Unhealthy |
+| W&B panel | Healthy | Unhealthy |
 |-------------|---------|-----------|
 | `reward/mean` | Steady upward trend | Spikes, oscillation, plateau |
 | `kl/mean` | Gradual increase (0 → 2–5) | Explosion (>10) or flat at 0 |
@@ -1094,7 +1094,7 @@ Reasoning models push RL to extremes. Here's what changes:
 
 ## Forward pointer: Regularization & over-optimization
 
-When RL runs go wrong, it is often due to RL latching onto spurious signals rather than the intended reward. 
+When RL runs go wrong, it is often due to RL latching onto spurious signals rather than the intended reward.
 These topics deserve their own lecture:
 
 - **KL penalties**: forward vs. reverse KL, math and code
@@ -1132,7 +1132,7 @@ From math to running code — the implementation details that matter:
 <!-- row-columns: 50/50 -->
 
 ```box
-title: Book & Course
+title: Book & course
 tone: accent
 compact: true
 content: |
@@ -1148,7 +1148,7 @@ title: Codebases
 tone: surface
 compact: true
 content: |
-  - [TRL](https://github.com/huggingface/trl) — HuggingFace
+  - [TRL](https://github.com/huggingface/trl) — Hugging Face
   - [Open Instruct](https://github.com/allenai/open-instruct) — Allen AI
   - [veRL](https://github.com/volcengine/verl) — ByteDance
   - [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF)
@@ -1159,7 +1159,7 @@ content: |
 <!-- row-columns: 50/50 -->
 
 ```box
-title: Key Papers
+title: Key papers
 tone: surface
 compact: true
 content: |
@@ -1172,7 +1172,7 @@ content: |
 |||
 
 ```box
-title: Further Reading
+title: Further reading
 tone: surface
 compact: true
 content: |
@@ -1184,7 +1184,7 @@ content: |
 ---
 
 <!-- rows: 50/50 -->
-## What's next: DAAs & Reasoning
+## What's next: DAAs & reasoning
 
 <!-- row-columns: 32/36/32 -->
 
@@ -1194,35 +1194,35 @@ tone: muted
 compact: true
 content: |
   1. Introduction
-  2. Key Related Works
-  3. Training Overview
+  2. Key related works
+  3. Training overview
 ```
 
 |||
 
 ```box
-title: Core Training Pipeline
+title: Core training pipeline
 tone: accent
 compact: true
 content: |
-  4. Instruction Tuning
-  5. Reward Models
-  6. **Reinforcement Learning**
+  4. Instruction tuning
+  5. Reward models
+  6. **Reinforcement learning**
   7. Reasoning
-  8. Direct Alignment
-  9. Rejection Sampling
+  8. Direct alignment
+  9. Rejection sampling
 ```
 
 |||
 
 ```box
-title: Data & Preferences
+title: Data & preferences
 tone: muted
 compact: true
 content: |
-  10. What are Preferences
-  11. Preference Data
-  12. Synthetic Data & CAI
+  10. What are preferences
+  11. Preference data
+  12. Synthetic data & CAI
 ```
 
 ===
@@ -1230,15 +1230,15 @@ content: |
 <!-- row-columns: 32/36/32 -->
 
 ```box
-title: Practical Considerations
+title: Practical considerations
 tone: muted
 compact: true
 content: |
-  13. Tool Use
+  13. Tool use
   14. Over-optimization
   15. Regularization
   16. Evaluation
-  17. Product & Character
+  17. Product & character
 ```
 
 |||
@@ -1249,14 +1249,14 @@ tone: surface
 compact: true
 content: |
   - A. Definitions
-  - B. Style & Information
-  - C. Practical Issues
+  - B. Style & information
+  - C. Practical issues
 ```
 
 |||
 
 ```box
-title: Course Home
+title: Course home
 tone: surface
 compact: true
 content: |
@@ -1268,12 +1268,12 @@ content: |
 
 ## Course outline
 
-1. **Introduction & Training Overview** — Chapters 1–3
-2. **Instruction Tuning, Reward Models, Rejection Sampling** — Chapters 4, 5, 9
-3. **RL Theory** — Chapter 6 (Part 1)
-4. **RL Implementation & Practice** — Chapter 6 (Part 2)
+1. **Introduction & training overview** — Chapters 1–3
+2. **Instruction tuning, reward models, rejection sampling** — Chapters 4, 5, 9
+3. **RL theory** — Chapter 6 (Part 1)
+4. **RL implementation & practice** — Chapter 6 (Part 2)
 5. **Reasoning** — Chapter 7
-6. **Direct Alignment Algorithms** — Chapter 8
+6. **Direct alignment algorithms** — Chapter 8
 7. ...
 
 ---

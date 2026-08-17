@@ -32,7 +32,7 @@ custom_css: |
 <p class="colloquium-title-name">Nathan Lambert</p>
 </div>
 
-<p class="colloquium-title-note">Course on RLHF and post-training. Chapters 1-3</p>
+<p class="colloquium-title-note">Post-training course. Chapters 1-3</p>
 
 ---
 
@@ -106,12 +106,12 @@ Modern language models:
 ---
 
 <!-- columns: 45/55 -->
-## 2020: GPT-3 surprising capabilities
+## 2020: GPT-3's surprising capabilities
 
 - 2017: the Transformer is born
 - 2018: GPT-1, ELMo, and BERT released
 - 2019: GPT-2 and scaling laws
-- **2020:** GPT-3 surprising capabilities
+- **2020:** GPT-3's surprising capabilities
 
 |||
 
@@ -126,7 +126,7 @@ Modern language models:
 - 2017: the Transformer is born
 - 2018: GPT-1, ELMo, and BERT released
 - 2019: GPT-2 and scaling laws
-- 2020: GPT-3 surprising capabilities
+- 2020: GPT-3's surprising capabilities
 - **2021:** Stochastic Parrots
 
 |||
@@ -142,7 +142,7 @@ Modern language models:
 - 2017: the Transformer is born
 - 2018: GPT-1, ELMo, and BERT released
 - 2019: GPT-2 and scaling laws
-- 2020: GPT-3 surprising capabilities
+- 2020: GPT-3's surprising capabilities
 - 2021: Stochastic Parrots
 - **2022:** ChatGPT
 
@@ -159,14 +159,14 @@ Modern language models:
 - 2017: the Transformer is born
 - 2018: GPT-1, ELMo, and BERT released
 - 2019: GPT-2 and scaling laws
-- 2020: GPT-3 surprising capabilities
+- 2020: GPT-3's surprising capabilities
 - 2021: Stochastic Parrots
 - 2022: ChatGPT
 - **2023:** GPT-4 and frontier-scale
 
 |||
 
-![An image where Nvidia CEO Jensen Huang supposedly leaked that GPT-4 was an ~2T parameter MoE model.](assets/jensen-gpt4.jpeg)
+![An image where NVIDIA CEO Jensen Huang supposedly leaked that GPT-4 was a roughly 2T-parameter MoE model.](assets/jensen-gpt4.jpeg)
 <!-- cite-right: openai2023gpt4 -->
 
 ---
@@ -177,7 +177,7 @@ Modern language models:
 - 2017: the Transformer is born
 - 2018: GPT-1, ELMo, and BERT released
 - 2019: GPT-2 and scaling laws
-- 2020: GPT-3 surprising capabilities
+- 2020: GPT-3's surprising capabilities
 - 2021: Stochastic Parrots
 - 2022: ChatGPT
 - 2023: GPT-4 and frontier-scale
@@ -196,7 +196,7 @@ Modern language models:
 - 2017: the Transformer is born
 - 2018: GPT-1, ELMo, and BERT released
 - 2019: GPT-2 and scaling laws
-- 2020: GPT-3 surprising capabilities
+- 2020: GPT-3's surprising capabilities
 - 2021: Stochastic Parrots
 - 2022: ChatGPT
 - 2023: GPT-4 and frontier-scale
@@ -293,7 +293,7 @@ What this means for post-training:
 
 Model responses evolved quickly to have:
 - Better **format**: direct, conversational answers
-- Better **style**: helpful, concise, markdown, etc.
+- Better **style**: helpful, concise, Markdown, etc.
 - Better **product**: people could actually use it every day
 
 |||
@@ -356,14 +356,14 @@ J(\pi) = \mathbb{E}_{\tau \sim \pi}\!\left[\sum_{t=0}^{T} \gamma^t r(s_t, a_t)\r
 ## RL in plain language
 
 Reinforcement learning basics:
-- Reinforcement learning is **trial-and-error learning**  
+- Reinforcement learning is **trial-and-error learning**
   Balancing exploration and exploitation across long-term rewards
 - **State**: the current situation the agent is in
 - **Action**: what the agent does next
 - **Reward**: the signal for how good that action was
 - **Policy**: the strategy for choosing actions
 - **Trajectory**: a sequence of states, actions, and rewards: $\tau = (s_0, a_0, r_0, s_1, a_1, r_1, \ldots)$
-- **Trajectory probability**:  
+- **Trajectory probability**:
   $P(\tau\mid\pi) = p(s_0)\prod_{t=0}^T \pi(a_t\mid s_t)\,p(s_{t+1}\mid s_t,a_t)$
 
 |||
@@ -385,7 +385,7 @@ The agent learns over many episodes when to turn the heater on or off
 - **Reward**: positive when the room stays near the target temperature
 - **Policy**: the rule for deciding what to do next
 
-||| 
+|||
 
 Example policy:
 
@@ -590,7 +590,6 @@ $$J(\pi) = \mathbb{E}\left[ r_\theta(x, y) \right] - \beta \, D_{\text{KL}}\!\le
 
 ---
 
-<!-- valign: center -->
 <!-- cite-right: ouyang2022training -->
 
 ## InstructGPT's 3-step RLHF recipe
@@ -608,9 +607,9 @@ $$J(\pi) = \mathbb{E}\left[ r_\theta(x, y) \right] - \beta \, D_{\text{KL}}\!\le
 The foundation of post-training. Also called **Supervised Fine-tuning (SFT)**:
 - Start from a pretrained language model
 - Collect demonstrations of *desired* assistant behavior
-- Train with standard supervised learning on prompt-response pairs.  
+- Train with standard supervised learning on prompt-response pairs.
   (different batch size, learning rate, etc.)
-- Model can now answer questions.  
+- Model can now answer questions.
   Easy to use IFT to quickly adapt base model to many domains.
 
 $$
@@ -676,7 +675,7 @@ Notation:
 ## Step 2/3: Reward modeling
 
 ```box
-title: Core Idea
+title: Core idea
 tone: accent
 content: |
   The reward used in RLHF is the model predicting the probability that a given piece of text would be the "winning" or "chosen" completion in a pair/batch. Clever!
@@ -791,7 +790,7 @@ $$
 
 **Direct Preference Optimization (DPO)**
 
-- Derived the gradient toward the optimal solution, $\pi^*$, to the above equation 
+- Derived the gradient toward the optimal solution, $\pi^*$, to the above equation
 - Eliminated the need for a separate reward model (via training an implicit one)
 - Train directly on preferred ($y_w$) vs. rejected ($y_l$) responses to a prompt ($x$)
 
@@ -825,7 +824,7 @@ $$
 
 **Direct Preference Optimization (DPO)**
 
-- Derived the gradient toward the optimal solution, $\pi^*$, to the above equation 
+- Derived the gradient toward the optimal solution, $\pi^*$, to the above equation
 - Eliminated the need for a separate reward model (via training an implicit one)
 - Train directly on preferred ($y_w$) vs. rejected ($y_l$) responses to a prompt ($x$)
 
@@ -897,7 +896,6 @@ The KL penalty $\beta$ is the main defense — it limits how far the policy can 
 
 ---
 
-<!-- valign: center -->
 ## How training recipes have evolved
 
 | | InstructGPT (2022) | Tülu 3 (2024) | DeepSeek R1 (2025) |
@@ -1006,7 +1004,7 @@ An example, **OLMoE** — same base model family, updated only post-training:
 - [`OLMoE-1B-7B-0924-Instruct`](https://huggingface.co/allenai/OLMoE-1B-7B-0924-Instruct) (Sep. 2024): **38.44** avg. eval score
 - [`OLMoE-1B-7B-0125-Instruct`](https://huggingface.co/allenai/OLMoE-1B-7B-0125-Instruct) (Jan. 2025): **45.62** avg. eval score
 
-Base models determine the *ceiling*. Post-training's job has been to **reach it**. 
+Base models determine the *ceiling*. Post-training's job has been to **reach it**.
 
 Simple post-training often doesn't extract nearly enough performance (especially when the pace of progress is high).
 
@@ -1028,7 +1026,7 @@ RLHF's reputation was that its contributions are minor on the final language mod
 
 |||
 
-The second paper, 3 years later, matches my intuition for post-training. 
+The second paper, 3 years later, matches my intuition for post-training.
 
 ```box
 title: I call this the **Elicitation Theory** of post-training, where we're trying to pull out the most useful knowledge of the model.
@@ -1054,7 +1052,7 @@ RLHF's reputation was that its contributions are minor on the final language mod
 
 |||
 
-The second paper, 3 years later, matches my intuition for post-training. 
+The second paper, 3 years later, matches my intuition for post-training.
 
 ```box
 title: I call this the **Elicitation Theory** of post-training, where we're trying to pull out the most useful knowledge of the model.
@@ -1136,7 +1134,7 @@ An often underplayed portion of the o1 release (and future reasoning/agentic mod
 - Scaling reinforcement learning compute also has a log-linear return on performance!
 - The core question: Is scaling RL *training* just eliciting more from the base model or actually teaching new abilities?
 
-Results in a two-sided scaling landscape for training language models -- both pretraining and post-training. 
+Results in a two-sided scaling landscape for training language models -- both pretraining and post-training.
 The third place of scaling is at inference (no weight updates there).
 
 |||
@@ -1200,35 +1198,35 @@ tone: accent
 compact: true
 content: |
   1. Introduction
-  2. Key Related Works
-  3. Training Overview
+  2. Key related works
+  3. Training overview
 ```
 
 |||
 
 ```box
-title: Core Training Pipeline
+title: Core training pipeline
 tone: muted
 compact: true
 content: |
-  4. Instruction Tuning
-  5. Reward Models
-  6. Reinforcement Learning
+  4. Instruction tuning
+  5. Reward models
+  6. Reinforcement learning
   7. Reasoning
-  8. Direct Alignment
-  9. Rejection Sampling
+  8. Direct alignment
+  9. Rejection sampling
 ```
 
 |||
 
 ```box
-title: Data & Preferences
+title: Data & preferences
 tone: muted
 compact: true
 content: |
-  10. What are Preferences
-  11. Preference Data
-  12. Synthetic Data & CAI
+  10. What are preferences
+  11. Preference data
+  12. Synthetic data & CAI
 ```
 
 ===
@@ -1236,15 +1234,15 @@ content: |
 <!-- row-columns: 34/33/33 -->
 
 ```box
-title: Practical Considerations
+title: Practical considerations
 tone: muted
 compact: true
 content: |
-  13. Tool Use
+  13. Tool use
   14. Over-optimization
   15. Regularization
   16. Evaluation
-  17. Product & Character
+  17. Product & character
 ```
 
 |||
@@ -1254,15 +1252,15 @@ title: Appendices
 tone: surface
 compact: true
 content: |
-  - A. Definitions  
-  - B. Style & Information  
-  - C. Practical Issues  
+  - A. Definitions
+  - B. Style & information
+  - C. Practical issues
 ```
 
 |||
 
 ```box
-title: Course Home
+title: Course home
 tone: surface
 compact: true
 content: |

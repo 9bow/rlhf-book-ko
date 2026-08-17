@@ -107,12 +107,12 @@ Modern language models:
 ---
 
 <!-- columns: 45/55 -->
-## 2020: GPT-3 surprising capabilities
+## 2020: GPT-3's surprising capabilities
 
 - 2017: the Transformer is born
 - 2018: GPT-1, ELMo, and BERT released
 - 2019: GPT-2 and scaling laws
-- **2020:** GPT-3 surprising capabilities
+- **2020:** GPT-3's surprising capabilities
 
 |||
 
@@ -127,7 +127,7 @@ Modern language models:
 - 2017: the Transformer is born
 - 2018: GPT-1, ELMo, and BERT released
 - 2019: GPT-2 and scaling laws
-- 2020: GPT-3 surprising capabilities
+- 2020: GPT-3's surprising capabilities
 - **2021:** Stochastic Parrots
 
 |||
@@ -143,7 +143,7 @@ Modern language models:
 - 2017: the Transformer is born
 - 2018: GPT-1, ELMo, and BERT released
 - 2019: GPT-2 and scaling laws
-- 2020: GPT-3 surprising capabilities
+- 2020: GPT-3's surprising capabilities
 - 2021: Stochastic Parrots
 - **2022:** ChatGPT
 
@@ -160,14 +160,14 @@ Modern language models:
 - 2017: the Transformer is born
 - 2018: GPT-1, ELMo, and BERT released
 - 2019: GPT-2 and scaling laws
-- 2020: GPT-3 surprising capabilities
+- 2020: GPT-3's surprising capabilities
 - 2021: Stochastic Parrots
 - 2022: ChatGPT
 - **2023:** GPT-4 and frontier-scale
 
 |||
 
-![An image where Nvidia CEO Jensen Huang supposedly leaked that GPT-4 was an ~2T parameter MoE model.](assets/jensen-gpt4.jpeg)
+![An image where NVIDIA CEO Jensen Huang supposedly leaked that GPT-4 was a roughly 2T-parameter MoE model.](assets/jensen-gpt4.jpeg)
 <!-- cite-right: openai2023gpt4 -->
 
 ---
@@ -178,7 +178,7 @@ Modern language models:
 - 2017: the Transformer is born
 - 2018: GPT-1, ELMo, and BERT released
 - 2019: GPT-2 and scaling laws
-- 2020: GPT-3 surprising capabilities
+- 2020: GPT-3's surprising capabilities
 - 2021: Stochastic Parrots
 - 2022: ChatGPT
 - 2023: GPT-4 and frontier-scale
@@ -197,7 +197,7 @@ Modern language models:
 - 2017: the Transformer is born
 - 2018: GPT-1, ELMo, and BERT released
 - 2019: GPT-2 and scaling laws
-- 2020: GPT-3 surprising capabilities
+- 2020: GPT-3's surprising capabilities
 - 2021: Stochastic Parrots
 - 2022: ChatGPT
 - 2023: GPT-4 and frontier-scale
@@ -268,7 +268,7 @@ messages:
 
 Model responses evolved quickly to have:
 - Better **format**: direct, conversational answers
-- Better **style**: helpful, concise, markdown, etc.
+- Better **style**: helpful, concise, Markdown, etc.
 - Better **product**: people could actually use it every day
 
 |||
@@ -409,7 +409,7 @@ $$J(\pi) = \mathbb{E}_{\tau \sim \pi}\!\left[\sum_{t=0}^{T} \gamma^t r(s_t, a_t)
 <div class="text-sm">
 
 **Classical RL**
-- Agent takes actions $a_t$ in an environment with states $s_t$ 
+- Agent takes actions $a_t$ in an environment with states $s_t$
 - Reward is a known function $r(s_t, a_t)$ from the environment per step
 - Optimize cumulative return over a trajectory (total steps $T$)
 
@@ -438,7 +438,7 @@ $$J(\pi) = \mathbb{E}\left[ r_\theta(x, y) \right] - \beta \, D_{\text{KL}}\!\le
 ## Reinforcement learning with *Verifiable* rewards
 
 Apply the same RL algorithms to LLMs when the answer can be checked directly. No need to train a reward model:
-- E.g. Math: check the final answer.  
+- E.g. Math: check the final answer.
   Code: run the tests.
 - No learned reward model — **no proxy objective**
 - Enables scaling RL compute on reasoning tasks
@@ -503,9 +503,9 @@ Apply the same RL algorithms to LLMs when the answer can be checked directly. No
 The foundation of post-training. Also called **Supervised Fine-tuning (SFT)**:
 - Start from a pretrained language model
 - Collect demonstrations of *desired* assistant behavior
-- Train with standard supervised learning on prompt-response pairs.  
+- Train with standard supervised learning on prompt-response pairs.
   (different batch size, learning rate, etc.)
-- Model can now answer questions.  
+- Model can now answer questions.
   Easy to use IFT to quickly adapt base model to many domains.
 
 $$
@@ -686,7 +686,7 @@ $$
 
 **Direct Preference Optimization (DPO)**
 
-- Derived the gradient toward the optimal solution, $\pi^*$, to the above equation 
+- Derived the gradient toward the optimal solution, $\pi^*$, to the above equation
 - Eliminated the need for a separate reward model (via training an implicit one)
 - Train directly on preferred ($y_w$) vs. rejected ($y_l$) responses to a prompt ($x$)
 
@@ -720,7 +720,7 @@ $$
 
 **Direct Preference Optimization (DPO)**
 
-- Derived the gradient toward the optimal solution, $\pi^*$, to the above equation 
+- Derived the gradient toward the optimal solution, $\pi^*$, to the above equation
 - Eliminated the need for a separate reward model (via training an implicit one)
 - Train directly on preferred ($y_w$) vs. rejected ($y_l$) responses to a prompt ($x$)
 
@@ -876,7 +876,7 @@ RLHF's reputation was that its contributions are minor on the final language mod
 
 |||
 
-The second paper, 3 years later, matches my intuition for post-training. 
+The second paper, 3 years later, matches my intuition for post-training.
 
 ```box
 title: I call this the **Elicitation Theory** of post-training, where we're trying to pull out the most useful knowledge of the model.
@@ -927,7 +927,7 @@ An often underplayed portion of the o1 release (and future reasoning/agentic mod
 - Scaling reinforcement learning compute also has a log-linear return on performance!
 - The core question: Is scaling RL *training* just eliciting more from the base model or actually teaching new abilities?
 
-Results in a two-sided scaling landscape for training language models -- both pretraining and post-training. 
+Results in a two-sided scaling landscape for training language models -- both pretraining and post-training.
 The third place of scaling is at inference (no weight updates there).
 
 |||
@@ -1045,9 +1045,9 @@ title: Appendices
 tone: surface
 compact: true
 content: |
-  - A. Definitions  
-  - B. Style & Information  
-  - C. Practical Issues  
+  - A. Definitions
+  - B. Style & Information
+  - C. Practical Issues
 ```
 
 |||
