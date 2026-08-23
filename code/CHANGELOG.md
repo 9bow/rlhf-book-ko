@@ -5,7 +5,10 @@ On release, entries get moved under a version heading.
 
 ## Unreleased
 
+- 2026-08-19: [PR #525](https://github.com/natolambert/rlhf-book/pull/525)에서 `r = 0` 부근의 상쇄 오차를 막기 위해 k3 KL 추정기(`policy_gradients/loss.py`)가 `(exp(r) - 1) - r` 대신 `expm1(r) - r`를 계산하도록 개선하고 회귀 테스트를 추가했습니다. `r > 0`에서의 동작은 변하지 않습니다.
+
 - 2026-08-13: [PR #523](https://github.com/natolambert/rlhf-book/pull/523) made ORM and PRM training config-driven with validation splits, pre-packing row-level splits to avoid prompt leakage, and namespaced metrics; PRM configs now also honor `dataset_split` and `freeze_backbone`, and PRM `samples` now caps raw problems before step-chunking rather than packed records.
+- 2026-08-17: [PR #524](https://github.com/natolambert/rlhf-book/pull/524)에서 ORM이 검증기로 레이블한 GSM8K의 Qwen3-0.6B 롤아웃으로 `Qwen/Qwen3-0.6B`를 학습하도록 변경했습니다. 레이블을 보지 않는 프롬프트별 롤아웃 샘플링, 생성에 사용한 Qwen 채팅 문맥, 검증 분할의 마지막 토큰 순위 지표를 적용하면서 기존 완료 토큰 마스킹 BCE는 유지했습니다. 보상 모델 매개변수와 AdamW 상태는 FP32로 유지하고 CUDA 계산에는 BF16 자동 혼합 정밀도를 사용합니다.
 
 ## v0.4.0
 
