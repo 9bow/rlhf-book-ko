@@ -25,9 +25,12 @@ def approx_kl3(
 ) -> torch.Tensor:
     """Monte-Carlo approximation of KL divergence (k3 estimator).
 
+    Uses ``r = pi_ref / pi`` so that ``r - log(r) - 1`` estimates
+    ``KL(pi || pi_ref)`` for samples drawn from ``pi``.
+
     See: http://joschu.net/blog/kl-approx.html
     """
-    log_ratio = log_probs - log_probs_ref
+    log_ratio = log_probs_ref - log_probs
     if action_mask is not None:
         log_ratio = log_ratio * action_mask
     return torch.expm1(log_ratio) - log_ratio
@@ -51,12 +54,15 @@ def approx_kl1(
 ) -> torch.Tensor:
     """Monte-Carlo approximation of KL divergence (k1 estimator).
 
+    Samples are drawn from ``pi``, so the estimator of ``KL(pi || pi_ref)``
+    is ``log(pi / pi_ref)``.
+
     See: http://joschu.net/blog/kl-approx.html
     """
     log_ratio = log_probs - log_probs_ref
     if action_mask is not None:
         log_ratio = log_ratio * action_mask
-    return -log_ratio
+    return log_ratio
 
 
 def get_approx_kl(

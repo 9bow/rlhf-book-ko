@@ -155,6 +155,32 @@ $if(abstract)$
 $endif$
 </header>
 $endif$
+  <h3 id="errata" style="padding: 0 20px; margin-top: 1.5em;">웹 버전과 원문 인쇄본의 차이(정오표)</h3>
+  <div style="padding: 0 20px; font-size: 0.9em;">
+    <p>이 절은 웹 버전과 2026년 7월에 처음 출간된 원문 인쇄본의 차이를 기록합니다. 체크 표시 <span class="errata-reprint-status" role="img" aria-label="2026년 10월 첫 재쇄에 반영됨">&#10003;</span>는 웹에서 수정된 내용이 2026년 10월 첫 재쇄에 반영되었음을 뜻합니다(<a href="https://github.com/natolambert/rlhf-book/blob/61bc90967b1915ba6b3859f601673798127e7f78/book/errata/first-reprint-october-2026.md">편집팀에 전달한 변경 사항 요약</a>). 점선 테두리의 체크 표시 <span class="errata-reprint-status errata-reprint-partial" role="img" aria-label="첫 재쇄에 일부 반영됨. 복잡한 변경 사항 일부는 제외됨" title="첫 재쇄에 일부 반영됨. 복잡한 변경 사항 일부는 제외됨">&#10003;</span>는 일부 변경만 반영되었고, 나머지는 복잡성 때문에 제외되었음을 뜻합니다.</p>
+    <p>저자는 몇 년 뒤 더 큰 변경과 최신 내용을 담은 제2판을 내고, 사후 학습 전반을 다루는 책으로 확장하는 방안을 고려하고 있습니다. 이에 관한 의견도 환영합니다.</p>
+    <p><strong>내용 추가와 수정:</strong></p>
+    <ul>
+      <li>MOPD와 에이전트 사후 학습 사례로 표준 학습 레시피를 확장하고 파이프라인 도표를 추가했습니다(3장) &mdash; <a href="https://github.com/natolambert/rlhf-book/pull/529">#529</a>.</li>
+      <li>에이전트 평가에 관한 짧은 하위 절을 추가했습니다(16장) &mdash; <a href="https://github.com/natolambert/rlhf-book/pull/492">#492</a>.</li>
+      <li>결과 보상 모델의 역사를 명확히 설명하고, 부정확한 표현을 수정하며 보상 모델링 장의 구성을 정리했습니다(5장) &mdash; <a href="https://github.com/natolambert/rlhf-book/pull/516">#516</a>. <span class="errata-reprint-status errata-reprint-partial" role="img" aria-label="첫 재쇄에 일부 반영됨. 복잡한 변경 사항 일부는 제외됨" title="첫 재쇄에 일부 반영됨. 복잡한 변경 사항 일부는 제외됨">&#10003;</span></li>
+      <li>궤적 샘플링 분포와 시간 첨자 등 RL 표기를 정리했습니다(6장) &mdash; <a href="https://github.com/natolambert/rlhf-book/pull/466">#466</a>. <span class="errata-reprint-status errata-reprint-partial" role="img" aria-label="첫 재쇄에 일부 반영됨. 복잡한 변경 사항 일부는 제외됨" title="첫 재쇄에 일부 반영됨. 복잡한 변경 사항 일부는 제외됨">&#10003;</span></li>
+      <li>자기 증류와 OPSD를 중심으로 온-정책 증류 절을 확장했습니다(12장) &mdash; <a href="https://github.com/natolambert/rlhf-book/pull/439">#439</a>.</li>
+    </ul>
+    <p><strong>구성 개선:</strong></p>
+    <ul>
+      <li>12장 제목을 "합성 데이터와 증류"로 변경했습니다 &mdash; <a href="https://github.com/natolambert/rlhf-book/pull/469">#469</a>. <span class="errata-reprint-status" role="img" aria-label="2026년 10월 첫 재쇄에 반영됨">&#10003;</span></li>
+      <li>설명의 흐름에 맞춰 정규화 장의 순서를 조정했습니다(15장) &mdash; <a href="https://github.com/natolambert/rlhf-book/pull/486">#486</a>.</li>
+    </ul>
+    <p><strong>오탈자와 세부 수정:</strong></p>
+    <ul>
+      <li>Bradley-Terry 보상 모델 손실 유도에 한 줄을 추가했습니다(5장) &mdash; <a href="https://github.com/natolambert/rlhf-book/pull/465">#465</a>.</li>
+      <li>정책 비율에서 참조 모델에 관한 설명을 수정했습니다(6장) &mdash; <a href="https://github.com/natolambert/rlhf-book/pull/488">#488</a>. <span class="errata-reprint-status" role="img" aria-label="2026년 10월 첫 재쇄에 반영됨">&#10003;</span></li>
+      <li>여러 오탈자와 표현을 수정했습니다 &mdash; <a href="https://github.com/natolambert/rlhf-book/pull/495">#495</a>. <span class="errata-reprint-status" role="img" aria-label="2026년 10월 첫 재쇄에 반영됨">&#10003;</span></li>
+      <li>CritiqueLLM 이름과 응답 쌍이 있는 프롬프트에 관한 표현, 참고문헌의 오탈자를 수정했습니다 &mdash; <a href="https://github.com/natolambert/rlhf-book/pull/526">#526</a>. <span class="errata-reprint-status" role="img" aria-label="2026년 10월 첫 재쇄에 반영됨">&#10003;</span></li>
+      <li>서론에서 "실제 목적 함수"와 "관련 방법"을 뜻하도록 원문 표현을 수정했습니다 &mdash; <a href="https://github.com/natolambert/rlhf-book/pull/530">#530</a>. <span class="errata-reprint-status" role="img" aria-label="2026년 10월 첫 재쇄에 반영됨">&#10003;</span></li>
+    </ul>
+  </div>
   <h3 id="ecosystem" style="padding: 0 20px; margin-top: 1.5em;">RLHF Book 생태계</h3>
   <div style="display: flex; align-items: center; justify-content: space-between; gap: 1em; flex-wrap: wrap; margin: 0.5em 20px 0; padding: 0.8em 1.2em; border: 1px solid var(--color-border); border-radius: 0.35em; background: var(--color-bg-section); box-shadow: 0 4px 12px var(--color-shadow);">
     <div>
@@ -226,7 +252,11 @@ $endif$
     <div style="display: flex; align-items: center; gap: 0.5em; flex-wrap: wrap;">
       <a href="https://github.com/jweihe/RLHF-book-Chinese" target="_blank" rel="noopener noreferrer" class="home-card-btn home-card-btn-grey">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        简体中文 (Simplified Chinese)
+        简体中文 (중국어 간체) · jweihe
+      </a>
+      <a href="https://github.com/around133/rlhf-book-zh" target="_blank" rel="noopener noreferrer" class="home-card-btn home-card-btn-grey">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        简体中文 (중국어 간체) · around133
       </a>
       <!-- 繁體中文 (zh-TW) by Twinkle AI pending, see issue #472 -->
     </div>

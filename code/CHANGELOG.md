@@ -5,6 +5,8 @@ On release, entries get moved under a version heading.
 
 ## Unreleased
 
+- 2026-09-02: [PR #528](https://github.com/natolambert/rlhf-book/pull/528)에서 정책에서 뽑은 샘플로 `KL(pi || pi_ref)`를 추정하도록 k1과 k3 추정기의 비율 방향을 수정하고, 방향을 검증하는 회귀 테스트를 추가했습니다. `beta > 0`인 설정에서는 KL 지표와 보상 페널티의 의미가 달라집니다. 저장소의 기본값인 `beta: 0.0`에는 영향이 없습니다.
+
 - 2026-08-19: [PR #525](https://github.com/natolambert/rlhf-book/pull/525)에서 `r = 0` 부근의 상쇄 오차를 막기 위해 k3 KL 추정기(`policy_gradients/loss.py`)가 `(exp(r) - 1) - r` 대신 `expm1(r) - r`를 계산하도록 개선하고 회귀 테스트를 추가했습니다. `r > 0`에서의 동작은 변하지 않습니다.
 
 - 2026-08-13: [PR #523](https://github.com/natolambert/rlhf-book/pull/523) made ORM and PRM training config-driven with validation splits, pre-packing row-level splits to avoid prompt leakage, and namespaced metrics; PRM configs now also honor `dataset_split` and `freeze_backbone`, and PRM `samples` now caps raw problems before step-chunking rather than packed records.

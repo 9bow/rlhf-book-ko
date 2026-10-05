@@ -362,7 +362,7 @@ RLAIF 방법들이 더 보편화됨에 따라, 많은 사람들이 응답 생성
 여러 연구는 LLM이 일관성 없는 평가자라는 것을 보여주었으며 [@wang2023large], 다른 모델의 응답보다 자신의 응답을 선호한다(자기 선호 편향이라고 불림) [@panickssery2024llm].
 
 이러한 편향 때문에 많은 사람들이 물었다. 이 레이블링 작업만을 위해 별도의 모델을 학습시키는 것이 해결책이 될 수 있는가?
-Shepherd [@wang2023shepherd] 및 CriticLLM [@ke2023critiquellm]과 같은 비평 모델, 또는 Auto-J [@li2023generative], Prometheus [@kim2023prometheus], Prometheus 2 [@kim2024prometheus], Prometheus-Vision [@lee2024prometheus] 같은 응답 성능 평가 모델처럼 프론티어 모델을 데이터 레이블링 도구로 대체하려는 여러 모델이 공개되었지만, 문서화된 학습 레시피에서 널리 채택되지는 않았다.
+Shepherd [@wang2023shepherd] 및 CritiqueLLM [@ke2023critiquellm]과 같은 비평 모델, 또는 Auto-J [@li2023generative], Prometheus [@kim2023prometheus], Prometheus 2 [@kim2024prometheus], Prometheus-Vision [@lee2024prometheus] 같은 응답 성능 평가 모델처럼 프론티어 모델을 데이터 레이블링 도구로 대체하려는 여러 모델이 공개되었지만, 문서화된 학습 레시피에서 널리 채택되지는 않았다.
 일부는 반복 샘플링으로 추론을 확장하거나 [@brown2024large] [@zhao2025sample] [@kalra2025verdict], 자기 개선 [@madaan2023self], 토너먼트 랭킹 [@pace2024west]을 사용하면 진정한 판단이나 더 높은 품질의 선호도 쌍을 더 잘 추정할 수 있다고 본다.
 다른 보정 기법들은 모델의 생성 능력과 판단 능력을 함께 발전시킨다 [@wu2024meta].
 편향은 존재하지만, 선도 언어 모델들은 이 작업을 위해 광범위하게 학습되었다고 보는 것이 일반적이다.

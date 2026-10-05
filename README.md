@@ -203,7 +203,8 @@ cd diagrams && make all
 > Readers maintain unofficial translations of the book in their own repositories.
 > These are community projects — independent of the official print editions and their professional translations — released under the same CC-BY-NC-SA license with attribution back to this book:
 
-- 简体中文 (Simplified Chinese): [jweihe/RLHF-book-Chinese](https://github.com/jweihe/RLHF-book-Chinese)
+- 简体中文 (중국어 간체): [jweihe/RLHF-book-Chinese](https://github.com/jweihe/RLHF-book-Chinese)
+- 简体中文 (중국어 간체): [around133/rlhf-book-zh](https://github.com/around133/rlhf-book-zh)
 
 번역을 추가하려면 별도 저장소에 유지하고(번역본은 이 저장소에 병합하지 않습니다), 위 라이선스 조건을 따르며, 커뮤니티 번역임을 명확히 표시한 뒤 이 목록과 홈페이지 Ecosystem 섹션(`book/templates/html.html`)에 추가하는 PR을 열어 주세요.
 

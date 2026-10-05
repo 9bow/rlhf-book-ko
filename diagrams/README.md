@@ -13,6 +13,7 @@ make all
 # Or specific targets
 make tokens    # Token strip diagrams (reward models)
 make tikz      # TikZ diagrams (policy gradients, distillation)
+make training-recipes  # MOPD와 순차 RL 레시피, 다크 모드 포함
 make figures   # Standalone figures (cartpole, tool_use, etc.)
 make clean     # Remove generated files
 make help      # List all targets
@@ -112,6 +113,8 @@ Box-and-arrow flows for RLHF architectures and related training concepts. Many u
 | `rlhf_schematic_tikz` | `tikz/02-related-works/rlhf_schematic_tikz.tex` | RLHF loop: RL algorithm, environment, reward predictor, human feedback (Christiano et al. 2017) | Ch 2 (Related Works) |
 | `rlhf_timeline_tikz` | `tikz/02-related-works/rlhf_timeline_tikz.tex` | Timeline of key RLHF developments across three eras | Ch 2 (Related Works) |
 | `thermostat_equation_tikz` | `tikz/03-training-overview/thermostat_equation_tikz.tex` | Thermostat analogy for the RL objective | Ch 3 (Training Overview) |
+| `rlhf_mopd_tikz` | `tikz/03-training-overview/rlhf_mopd_tikz.tex` | 공통 SFT → 분야별 SFT 교사 → 분야별 RL 교사 → MOPD → 학생 모델 | 3장(학습 개요) |
+| `rlhf_sequential_rl_tikz` | `tikz/03-training-overview/rlhf_sequential_rl_tikz.tex` | 전체 SFT → 추론 RL → 에이전트 RL → 일반 RL | 3장(학습 개요) |
 | `reinforce_tikz` | `tikz/06-policy-gradients/reinforce_tikz.tex` | REINFORCE: basic policy gradient algorithm | Ch 6 (Policy Gradients) |
 | `ppo_tikz` | `tikz/06-policy-gradients/ppo_tikz.tex` | PPO: single output, value network, GAE, KL in reward | Ch 6 (Policy Gradients) |
 | `grpo_tikz` | `tikz/06-policy-gradients/grpo_tikz.tex` | GRPO: group of G outputs, group normalization, KL as loss | Ch 6 (Policy Gradients) |
@@ -126,6 +129,10 @@ Box-and-arrow flows for RLHF architectures and related training concepts. Many u
 | `pretraining_next_token_tikz` | `tikz/pretraining/pretraining_next_token_tikz.tex` | Introductory next-token prediction example with target token and loss intuition | Talks/presentations |
 
 **Make target:** `make tikz`
+
+학습 레시피 도표 두 개만 생성하려면 `make training-recipes`를 실행합니다. 밝은 테마의 PDF/SVG/PNG와 투명 배경의 다크 모드 PNG를 생성합니다.
+공통 스타일 `tikz/_shared/styles_training_recipes.tex`는 3장의 `rlhf-basic`, `rlhf-complex`와 같은 테두리 상자와 회색의 열린 화살촉을 사용합니다.
+출처, 의도적으로 생략한 내용, 미리보기 방법, 본문 삽입 예시는 [레시피 설명](tikz/03-training-overview/README.md)을 참고하세요.
 
 ### Standalone Figures
 

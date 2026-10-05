@@ -175,7 +175,7 @@ No new algorithms -- the methods of this entire course, aimed at a more precise 
 - Pipelines that control the specific language in training data -- e.g. removing common phrases like `Certainly` or `as an AI model built by...`
 - Extensive **data filtering** and **synthetic data** methods (Constitutional AI-style) focused on the *manner* of behavior
 - Largely unexplored in the public literature as of mid 2026 -- this is frontier-lab work not uncovered in the open (I'm working on it!)
-- Often not highlighted in public evalutions/benchmarks: labs make **small personality changes over time** to improve user experience
+- 공개 평가나 벤치마크에서는 잘 드러나지 않지만, 연구소들은 사용자 경험을 개선하기 위해 **시간이 지나면서 모델의 성격을 조금씩 조정합니다**
 
 ---
 
